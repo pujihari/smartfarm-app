@@ -1,0 +1,63 @@
+<div class="page-container">
+  <h1 class="page-title">Pengaturan</h1>
+
+  @if (isLoading) {
+    <p>Memuat pengaturan...</p>
+  } @else {
+    <!-- User Profile Card -->
+    <div class="settings-card">
+      <h2>Profil Pengguna</h2>
+      <p class="card-description">Ubah nama tampilan dan nomor telepon Anda.</p>
+      
+      <form [formGroup]="userProfileForm" (ngSubmit)="onSaveUserProfile()">
+        <div class="form-group">
+          <label for="display_name">Nama Tampilan</label>
+          <input id="display_name" type="text" formControlName="display_name">
+        </div>
+        <div class="form-group">
+          <label for="phone">Nomor Telepon</label>
+          <input id="phone" type="text" formControlName="phone" placeholder="Contoh: 08123456789">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="save-btn" [disabled]="userProfileForm.invalid || isSavingUser">
+            {{ isSavingUser ? 'Menyimpan...' : 'Simpan Profil' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Organization Profile Card -->
+    <div class="settings-card">
+      <h2>Profil Organisasi</h2>
+      <p class="card-description">Ubah nama dan logo organisasi Anda. Perubahan akan terlihat di seluruh aplikasi. Hanya dapat diubah oleh Owner.</p>
+      
+      <form [formGroup]="organizationForm" (ngSubmit)="onSaveOrganization()">
+        <div class="form-group">
+          <label for="name">Nama Organisasi</label>
+          <input id="name" type="text" formControlName="name">
+        </div>
+
+        <div class="form-group">
+          <label for="logo">Logo Organisasi</label>
+          <div class="logo-upload-area">
+            @if (transformedLogoPreview) {
+              <img [src]="transformedLogoPreview" alt="Pratinjau Logo" class="logo-preview">
+            } @else if (logoPreview) {
+              <img [src]="logoPreview" alt="Pratinjau Logo" class="logo-preview">
+            }
+            <input id="logo" type="file" (change)="onFileSelected($event)" accept="image/png, image/jpeg, image/svg+xml" [disabled]="!(isOwner$ | async)">
+            <small>Pilih file gambar (PNG, JPG, atau SVG).</small>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          @if (isOwner$ | async) {
+            <button type="submit" class="save-btn" [disabled]="organizationForm.invalid || isSavingOrg">
+              {{ isSavingOrg ? 'Menyimpan...' : 'Simpan Perubahan Organisasi' }}
+            </button>
+          }
+        </div>
+      </form>
+    </div>
+  }
+</div>

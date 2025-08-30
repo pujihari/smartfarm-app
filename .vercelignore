@@ -1,0 +1,15 @@
+node_modules
+.git
+.angular
+src
+*.md
+*.json
+!package.json
+!vercel.json
+!angular.json
+.npmrc
+tsconfig.*
+.eslintrc.*
+.editorconfig
+.prettierrc
+.prettierignore

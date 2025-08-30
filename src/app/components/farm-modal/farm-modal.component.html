@@ -1,0 +1,24 @@
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ farm ? 'Edit Farm' : 'Tambah Farm Baru' }}</h2>
+      <button class="close-button" (click)="onClose()">×</button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="farmForm" (ngSubmit)="onSave()">
+        <div class="form-group">
+          <label for="name">Nama Farm</label>
+          <input id="name" type="text" formControlName="name" placeholder="Contoh: Farm Subang Jaya">
+        </div>
+        <div class="form-group">
+          <label for="location">Lokasi</label>
+          <input id="location" type="text" formControlName="location" placeholder="Contoh: Subang, Jawa Barat">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="onClose()">Batal</button>
+      <button class="save-btn" (click)="onSave()" [disabled]="farmForm.invalid">Simpan</button>
+    </div>
+  </div>
+</div>

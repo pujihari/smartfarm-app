@@ -1,0 +1,41 @@
+<div class="table-container">
+  <table class="flocks-table">
+    <thead>
+      <tr>
+        <th>Nama Flok</th>
+        <th>Jenis Ayam</th>
+        <th>Populasi</th>
+        <th>Tanggal Mulai</th>
+        <th>Status</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (flock of flocks; track flock.id) {
+        <tr>
+          <td data-label="Nama Flok">{{ flock.name }}</td>
+          <td data-label="Jenis Ayam">{{ flock.breed }}</td>
+          <td data-label="Populasi">{{ flock.population.toLocaleString('id-ID') }}</td>
+          <td data-label="Tanggal Mulai">{{ flock.start_date | date: 'dd MMMM yyyy' }}</td>
+          <td data-label="Status">
+            <span class="status" [class.status-active]="flock.status === 'Aktif'" [class.status-finished]="flock.status === 'Selesai'">
+              {{ flock.status }}
+            </span>
+          </td>
+          <td data-label="Aksi">
+            <div class="action-buttons">
+              @if (authService.isOwner$ | async) {
+                <button class="action-btn edit-btn" (click)="onEdit(flock)">Edit</button>
+                <button class="action-btn delete-btn" (click)="onDelete(flock)">Hapus</button>
+              }
+            </div>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="6" class="empty-state">Belum ada data flok untuk farm ini.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,59 @@
+<div class="page-container">
+  @if (farm$ | async; as farm) {
+    <div class="page-header">
+      <a routerLink="/farms" class="back-link">← Kembali ke Daftar Farm</a>
+      <h1 class="page-title">{{ farm.name }}</h1>
+      <span class="status" [class.status-active]="farm.status === 'Aktif'" [class.status-inactive]="farm.status === 'Tidak Aktif'">
+        {{ farm.status }}
+      </span>
+    </div>
+
+    <div class="details-grid">
+      <div class="detail-card">
+        <h3>Lokasi</h3>
+        <p>{{ farm.location }}</p>
+      </div>
+      <div class="detail-card">
+        <h3>Flok Aktif</h3>
+        <p>{{ farm.activeFlocks }}</p>
+      </div>
+      <div class="detail-card">
+        <h3>Total Populasi</h3>
+        <p>{{ farm.population.toLocaleString('id-ID') }}</p>
+      </div>
+    </div>
+
+    <div class="section-container">
+      <div class="section-header">
+        <h2>Daftar Flok di Farm Ini</h2>
+        @if (authService.canWriteData$ | async) {
+          <button class="add-button" (click)="openAddFlockModal()">+ Tambah Flok Baru</button>
+        }
+      </div>
+      <app-flock-list 
+        [flocks]="(flocks$ | async) ?? []"
+        (edit)="openEditFlockModal($event)"
+        (delete)="openDeleteFlockModal($event)">
+      </app-flock-list>
+    </div>
+  } @else {
+    <p>Farm tidak ditemukan.</p>
+  }
+</div>
+
+@if (isFlockModalOpen) {
+  <app-flock-modal 
+    [flock]="flockToEdit" 
+    [farms]="(farms$ | async) ?? []"
+    [lockedFarmId]="currentFarmId"
+    (close)="closeFlockModal()" 
+    (save)="saveFlock($event)">
+  </app-flock-modal>
+}
+
+@if (isConfirmModalOpen) {
+  <app-confirmation-modal 
+    (confirm)="confirmDeleteFlock()" 
+    (cancel)="closeDeleteFlockModal()">
+  </app-confirmation-modal>
+}

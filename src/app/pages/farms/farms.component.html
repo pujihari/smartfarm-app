@@ -1,0 +1,64 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Manajemen Farm</h1>
+    @if (authService.isOwner$ | async) {
+      <button class="add-button" (click)="openAddModal()">+ Tambah Farm Baru</button>
+    }
+  </div>
+
+  <div class="table-container">
+    <table class="farms-table">
+      <thead>
+        <tr>
+          <th>Nama Farm</th>
+          <th>Lokasi</th>
+          <th>Flok Aktif</th>
+          <th>Populasi</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (farms$ | async; as farms) {
+          @for (farm of farms; track farm.id) {
+            <tr>
+              <td data-label="Nama Farm">{{ farm.name }}</td>
+              <td data-label="Lokasi">{{ farm.location }}</td>
+              <td data-label="Flok Aktif">{{ farm.activeFlocks }}</td>
+              <td data-label="Populasi">{{ farm.population.toLocaleString('id-ID') }}</td>
+              <td data-label="Status">
+                <span class="status" [class.status-active]="farm.status === 'Aktif'" [class.status-inactive]="farm.status === 'Tidak Aktif'">
+                  {{ farm.status }}
+                </span>
+              </td>
+              <td data-label="Aksi">
+                <div class="action-buttons">
+                  <a [routerLink]="['/farms', farm.id]" class="action-btn detail-btn">Detail</a>
+                  @if (authService.isOwner$ | async) {
+                    <button class="action-btn edit-btn" (click)="openEditModal(farm)">Edit</button>
+                    <button class="action-btn delete-btn" (click)="openDeleteModal(farm)">Hapus</button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-state">Belum ada data farm.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (isModalOpen) {
+  <app-farm-modal [farm]="farmToEdit" (close)="closeModal()" (save)="saveFarm($event)"></app-farm-modal>
+}
+
+@if (isConfirmModalOpen) {
+  <app-confirmation-modal 
+    (confirm)="confirmDelete()" 
+    (cancel)="closeDeleteModal()">
+  </app-confirmation-modal>
+}

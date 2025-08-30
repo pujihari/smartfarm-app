@@ -1,0 +1,48 @@
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ item ? 'Edit Item Inventori' : 'Tambah Item Inventori' }}</h2>
+      <button class="close-button" (click)="onClose()">×</button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="itemForm" (ngSubmit)="onSave()">
+        <div class="form-group">
+          <label for="item_type">Jenis Item</label>
+          <select id="item_type" formControlName="item_type">
+            <option [ngValue]="null" disabled>Pilih Jenis</option>
+            @for (type of itemTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+        </div>
+
+        @if (itemForm.get('item_type')?.value === 'PAKAN') {
+          <div class="form-group">
+            <label for="item_code">Kode Pakan</label>
+            <input id="item_code" type="text" formControlName="item_code" placeholder="Contoh: PK-001">
+          </div>
+        }
+
+        <div class="form-group">
+          <label for="name">Nama Item</label>
+          <input id="name" type="text" formControlName="name" placeholder="Contoh: Jagung Giling">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="quantity">Jumlah Stok</label>
+            <input id="quantity" type="number" formControlName="quantity">
+          </div>
+          <div class="form-group">
+            <label for="unit">Satuan</label>
+            <input id="unit" type="text" formControlName="unit" placeholder="Contoh: kg, liter, pcs">
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="onClose()">Batal</button>
+      <button class="save-btn" (click)="onSave()" [disabled]="itemForm.invalid">Simpan</button>
+    </div>
+  </div>
+</div>

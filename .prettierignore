@@ -1,0 +1,23 @@
+# Dependencies
+/node_modules
+
+# Production
+/dist
+/.angular
+
+# IDE
+.idea
+.vscode
+
+# Testing
+/coverage
+
+# Misc
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System Files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,108 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  height: 80px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  color: #333;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.menu-toggle-btn {
+  display: none; /* Hidden on desktop */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-right: 8px;
+  color: #333;
+}
+
+.logo {
+  height: 48px;
+  object-fit: contain;
+}
+
+.tenant-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #0A4D9D;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-name {
+  font-weight: 500;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #0A4D9D;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.logout-btn {
+  background: none;
+  border: 1px solid #ddd;
+  color: #dc3545;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #dc3545;
+  color: #fff;
+  border-color: #dc3545;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0 16px;
+    height: 60px;
+  }
+  .menu-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+  }
+  .tenant-name {
+    display: none; /* Hide tenant name on small screens to save space */
+  }
+  .user-name {
+    display: none; /* Hide user name on small screens */
+  }
+  .avatar {
+    width: 30px;
+    height: 30px;
+  }
+  .logout-btn {
+    padding: 4px 8px;
+    font-size: 0.9rem;
+  }
+}

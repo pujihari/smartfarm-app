@@ -1,0 +1,21 @@
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Undang Anggota Baru</h2>
+      <button class="close-button" (click)="onClose()">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-description">Anggota yang diundang akan menerima email untuk bergabung dengan organisasi Anda. Mereka akan memiliki peran 'member' secara default.</p>
+      <form [formGroup]="inviteForm" (ngSubmit)="onSave()">
+        <div class="form-group">
+          <label for="email">Email Anggota</label>
+          <input id="email" type="email" formControlName="email" placeholder="nama@email.com">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="onClose()">Batal</button>
+      <button class="save-btn" (click)="onSave()" [disabled]="inviteForm.invalid">Kirim Undangan</button>
+    </div>
+  </div>
+</div>

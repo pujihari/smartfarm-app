@@ -1,0 +1,76 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Manajemen Inventori</h1>
+    @if (authService.isOwner$ | async) {
+      <button class="add-button" (click)="openAddModal()">+ Tambah Item Baru</button>
+    }
+  </div>
+
+  <div class="inventory-content">
+    @if (inventoryGroups$ | async; as groups) {
+      @for (group of groups; track group.type) {
+        <div class="inventory-group">
+          <h2>{{ group.type }}</h2>
+          <div class="table-container">
+            <table class="inventory-table">
+              <thead>
+                <tr>
+                  @if (group.type === 'PAKAN') {
+                    <th>Kode Pakan</th>
+                  }
+                  <th>Nama Item</th>
+                  <th>Jumlah Stok</th>
+                  <th>Satuan</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of group.items; track item.id) {
+                  <tr>
+                    @if (group.type === 'PAKAN') {
+                      <td data-label="Kode Pakan">{{ item.item_code }}</td>
+                    }
+                    <td data-label="Nama Item">{{ item.name }}</td>
+                    <td data-label="Jumlah Stok">{{ item.quantity.toLocaleString('id-ID') }}</td>
+                    <td data-label="Satuan">{{ item.unit }}</td>
+                    <td data-label="Aksi">
+                      @if (authService.isOwner$ | async) {
+                        <div class="action-buttons">
+                          <button class="action-btn edit-btn" (click)="openEditModal(item)">Edit</button>
+                          <button class="action-btn delete-btn" (click)="openDeleteModal(item)">Hapus</button>
+                        </div>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td [attr.colspan]="group.type === 'PAKAN' ? 5 : 4" class="empty-state">
+                      Belum ada data untuk kategori {{ group.type }}.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    } @else {
+      <p>Memuat data inventori...</p>
+    }
+  </div>
+</div>
+
+@if (isModalOpen) {
+  <app-inventory-modal
+    [item]="itemToEdit"
+    (close)="closeModal()"
+    (save)="saveItem($event)">
+  </app-inventory-modal>
+}
+
+@if (isConfirmModalOpen) {
+  <app-confirmation-modal
+    (confirm)="confirmDelete()"
+    (cancel)="closeDeleteModal()">
+  </app-confirmation-modal>
+}

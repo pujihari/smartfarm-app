@@ -1,0 +1,158 @@
+.page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.add-button {
+  background-color: #0A4D9D;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-button:hover {
+  background-color: #083a75;
+}
+
+.table-container {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  overflow-x: auto;
+}
+
+.members-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.members-table th, .members-table td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.members-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #666;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.members-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.status {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-active {
+  background-color: #e6f4ea;
+  color: #28a745;
+}
+
+.status-invited {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  border: 1px solid #ddd;
+  background-color: #fff;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.delete-btn {
+  color: #dc3545;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: #999;
+}
+
+@media (max-width: 768px) {
+  .table-container {
+    box-shadow: none;
+    background-color: transparent;
+    overflow-x: hidden;
+  }
+
+  .members-table {
+    border: none;
+  }
+
+  .members-table thead {
+    display: none;
+  }
+
+  .members-table tr {
+    display: block;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid #e0e0e0;
+  }
+
+  .members-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .members-table td:last-child {
+    border-bottom: none;
+  }
+
+  .members-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #333;
+    text-align: left;
+    margin-right: 16px;
+  }
+
+  .action-buttons {
+    justify-content: flex-end;
+    flex-grow: 1;
+  }
+}

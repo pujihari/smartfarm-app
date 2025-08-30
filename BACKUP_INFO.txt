@@ -1,0 +1,22 @@
+=== SMARTFARM 4.0 BACKUP INFO ===
+Tanggal Backup: [isi tanggal hari ini]
+Source: https://github.com/pujihari/smartfarm4.0copy
+
+=== VERCEL SETTINGS ===
+Current URL: smartfarm4-0copy-n19e.vercel.app
+Framework: Angular
+Build Command: npm run build
+Output Directory: dist/dyad-angular-template
+
+=== SUPABASE CONFIG ===
+URL: https://zrnsngrdhvgcgwjdhgrf.supabase.co
+Project ID: zrnsngrdhvgcgwjdhgrf
+Anon Key: [disimpan di environment files]
+
+=== CURRENT ISSUES ===
+- Deployment berhasil tapi aplikasi error 404
+- Routing SPA belum bekerja dengan benar
+
+=== NEXT STEPS ===
+- Identity cleanup untuk lepas dari Dyad
+- Fix routing configuration

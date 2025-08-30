@@ -1,0 +1,94 @@
+<div class="page-container">
+  <h1 class="page-title">Cek Status Respirasi</h1>
+
+  <div class="input-container">
+    <h2>Input Data Cek Respirasi</h2>
+    <form [formGroup]="respiratoryForm" (ngSubmit)="saveData()">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="flock_id">Pilih Flok</label>
+          <select id="flock_id" formControlName="flock_id">
+            <option [ngValue]="null" disabled>Pilih Flok</option>
+            @for (flock of (flocks$ | async); track flock.id) {
+              <option [value]="flock.id">{{ flock.name }} ({{ flock.farmName }})</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="check_date">Tanggal Pengecekan</label>
+          <input id="check_date" type="date" formControlName="check_date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="respiratory_score">Skor Respirasi (0-5)</label>
+        <input id="respiratory_score" type="number" formControlName="respiratory_score" min="0" max="5">
+        <small>0 = Normal, 5 = Sangat Parah</small>
+      </div>
+      <div class="form-group">
+        <label>Gejala yang Terlihat</label>
+        <div class="symptoms-group" formArrayName="symptoms">
+          @for (symptom of symptoms.controls; track $index) {
+            <label class="symptom-checkbox">
+              <input type="checkbox" [formControlName]="$index">
+              {{ availableSymptoms[$index] }}
+            </label>
+          }
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="notes">Catatan Tambahan (Opsional)</label>
+        <textarea id="notes" formControlName="notes" rows="3"></textarea>
+      </div>
+      <button type="submit" class="save-btn" [disabled]="respiratoryForm.invalid || isSaving">
+        {{ isSaving ? 'Menyimpan...' : 'Simpan Data' }}
+      </button>
+    </form>
+  </div>
+
+  <div class="table-container">
+    <h2>Riwayat Cek Respirasi</h2>
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Farm</th>
+          <th>Flok</th>
+          <th>Skor</th>
+          <th>Gejala</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (history$ | async; as history) {
+          @for (item of history; track item.id) {
+            <tr>
+              <td data-label="Tanggal">{{ item.check_date | date: 'dd MMMM yyyy' }}</td>
+              <td data-label="Farm">{{ item.farmName }}</td>
+              <td data-label="Flok">{{ item.flockName }}</td>
+              <td data-label="Skor">{{ item.respiratory_score }}</td>
+              <td data-label="Gejala">{{ item.symptoms?.join(', ') || '-' }}</td>
+              <td data-label="Aksi">
+                @if (authService.canWriteData$ | async) {
+                  <div class="action-buttons">
+                    <button class="action-btn delete-btn" (click)="openDeleteModal(item)">Hapus</button>
+                  </div>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-state">Belum ada riwayat cek respirasi.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (isConfirmModalOpen) {
+  <app-confirmation-modal
+    (confirm)="confirmDelete()"
+    (cancel)="closeDeleteModal()">
+  </app-confirmation-modal>
+}

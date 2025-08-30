@@ -1,0 +1,74 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Manajemen Anggota</h1>
+    @if (authService.isOwner$ | async) {
+      <button class="add-button" (click)="openInviteModal()">+ Undang Anggota</button>
+    }
+  </div>
+
+  <div class="table-container">
+    <table class="members-table">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Peran</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (members$ | async; as members) {
+          @for (member of members; track member.id) {
+            <tr>
+              <td data-label="Email">{{ member.email }}</td>
+              <td data-label="Peran">{{ member.role }}</td>
+              <td data-label="Status">
+                <span class="status" [class.status-active]="member.status === 'active'" [class.status-invited]="member.status === 'invited'">
+                  {{ member.status }}
+                </span>
+              </td>
+              <td data-label="Aksi">
+                <div class="action-buttons">
+                  @if ((authService.isOwner$ | async) && member.status === 'invited') {
+                    <button class="action-btn delete-btn" (click)="openCancelModal(member)">Batalkan Undangan</button>
+                  }
+                  @if ((authService.isOwner$ | async) && member.status === 'active' && member.role !== 'owner') {
+                    <button class="action-btn delete-btn" (click)="openDeleteModal(member)">Hapus</button>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="empty-state">Belum ada data anggota.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (isCancelModalOpen) {
+  <app-confirmation-modal
+    title="Batalkan Undangan"
+    message="Apakah Anda yakin ingin membatalkan undangan untuk anggota ini?"
+    confirmButtonText="Ya, Batalkan"
+    (confirm)="confirmCancel()"
+    (cancel)="closeCancelModal()">
+  </app-confirmation-modal>
+}
+
+@if (isDeleteModalOpen) {
+  <app-confirmation-modal
+    title="Hapus Anggota"
+    message="Apakah Anda yakin ingin menghapus anggota ini dari organisasi? Tindakan ini tidak dapat dibatalkan."
+    confirmButtonText="Ya, Hapus"
+    (confirm)="confirmDelete()"
+    (cancel)="closeDeleteModal()">
+  </app-confirmation-modal>
+}
+
+@if (isModalOpen) {
+  <app-member-modal (close)="closeModal()" (save)="inviteMember($event)"></app-member-modal>
+}

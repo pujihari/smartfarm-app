@@ -1,0 +1,47 @@
+<div class="dashboard-container">
+  <div class="connection-status-card" [class.error]="connectionError">
+    <h3>Tes Koneksi</h3>
+    <p>{{ connectionStatus }}</p>
+    @if (connectionError) {
+      <p class="error-details">{{ connectionError }}</p>
+    }
+    @if (connectionWarning) {
+      <p class="warning-details">{{ connectionWarning }}</p>
+    }
+  </div>
+
+  <h1 class="page-title">Dashboard Ringkasan PT</h1>
+
+  <div class="kpi-grid">
+    @if (kpiCards$ | async; as kpiCards) {
+      @for (card of kpiCards; track card.title) {
+        <div class="kpi-card" [class.loading]="card.loading">
+          <h3 class="kpi-title">{{ card.title }}</h3>
+          <p class="kpi-value">{{ card.value }}</p>
+          @if (card.note) {
+            <p class="kpi-note">{{ card.note }}</p>
+          }
+        </div>
+      }
+    }
+  </div>
+
+  <div class="chart-container">
+    <h2>Performa Produksi per Farm</h2>
+    @if (isChartLoading) {
+      <div class="loading-state">Memuat grafik...</div>
+    } @else {
+      @if (barChartData.labels && barChartData.labels.length > 0) {
+        <div class="chart-wrapper">
+          <canvas baseChart
+            [data]="barChartData"
+            [options]="barChartOptions"
+            [type]="barChartType">
+          </canvas>
+        </div>
+      } @else {
+        <p class="placeholder-text">Belum ada data produksi untuk ditampilkan di grafik.</p>
+      }
+    }
+  </div>
+</div>

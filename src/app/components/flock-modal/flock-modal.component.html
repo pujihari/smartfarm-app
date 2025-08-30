@@ -1,0 +1,57 @@
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ flock ? 'Edit Flok' : 'Tambah Flok Baru' }}</h2>
+      <button class="close-button" (click)="onClose()">×</button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="flockForm" (ngSubmit)="onSave()">
+        <div class="form-group">
+          <label for="farm_id">Farm</label>
+          <select id="farm_id" formControlName="farm_id">
+            <option [ngValue]="null" disabled>Pilih Farm</option>
+            @for (farm of farms; track farm.id) {
+              <option [value]="farm.id">{{ farm.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="name">Nama Flok</label>
+          <input id="name" type="text" formControlName="name" placeholder="Contoh: Kandang A1">
+        </div>
+        <div class="form-group">
+          <label for="breed">Jenis Ayam</label>
+          <select id="breed" formControlName="breed">
+            <option [ngValue]="null" disabled>Pilih Jenis</option>
+            @for (breed of breeds; track breed) {
+              <option [value]="breed">{{ breed }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="population">Populasi Awal</label>
+          <input id="population" type="number" formControlName="population">
+        </div>
+        <div class="form-group">
+          <label for="start_date">Tanggal Mulai</label>
+          <input id="start_date" type="date" formControlName="start_date">
+        </div>
+        <div class="form-group">
+          <label for="entry_age_days">Umur Masuk (hari)</label>
+          <input id="entry_age_days" type="number" formControlName="entry_age_days" placeholder="Contoh: 112">
+        </div>
+        <div class="form-group">
+          <label for="status">Status</label>
+          <select id="status" formControlName="status">
+            <option value="Aktif">Aktif</option>
+            <option value="Selesai">Selesai</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="onClose()">Batal</button>
+      <button class="save-btn" (click)="onSave()" [disabled]="flockForm.invalid">Simpan</button>
+    </div>
+  </div>
+</div>

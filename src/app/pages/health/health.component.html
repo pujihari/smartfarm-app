@@ -1,0 +1,68 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Manajemen Kesehatan</h1>
+    @if (authService.canWriteData$ | async) {
+      <button class="add-button" (click)="openAddModal()">+ Tambah Catatan Baru</button>
+    }
+  </div>
+
+  <div class="table-container">
+    <table class="health-table">
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Farm</th>
+          <th>Flok</th>
+          <th>Jenis Kejadian</th>
+          <th>Deskripsi</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (healthEvents$ | async; as events) {
+          @for (event of events; track event.id) {
+            <tr>
+              <td data-label="Tanggal">{{ event.date | date: 'dd MMMM yyyy' }}</td>
+              <td data-label="Farm">{{ event.farmName }}</td>
+              <td data-label="Flok">{{ event.flockName }}</td>
+              <td data-label="Jenis Kejadian">
+                <span class="event-type" [ngClass]="'type-' + event.event_type.toLowerCase().replace(' ', '-')">
+                  {{ event.event_type }}
+                </span>
+              </td>
+              <td data-label="Deskripsi">{{ event.description }}</td>
+              <td data-label="Aksi">
+                @if (authService.canWriteData$ | async) {
+                  <div class="action-buttons">
+                    <button class="action-btn edit-btn" (click)="openEditModal(event)">Edit</button>
+                    <button class="action-btn delete-btn" (click)="openDeleteModal(event)">Hapus</button>
+                  </div>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-state">Belum ada catatan kesehatan.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (isModalOpen) {
+  <app-health-event-modal
+    [event]="eventToEdit"
+    [flocks]="(flocks$ | async) ?? []"
+    (close)="closeModal()"
+    (save)="saveEvent($event)">
+  </app-health-event-modal>
+}
+
+@if (isConfirmModalOpen) {
+  <app-confirmation-modal
+    (confirm)="confirmDelete()"
+    (cancel)="closeDeleteModal()">
+  </app-confirmation-modal>
+}

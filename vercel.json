@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "name": "smartfarm-4.0",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/dyad-angular-template",
+  "routes": [
+    {
+      "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot))$",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}

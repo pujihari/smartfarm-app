@@ -1,0 +1,108 @@
+<div class="page-container">
+  <h1 class="page-title">Timbang Berat Badan</h1>
+
+  <div class="calculator-container">
+    <h2>Kalkulator Timbang BB</h2>
+    <form [formGroup]="calculatorForm" (ngSubmit)="calculate()">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="farm_id">Filter Farm (Opsional)</label>
+          <select id="farm_id" formControlName="farm_id">
+            <option [ngValue]="null">Tampilkan Semua Farm</option>
+            @for (farm of (farms$ | async); track farm.id) {
+              <option [value]="farm.id">{{ farm.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="flock_id">Pilih Flok</label>
+          <select id="flock_id" formControlName="flock_id">
+            <option [ngValue]="null" disabled>Pilih Flok</option>
+            @for (flock of (flocks$ | async); track flock.id) {
+              <option [value]="flock.id">{{ flock.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="weighing_date">Tanggal Timbang</label>
+        <input id="weighing_date" type="date" formControlName="weighing_date">
+      </div>
+      <div class="form-group">
+        <label for="weights">Input Berat Badan (gram), pisahkan dengan koma, spasi, atau baris baru</label>
+        <textarea id="weights" formControlName="weights" rows="5" placeholder="Contoh: 1500, 1550, 1480, ..."></textarea>
+      </div>
+      <button type="submit" class="calculate-btn" [disabled]="calculatorForm.invalid">Hitung</button>
+    </form>
+  </div>
+
+  @if (calculationResult) {
+    <div class="result-container">
+      <h3>Hasil Perhitungan</h3>
+      <div class="result-grid">
+        <div class="result-item"><span>Flok:</span><strong>{{ calculationResult.flockName }}</strong></div>
+        <div class="result-item"><span>Tanggal:</span><strong>{{ calculationResult.weighing_date | date: 'dd MMMM yyyy' }}</strong></div>
+        <div class="result-item"><span>Umur (hari):</span><strong>{{ calculationResult.age_days }}</strong></div>
+        <div class="result-item"><span>Jumlah Sampel:</span><strong>{{ calculationResult.sampleSize }} ekor</strong></div>
+        <div class="result-item"><span>Rata-rata BB Aktual:</span><strong>{{ calculationResult.avg_body_weight_actual.toFixed(2) }} g</strong></div>
+        <div class="result-item"><span>Standar Deviasi:</span><strong>{{ calculationResult.stdDev.toFixed(2) }} g</strong></div>
+        <div class="result-item"><span>Uniformity (%):</span><strong>{{ calculationResult.uniformity_percentage.toFixed(2) }} %</strong></div>
+        <div class="result-item"><span>Standar BB:</span><strong>{{ calculationResult.avg_body_weight_standard ? calculationResult.avg_body_weight_standard.toFixed(2) + ' g' : 'N/A' }}</strong></div>
+      </div>
+      <button class="save-btn" (click)="saveResult()" [disabled]="isSaving">
+        {{ isSaving ? 'Menyimpan...' : 'Simpan Hasil ke Database' }}
+      </button>
+    </div>
+  }
+
+  <div class="table-container">
+    <h2>Riwayat Timbang BB</h2>
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Farm</th>
+          <th>Flok</th>
+          <th>Umur (hari)</th>
+          <th>Avg. BB (g)</th>
+          <th>Std. BB (g)</th>
+          <th>Uniformity (%)</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (history$ | async; as history) {
+          @for (item of history; track item.id) {
+            <tr>
+              <td data-label="Tanggal">{{ item.weighing_date | date: 'dd MMMM yyyy' }}</td>
+              <td data-label="Farm">{{ item.farmName }}</td>
+              <td data-label="Flok">{{ item.flockName }}</td>
+              <td data-label="Umur">{{ item.age_days }}</td>
+              <td data-label="Avg. BB">{{ item.avg_body_weight_actual.toLocaleString('id-ID') }}</td>
+              <td data-label="Std. BB">{{ item.avg_body_weight_standard?.toLocaleString('id-ID') || 'N/A' }}</td>
+              <td data-label="Uniformity">{{ item.uniformity_percentage.toLocaleString('id-ID') }}%</td>
+              <td data-label="Aksi">
+                @if (authService.canWriteData$ | async) {
+                  <div class="action-buttons">
+                    <button class="action-btn delete-btn" (click)="openDeleteModal(item)">Hapus</button>
+                  </div>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="empty-state">Belum ada riwayat timbang BB.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (isConfirmModalOpen) {
+  <app-confirmation-modal
+    (confirm)="confirmDelete()"
+    (cancel)="closeDeleteModal()">
+  </app-confirmation-modal>
+}

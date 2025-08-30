@@ -1,0 +1,46 @@
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ event ? 'Edit Catatan Kesehatan' : 'Tambah Catatan Kesehatan' }}</h2>
+      <button class="close-button" (click)="onClose()">×</button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="eventForm" (ngSubmit)="onSave()">
+        <div class="form-group">
+          <label for="flock_id">Flok</label>
+          <select id="flock_id" formControlName="flock_id">
+            <option [ngValue]="null" disabled>Pilih Flok</option>
+            @for (flock of flocks; track flock.id) {
+              <option [value]="flock.id">{{ flock.name }} ({{ flock.farmName }})</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="event_type">Jenis Kejadian</label>
+          <select id="event_type" formControlName="event_type">
+            <option [ngValue]="null" disabled>Pilih Jenis</option>
+            @for (type of eventTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="description">Deskripsi</label>
+          <input id="description" type="text" formControlName="description" placeholder="Contoh: Vaksin ND-IB">
+        </div>
+        <div class="form-group">
+          <label for="date">Tanggal</label>
+          <input id="date" type="date" formControlName="date">
+        </div>
+        <div class="form-group">
+          <label for="notes">Catatan (Opsional)</label>
+          <textarea id="notes" formControlName="notes" rows="3"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="onClose()">Batal</button>
+      <button class="save-btn" (click)="onSave()" [disabled]="eventForm.invalid">Simpan</button>
+    </div>
+  </div>
+</div>

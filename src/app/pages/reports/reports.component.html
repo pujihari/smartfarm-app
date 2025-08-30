@@ -1,0 +1,84 @@
+<div class="page-container">
+  <h1 class="page-title">Laporan Performa</h1>
+
+  <div class="filter-container">
+    <form [formGroup]="reportForm" (ngSubmit)="generateReport()">
+      <div class="form-group">
+        <label for="farmId">Pilih Farm (Opsional)</label>
+        <select id="farmId" formControlName="farmId">
+          <option value="">Semua Farm</option>
+          @if (farms$ | async; as farms) {
+            @for (farm of farms; track farm.id) {
+              <option [value]="farm.id">{{ farm.name }}</option>
+            }
+          }
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="standardId">Bandingkan dengan Standar</label>
+        <select id="standardId" formControlName="standardId">
+          <option value="">Tidak ada</option>
+          @if (standards$ | async; as standards) {
+            @for (standard of standards; track standard.id) {
+              <option [value]="standard.id">{{ standard.name }}</option>
+            }
+          }
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="startDate">Tanggal Mulai</label>
+        <input id="startDate" type="date" formControlName="startDate">
+      </div>
+      <div class="form-group">
+        <label for="endDate">Tanggal Selesai</label>
+        <input id="endDate" type="date" formControlName="endDate">
+      </div>
+      <button type="submit" class="generate-btn" [disabled]="isLoading">
+        {{ isLoading ? 'Memuat...' : 'Buat Laporan' }}
+      </button>
+    </form>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-state">Memuat data laporan...</div>
+  }
+
+  @if (reportData && !isLoading) {
+    <div class="report-content">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <h3>Total Produksi (Butir)</h3>
+          <p>{{ reportData.kpis.totalEggCount.toLocaleString('id-ID') }}</p>
+        </div>
+        <div class="kpi-card">
+          <h3>Total Produksi (Kg)</h3>
+          <p>{{ reportData.kpis.totalEggWeightKg.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
+        </div>
+        <div class="kpi-card">
+          <h3>Total Pakan (Kg)</h3>
+          <p>{{ reportData.kpis.totalFeedConsumption.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
+        </div>
+        <div class="kpi-card">
+          <h3>FCR (Pakan/Produksi)</h3>
+          <p>{{ reportData.kpis.fcr.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h2>Tren Hen-Day Percentage (HD%)</h2>
+        <div class="chart-wrapper">
+          <canvas baseChart
+            [data]="lineChartData"
+            [options]="lineChartOptions"
+            [legend]="lineChartLegend"
+            type="line">
+          </canvas>
+        </div>
+      </div>
+    </div>
+  } @else if (!isLoading) {
+    <div class="placeholder-text">
+      Pilih filter di atas dan klik "Buat Laporan" untuk melihat data.
+    </div>
+  }
+</div>

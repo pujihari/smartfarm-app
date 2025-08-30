@@ -1,0 +1,177 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1 class="page-title">Manajemen Produksi</h1>
+    @if (authService.canWriteData$ | async) {
+      <button class="add-button" (click)="openAddModal()">+ Tambah Data Tunggal</button>
+    }
+  </div>
+
+  <!-- Batch Input Section -->
+  @if (authService.canWriteData$ | async) {
+    <div class="batch-input-container">
+      <h2>Input Data Massal</h2>
+      <form [formGroup]="batchProductionForm" class="batch-form">
+        <div class="form-row top-row">
+          <div class="form-group">
+            <label for="batch_flock_id">Flok</label>
+            <select id="batch_flock_id" formControlName="flock_id">
+              <option [ngValue]="null" disabled>Pilih Flok</option>
+              @if (flocks$ | async; as flocks) {
+                @for (flock of flocks; track flock.id) {
+                  <option [value]="flock.id">{{ flock.name }} ({{ flock.farmName }})</option>
+                }
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="batch_date">Tanggal</label>
+            <input id="batch_date" type="date" formControlName="date">
+          </div>
+        </div>
+        
+        <fieldset class="egg-quality-group">
+          <legend>Produksi Telur (butir)</legend>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="batch_normal_eggs">Normal</label>
+              <input id="batch_normal_eggs" type="number" formControlName="normal_eggs">
+            </div>
+            <div class="form-group">
+              <label for="batch_white_eggs">Putih/Pucat</label>
+              <input id="batch_white_eggs" type="number" formControlName="white_eggs">
+            </div>
+            <div class="form-group">
+              <label for="batch_cracked_eggs">Retak</label>
+              <input id="batch_cracked_eggs" type="number" formControlName="cracked_eggs">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="egg-quality-group">
+          <legend>Produksi Telur (kilo)</legend>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="batch_normal_eggs_weight_kg">Normal</label>
+              <input id="batch_normal_eggs_weight_kg" type="number" formControlName="normal_eggs_weight_kg">
+            </div>
+            <div class="form-group">
+              <label for="batch_white_eggs_weight_kg">Putih/Pucat</label>
+              <input id="batch_white_eggs_weight_kg" type="number" formControlName="white_eggs_weight_kg">
+            </div>
+            <div class="form-group">
+              <label for="batch_cracked_eggs_weight_kg">Retak</label>
+              <input id="batch_cracked_eggs_weight_kg" type="number" formControlName="cracked_eggs_weight_kg">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset formArrayName="feed_consumption">
+          <legend>Konsumsi Pakan</legend>
+          @for (feed of batch_feed_consumption.controls; track $index) {
+            <div class="feed-row" [formGroupName]="$index">
+              <input type="text" formControlName="feed_code" placeholder="Kode Pakan">
+              <input type="number" formControlName="quantity_kg" placeholder="Jumlah (kg)">
+              <button type="button" class="remove-feed-btn" (click)="removeFeedFromBatchForm($index)" [disabled]="batch_feed_consumption.controls.length <= 1">Hapus</button>
+            </div>
+          }
+          <button type="button" class="add-feed-btn" (click)="addFeedToBatchForm()">+ Tambah Pakan</button>
+        </fieldset>
+
+        <button type="button" class="add-to-stage-btn" (click)="addToStage()" [disabled]="batchProductionForm.invalid">
+          Tambah ke Daftar
+        </button>
+      </form>
+
+      @if (stagedProductionData.length > 0) {
+        <div class="staging-area">
+          <h3>Data yang Akan Disimpan</h3>
+          <div class="table-container">
+            <table class="staging-table">
+              <thead>
+                <tr>
+                  <th>Flok</th>
+                  <th>Tanggal</th>
+                  <th>Telur (butir)</th>
+                  <th>Produksi (kg)</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of stagedProductionData; track $index) {
+                  <tr>
+                    <td>{{ item.flockName }}</td>
+                    <td>{{ item.date | date: 'dd/MM/yy' }}</td>
+                    <td>{{ (item.normal_eggs || 0) + (item.white_eggs || 0) + (item.cracked_eggs || 0) }}</td>
+                    <td>{{ ((item.normal_eggs_weight_kg || 0) + (item.white_eggs_weight_kg || 0) + (item.cracked_eggs_weight_kg || 0)).toFixed(2) }}</td>
+                    <td><button class="action-btn delete-btn" (click)="removeFromStage($index)">Hapus</button></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <button class="save-all-btn" (click)="saveStagedData()" [disabled]="isSavingBatch">
+            {{ isSavingBatch ? 'Menyimpan...' : 'Simpan Semua ke Database' }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="table-container main-table">
+    <table class="production-table">
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Farm</th>
+          <th>Flok</th>
+          <th>Total Telur (butir)</th>
+          <th>Total Produksi (kg)</th>
+          <th>Total Pakan (kg)</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (productionData$ | async; as data) {
+          @for (item of data; track item.id) {
+            <tr>
+              <td data-label="Tanggal">{{ item.date | date: 'dd MMMM yyyy' }}</td>
+              <td data-label="Farm">{{ item.farmName }}</td>
+              <td data-label="Flok">{{ item.flockName }}</td>
+              <td data-label="Total Telur (butir)">{{ item.totalEggCount.toLocaleString('id-ID') }}</td>
+              <td data-label="Total Produksi (kg)">{{ item.totalEggWeightKg.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
+              <td data-label="Total Pakan (kg)">{{ item.totalFeedConsumption.toLocaleString('id-ID') }}</td>
+              <td data-label="Aksi">
+                @if (authService.canWriteData$ | async) {
+                  <div class="action-buttons">
+                    <button class="action-btn edit-btn" (click)="openEditModal(item)">Edit</button>
+                    <button class="action-btn delete-btn" (click)="openDeleteModal(item)">Hapus</button>
+                  </div>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty-state">Belum ada data produksi.</td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if (isModalOpen) {
+  <app-production-modal
+    [data]="dataToEdit"
+    [flocks]="(flocks$ | async) ?? []"
+    (close)="closeModal()"
+    (save)="saveData($event)">
+  </app-production-modal>
+}
+
+@if (isConfirmModalOpen) {
+  <app-confirmation-modal
+    (confirm)="confirmDelete()"
+    (cancel)="closeDeleteModal()">
+  </app-confirmation-modal>
+}

@@ -1,0 +1,144 @@
+.table-container {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  overflow-x: auto;
+}
+
+.flocks-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.flocks-table th, .flocks-table td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  white-space: nowrap;
+}
+
+.flocks-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #666;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.flocks-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.flocks-table tbody tr:hover {
+  background-color: #f4f7fa;
+}
+
+.status {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.status-active {
+  background-color: #e6f4ea;
+  color: #28a745;
+}
+
+.status-finished {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  border: 1px solid #ddd;
+  background-color: #fff;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  display: inline-block;
+}
+
+.action-btn:hover {
+  background-color: #f0f0f0;
+  border-color: #ccc;
+}
+
+.detail-btn {
+  color: #0A4D9D;
+}
+
+.edit-btn {
+  color: #F5A623;
+}
+
+.delete-btn {
+  color: #dc3545;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: #999;
+}
+
+@media (max-width: 768px) {
+  .table-container {
+    box-shadow: none;
+    background-color: transparent;
+    overflow-x: hidden;
+  }
+
+  .flocks-table {
+    border: none;
+  }
+
+  .flocks-table thead {
+    display: none;
+  }
+
+  .flocks-table tr {
+    display: block;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid #e0e0e0;
+  }
+
+  .flocks-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .flocks-table td:last-child {
+    border-bottom: none;
+  }
+
+  .flocks-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #333;
+    text-align: left;
+    margin-right: 16px;
+  }
+
+  .action-buttons {
+    justify-content: flex-end;
+    flex-grow: 1;
+  }
+}
