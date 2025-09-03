@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "npm run vercel-build",
-  "outputDirectory": "dist/smartfarm-app",
+  "outputDirectory": "dist/smartfarm-app/browser",
   "routes": [
     {
       "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot))$",
