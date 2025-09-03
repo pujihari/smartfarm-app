@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "smartfarm-4.0",
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist/smartfarm-app",
   "routes": [
