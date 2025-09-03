@@ -97,20 +97,7 @@ export class AuthService {
   async signUp(credentials: { email: string; password: string; organizationName: string }) {
     const { email, password, organizationName } = credentials;
     
-    const { data: existingOrg, error: checkError } = await supabase
-      .from('organizations')
-      .select('id')
-      .eq('name', organizationName)
-      .limit(1)
-      .single();
-
-    if (checkError && checkError.code !== 'PGRST116') {
-      return { data: null, error: { message: `Database error: ${checkError.message}` } as AuthError };
-    }
-    if (existingOrg) {
-      return { data: null, error: { message: 'Nama organisasi sudah digunakan.' } as AuthError };
-    }
-
+    // First, sign up the user with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
 
     if (authError) {
@@ -120,16 +107,20 @@ export class AuthService {
       return { data: null, error: { message: 'Pendaftaran gagal, pengguna tidak dibuat.' } as AuthError };
     }
 
-    const { error: orgError } = await supabase.from('organizations').insert({
-      name: organizationName,
-      owner_id: authData.user.id,
+    // Now, call the Edge Function to create the organization and link the user as owner
+    const { data: orgCreationData, error: orgCreationError } = await supabase.functions.invoke('create-organization-and-member', {
+      body: { userId: authData.user.id, organizationName },
     });
 
-    if (orgError) {
-      // The user has been created and the confirmation email sent.
-      // We log the organization creation error for debugging but return success to the user.
-      // This prevents showing a confusing error message when the user has received a confirmation email.
-      console.error('CRITICAL: User was created, but organization creation failed due to RLS policy. User will not be associated with an organization upon login.', orgError);
+    if (orgCreationError) {
+      // Log the error but still return success for the user signup part
+      console.error('CRITICAL: User was created, but organization creation failed via Edge Function:', orgCreationError);
+      return { data: authData, error: { message: orgCreationError.message || 'Pendaftaran berhasil, tetapi gagal membuat organisasi. Silakan hubungi dukungan.' } as AuthError };
+    }
+    
+    if (orgCreationData && orgCreationData.error) {
+      console.error('CRITICAL: User was created, but organization creation failed via Edge Function (application error):', orgCreationData.error);
+      return { data: authData, error: { message: orgCreationData.error || 'Pendaftaran berhasil, tetapi gagal membuat organisasi. Silakan hubungi dukungan.' } as AuthError };
     }
 
     // Return success as long as the user was created, so the frontend can show the "Check your email" message.
