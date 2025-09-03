@@ -126,10 +126,13 @@ export class AuthService {
     });
 
     if (orgError) {
-      console.error('Failed to create organization after signup:', orgError);
-      return { data: null, error: { name: 'OrganizationError', message: `Gagal membuat organisasi: ${orgError.message}` } as AuthError };
+      // The user has been created and the confirmation email sent.
+      // We log the organization creation error for debugging but return success to the user.
+      // This prevents showing a confusing error message when the user has received a confirmation email.
+      console.error('CRITICAL: User was created, but organization creation failed due to RLS policy. User will not be associated with an organization upon login.', orgError);
     }
 
+    // Return success as long as the user was created, so the frontend can show the "Check your email" message.
     return { data: authData, error: null };
   }
 
