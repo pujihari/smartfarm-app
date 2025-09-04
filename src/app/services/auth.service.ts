@@ -97,7 +97,8 @@ export class AuthService {
   async signUp(credentials: { email: string; password: string; organizationName: string }) {
     const { email, password, organizationName } = credentials;
     
-    // First, sign up the user with Supabase Auth
+    // Pendaftaran pengguna dengan Supabase Auth.
+    // Ini akan memicu fungsi database `handle_new_user` yang akan membuat organisasi dan keanggotaan.
     const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
 
     if (authError) {
@@ -107,23 +108,12 @@ export class AuthService {
       return { data: null, error: { message: 'Pendaftaran gagal, pengguna tidak dibuat.' } as AuthError };
     }
 
-    // Now, call the Edge Function to create the organization and link the user as owner
-    const { data: orgCreationData, error: orgCreationError } = await supabase.functions.invoke('create-organization-and-member', {
-      body: { userId: authData.user.id, organizationName },
-    });
+    // PENTING: Panggilan ke Edge Function 'create-organization-and-member' telah dihapus.
+    // Fungsi database `handle_new_user` sudah menangani pembuatan organisasi dan keanggotaan owner
+    // secara otomatis setelah pengguna berhasil dibuat oleh `supabase.auth.signUp`.
+    // Memanggil Edge Function lagi akan menyebabkan konflik karena organisasi sudah ada.
 
-    if (orgCreationError) {
-      // Log the error but still return success for the user signup part
-      console.error('CRITICAL: User was created, but organization creation failed via Edge Function:', orgCreationError);
-      return { data: authData, error: { message: orgCreationError.message || 'Pendaftaran berhasil, tetapi gagal membuat organisasi. Silakan hubungi dukungan.' } as AuthError };
-    }
-    
-    if (orgCreationData && orgCreationData.error) {
-      console.error('CRITICAL: User was created, but organization creation failed via Edge Function (application error):', orgCreationData.error);
-      return { data: authData, error: { message: orgCreationData.error || 'Pendaftaran berhasil, tetapi gagal membuat organisasi. Silakan hubungi dukungan.' } as AuthError };
-    }
-
-    // Return success as long as the user was created, so the frontend can show the "Check your email" message.
+    // Mengembalikan sukses selama pengguna dibuat, sehingga frontend dapat menampilkan pesan "Periksa email Anda".
     return { data: authData, error: null };
   }
 
@@ -132,6 +122,6 @@ export class AuthService {
     if (error) {
       console.error('Error signing out:', error);
     }
-    // Navigation is now handled by the onAuthStateChange listener.
+    // Navigasi sekarang ditangani oleh listener onAuthStateChange.
   }
 }
