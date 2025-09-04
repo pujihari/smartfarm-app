@@ -73,6 +73,7 @@ export class HeaderComponent implements OnInit {
   }
 
   logout(): void {
+    console.log('Logout button clicked in HeaderComponent'); // Log ini
     this.authService.signOut();
   }
 }

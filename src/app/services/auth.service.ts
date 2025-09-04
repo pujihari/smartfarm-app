@@ -39,6 +39,7 @@ export class AuthService {
     private profileService: ProfileService
   ) {
     supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
+      console.log('Auth state changed:', event, session); // Log ini
       this._currentUser.next(session?.user ?? null);
       if (session?.user) {
         this.fetchMemberDetails(session.user.id);
@@ -51,6 +52,7 @@ export class AuthService {
         this._organizationId.next(null);
         this._profile.next(null);
         if (this.router.url !== '/login' && this.router.url !== '/register') {
+          console.log('Navigating to login page after SIGNED_OUT event.'); // Log ini
           this.router.navigate(['/login']);
         }
       }
@@ -122,9 +124,12 @@ export class AuthService {
   }
 
   async signOut(): Promise<void> {
+    console.log('Attempting to sign out via Supabase...'); // Log ini
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error signing out:', error);
+    } else {
+      console.log('Supabase signOut call completed without error.'); // Log ini
     }
     // Navigasi sekarang ditangani oleh listener onAuthStateChange.
   }
