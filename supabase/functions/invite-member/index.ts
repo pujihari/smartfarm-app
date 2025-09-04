@@ -52,19 +52,23 @@ serve(async (req: Request) => {
     
     const { organization_id } = inviterMembership;
 
-    // Check if user is already a member or has a pending invite
-    const { data: existingMember } = await supabaseAdmin.rpc('get_member_status_by_email', {
+    // Check if user is already a member or has a pending invite using the new RPC
+    const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('get_member_status_by_email', {
       p_email: email,
       p_org_id: organization_id
     });
 
-    if (existingMember) {
-      if (existingMember.status === 'active') {
-        throw new Error('Pengguna dengan email ini sudah menjadi anggota aktif organisasi Anda.');
-      }
-      if (existingMember.status === 'invited') {
-        throw new Error('Pengguna dengan email ini sudah memiliki undangan yang tertunda.');
-      }
+    if (rpcError) {
+      throw new Error(`Database error checking member status: ${rpcError.message}`);
+    }
+
+    const memberStatus = rpcResult && rpcResult.length > 0 ? rpcResult[0].status : null;
+
+    if (memberStatus === 'active') {
+      throw new Error('Pengguna dengan email ini sudah menjadi anggota aktif organisasi Anda.');
+    }
+    if (memberStatus === 'invited') {
+      throw new Error('Pengguna dengan email ini sudah memiliki undangan yang tertunda.');
     }
 
     // FIX: Insert into invites table BEFORE sending email to prevent race condition
