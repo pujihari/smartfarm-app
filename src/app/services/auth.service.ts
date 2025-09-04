@@ -58,17 +58,21 @@ export class AuthService {
     });
   }
 
-  private fetchMemberDetails(userId: string): void {
+  private fetchMemberDetails(userId: string, retries = 3, delay = 1000): void {
     supabase
       .from('organization_members')
       .select('role, organization_id')
       .eq('user_id', userId)
       .single()
       .then(({ data, error }: { data: { role: MemberRole; organization_id: string } | null; error: any }) => {
-        if (error && error.code !== 'PGRST116') {
+        if (error && error.code !== 'PGRST116') { // PGRST116 berarti tidak ada baris yang ditemukan
           console.error('Error fetching member details:', error);
           this._memberRole.next(null);
           this._organizationId.next(null);
+        } else if (!data && retries > 0) {
+          // Jika tidak ada data yang ditemukan, coba lagi setelah penundaan
+          console.warn(`No organization member data found for user ${userId}. Retrying in ${delay}ms... (${retries} retries left)`);
+          setTimeout(() => this.fetchMemberDetails(userId, retries - 1, delay * 2), delay);
         } else {
           this._memberRole.next((data?.role as MemberRole) || null);
           this._organizationId.next(data?.organization_id || null);
