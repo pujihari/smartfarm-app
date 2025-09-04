@@ -20,7 +20,7 @@ export class HeaderComponent implements OnInit {
   userName = 'Pengguna';
   userInitials = 'P';
   logoUrl: string | null = null;
-  transformedLogoUrl: string | null = null;
+  // transformedLogoUrl: string | null = null; // Dihapus karena fitur transformasi tidak diaktifkan
 
   constructor(
     private organizationService: OrganizationService,
@@ -32,15 +32,15 @@ export class HeaderComponent implements OnInit {
       if (profile) {
         this.tenantName = profile.name;
         this.logoUrl = profile.logo_url || null;
-        if (this.logoUrl) {
-          this.transformedLogoUrl = this.getTransformedLogoUrl(this.logoUrl);
-        } else {
-          this.transformedLogoUrl = null;
-        }
+        // if (this.logoUrl) {
+        //   this.transformedLogoUrl = this.getTransformedLogoUrl(this.logoUrl);
+        // } else {
+        //   this.transformedLogoUrl = null;
+        // }
       } else {
         this.tenantName = 'Nama Organisasi Belum Diatur';
         this.logoUrl = null;
-        this.transformedLogoUrl = null;
+        // this.transformedLogoUrl = null;
       }
     });
 
@@ -60,13 +60,13 @@ export class HeaderComponent implements OnInit {
     });
   }
 
-  private getTransformedLogoUrl(originalUrl: string): string {
-    if (originalUrl.includes('/storage/v1/object/public/')) {
-      // Add a timestamp to bust the cache
-      return originalUrl.replace('/object/public/', '/render/image/public/') + `?height=96&resize=contain&t=${new Date().getTime()}`;
-    }
-    return originalUrl;
-  }
+  // private getTransformedLogoUrl(originalUrl: string): string { // Dihapus
+  //   if (originalUrl.includes('/storage/v1/object/public/')) {
+  //     // Add a timestamp to bust the cache
+  //     return originalUrl.replace('/object/public/', '/render/image/public/') + `?height=96&resize=contain&t=${new Date().getTime()}`;
+  //   }
+  //   return originalUrl;
+  // }
 
   onMenuToggle(): void {
     this.menuToggle.emit();

@@ -24,7 +24,7 @@ export class SettingsComponent implements OnInit {
   isSavingUser = false;
 
   logoPreview: string | ArrayBuffer | null = null;
-  transformedLogoPreview: string | null = null;
+  // transformedLogoPreview: string | null = null; // Dihapus
   selectedFile: File | null = null;
   currentOrganization: Organization | null = null;
   currentUserProfile: Profile | null = null;
@@ -63,10 +63,10 @@ export class SettingsComponent implements OnInit {
         this.organizationForm.patchValue(org);
         if (org.logo_url) {
           this.logoPreview = org.logo_url;
-          this.transformedLogoPreview = this.getTransformedLogoUrl(org.logo_url);
+          // this.transformedLogoPreview = this.getTransformedLogoUrl(org.logo_url); // Dihapus
         } else {
           this.logoPreview = null;
-          this.transformedLogoPreview = null;
+          // this.transformedLogoPreview = null; // Dihapus
         }
       }
       this.isLoading = false;
@@ -80,12 +80,12 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  private getTransformedLogoUrl(originalUrl: string): string {
-    if (originalUrl.includes('/storage/v1/object/public/')) {
-        return originalUrl.replace('/object/public/', '/render/image/public/') + `?height=200&resize=contain&t=${new Date().getTime()}`;
-    }
-    return originalUrl;
-  }
+  // private getTransformedLogoUrl(originalUrl: string): string { // Dihapus
+  //   if (originalUrl.includes('/storage/v1/object/public/')) {
+  //       return originalUrl.replace('/object/public/', '/render/image/public/') + `?height=200&resize=contain&t=${new Date().getTime()}`;
+  //   }
+  //   return originalUrl;
+  // }
 
   onFileSelected(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -94,7 +94,7 @@ export class SettingsComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = () => {
         this.logoPreview = reader.result;
-        this.transformedLogoPreview = null;
+        // this.transformedLogoPreview = null; // Dihapus
       };
       reader.readAsDataURL(this.selectedFile);
     }

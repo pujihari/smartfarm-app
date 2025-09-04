@@ -40,9 +40,7 @@
         <div class="form-group">
           <label for="logo">Logo Organisasi</label>
           <div class="logo-upload-area">
-            @if (transformedLogoPreview) {
-              <img [src]="transformedLogoPreview" alt="Pratinjau Logo" class="logo-preview">
-            } @else if (logoPreview) {
+            @if (logoPreview) {
               <img [src]="logoPreview" alt="Pratinjau Logo" class="logo-preview">
             }
             <input id="logo" type="file" (change)="onFileSelected($event)" accept="image/png, image/jpeg, image/svg+xml" [disabled]="!(isOwner$ | async)">
