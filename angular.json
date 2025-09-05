@@ -30,7 +30,7 @@
               "src/styles.css"
             ],
             "scripts": [],
-            "serviceWorker": true
+            "serviceWorker": "ngsw-worker.js"
           },
           "configurations": {
             "production": {
