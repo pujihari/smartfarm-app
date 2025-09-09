@@ -29,8 +29,7 @@
               "node_modules/ngx-toastr/toastr.css",
               "src/styles.css"
             ],
-            "scripts": [],
-            "serviceWorker": "ngsw-worker.js"
+            "scripts": []
           },
           "configurations": {
             "production": {

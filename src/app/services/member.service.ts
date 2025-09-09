@@ -40,9 +40,16 @@ export class MemberService {
 
     if (error) {
       console.error("Gagal memanggil fungsi:", error);
-      return { data: null, error: `Gagal menghubungi server: ${error.message}` };
+      // Check if the error is a FunctionsHttpError and if data contains a specific error message
+      if (data && data.error) {
+        return { data: null, error: data.error }; // Use the specific error message from the Edge Function
+      }
+      return { data: null, error: `Gagal menghubungi server: ${error.message}` }; // Fallback to generic message
     }
     
+    // This block is technically redundant if the above logic is correct,
+    // as a successful 2xx response from the Edge Function would not have `data.error`.
+    // However, keeping it for robustness if the Edge Function somehow returns 2xx with an error field.
     if (data && data.error) {
        return { data: null, error: data.error };
     }

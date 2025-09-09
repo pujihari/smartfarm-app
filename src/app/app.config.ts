@@ -18,7 +18,7 @@ export const appConfig: ApplicationConfig = {
     }),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
-      registrationStrategy: 'V3'
+      registrationStrategy: 'registerImmediately'
     })
   ]
 };
