@@ -25,7 +25,6 @@ serve(async (req: Request) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     )
 
-    // FIX: Safely get the authenticated user to prevent crash on expired session
     const { data: { user: inviter }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !inviter) {
       throw new Error("Otentikasi pengguna gagal. Silakan login kembali.");
@@ -50,12 +49,12 @@ serve(async (req: Request) => {
       throw new Error('Hanya pemilik organisasi yang dapat mengundang anggota baru.');
     }
     
-    const { organization_id } = inviterMembership;
+    const organizationId = inviterMembership.organization_id; // Dapatkan ID organisasi pengundang
 
-    // Check if user is already a member or has a pending invite using the new RPC
+    // Periksa apakah pengguna sudah menjadi anggota atau memiliki undangan yang tertunda
     const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('get_member_status_by_email', {
       p_email: email,
-      p_org_id: organization_id
+      p_org_id: organizationId
     });
 
     if (rpcError) {
@@ -71,13 +70,13 @@ serve(async (req: Request) => {
       throw new Error('Pengguna dengan email ini sudah memiliki undangan yang tertunda.');
     }
 
-    // FIX: Insert into invites table BEFORE sending email to prevent race condition
+    // Masukkan ke tabel invites
     const { error: insertError } = await supabaseAdmin
       .from('invites')
       .insert({
         email,
-        organization_id,
-        invite_token: 'unused', // Token is handled by Supabase Auth now
+        organization_id: organizationId,
+        invite_token: 'unused', // Token ditangani oleh Supabase Auth
         status: 'pending',
         role: 'member'
       });
@@ -86,11 +85,11 @@ serve(async (req: Request) => {
       throw new Error(`Gagal menyimpan data undangan: ${insertError.message}`);
     }
 
-    // Now, send the invitation email
+    // Kirim email undangan
     const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email);
     if (inviteError) {
-      // If sending email fails, roll back the invite record
-      await supabaseAdmin.from('invites').delete().match({ email, organization_id });
+      // Jika pengiriman email gagal, batalkan catatan undangan
+      await supabaseAdmin.from('invites').delete().match({ email, organization_id: organizationId });
       throw new Error(inviteError.message || 'Gagal mengundang pengguna.');
     }
 
@@ -99,7 +98,7 @@ serve(async (req: Request) => {
       status: 200,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
