@@ -19,7 +19,7 @@ export class HeaderComponent implements OnInit {
   tenantName = 'Memuat...';
   userName = 'Pengguna';
   userInitials = 'P';
-  logoUrl: string | null = null;
+  logoUrl: string = '';
   // transformedLogoUrl: string | null = null; // Dihapus karena fitur transformasi tidak diaktifkan
 
   constructor(
@@ -31,7 +31,7 @@ export class HeaderComponent implements OnInit {
     this.organizationService.organization$.subscribe((profile: Organization | null) => {
       if (profile) {
         this.tenantName = profile.name;
-        this.logoUrl = profile.logo_url || null;
+        this.logoUrl = profile.logo_url || '';
         // if (this.logoUrl) {
         //   this.transformedLogoUrl = this.getTransformedLogoUrl(this.logoUrl);
         // } else {
@@ -39,7 +39,7 @@ export class HeaderComponent implements OnInit {
         // }
       } else {
         this.tenantName = 'Nama Organisasi Belum Diatur';
-        this.logoUrl = null;
+        this.logoUrl = '';
         // this.transformedLogoUrl = null;
       }
     });
