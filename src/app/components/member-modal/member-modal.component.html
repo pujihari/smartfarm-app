@@ -5,11 +5,19 @@
       <button class="close-button" (click)="onClose()">×</button>
     </div>
     <div class="modal-body">
-      <p class="modal-description">Anggota yang diundang akan menerima email untuk bergabung dengan organisasi Anda. Mereka akan memiliki peran 'member' secara default.</p>
+      <p class="modal-description">Anggota yang diundang akan menerima email untuk bergabung dengan organisasi Anda. Anda dapat menetapkan peran mereka di sini.</p>
       <form [formGroup]="inviteForm" (ngSubmit)="onSave()">
         <div class="form-group">
           <label for="email">Email Anggota</label>
           <input id="email" type="email" formControlName="email" placeholder="nama@email.com">
+        </div>
+        <div class="form-group">
+          <label for="role">Peran</label>
+          <select id="role" formControlName="role">
+            @for (role of memberRoles; track role) {
+              <option [value]="role">{{ role | titlecase }}</option>
+            }
+          </select>
         </div>
       </form>
     </div>

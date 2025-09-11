@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { from, Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { supabase } from '../supabase.client';
+import { MemberRole } from '../models/member.model'; // Import MemberRole
 
 // This interface should reflect the data you want to display
 export interface MemberDetails {
@@ -33,9 +34,9 @@ export class MemberService {
     );
   }
 
-  async inviteMember(email: string): Promise<{ data: any, error: string | null }> {
+  async inviteMember(email: string, role: MemberRole): Promise<{ data: any, error: string | null }> {
     const { data, error } = await supabase.functions.invoke('invite-member', {
-      body: { email },
+      body: { email, role }, // Pass the role to the Edge Function
     });
 
     if (error) {

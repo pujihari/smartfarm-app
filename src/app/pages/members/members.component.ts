@@ -7,6 +7,7 @@ import { switchMap } from 'rxjs/operators';
 import { MemberModalComponent } from '../../components/member-modal/member-modal.component';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { AuthService } from '../../services/auth.service';
+import { MemberRole } from '../../models/member.model'; // Import MemberRole
 
 @Component({
   selector: 'app-members',
@@ -46,8 +47,8 @@ export class MembersComponent implements OnInit {
     this.isModalOpen = false;
   }
 
-  async inviteMember(data: { email: string }): Promise<void> {
-    const { error } = await this.memberService.inviteMember(data.email);
+  async inviteMember(data: { email: string, role: MemberRole }): Promise<void> {
+    const { error } = await this.memberService.inviteMember(data.email, data.role);
     
     if (error) {
       this.notificationService.showError(error, 'Gagal Mengirim Undangan');

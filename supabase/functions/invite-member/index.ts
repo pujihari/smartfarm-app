@@ -14,9 +14,12 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { email } = await req.json()
+    const { email, role } = await req.json() // Dapatkan peran dari body request
     if (!email) {
       throw new Error("Email wajib diisi.");
+    }
+    if (!role || (role !== 'member' && role !== 'owner')) { // Validasi peran
+      throw new Error("Peran tidak valid. Harus 'member' atau 'owner'.");
     }
 
     const supabaseClient = createClient(
@@ -70,7 +73,7 @@ serve(async (req: Request) => {
       throw new Error('Pengguna dengan email ini sudah memiliki undangan yang tertunda.');
     }
 
-    // Masukkan ke tabel invites
+    // Masukkan ke tabel invites dengan peran yang ditentukan
     const { error: insertError } = await supabaseAdmin
       .from('invites')
       .insert({
@@ -78,7 +81,7 @@ serve(async (req: Request) => {
         organization_id: organizationId,
         invite_token: 'unused', // Token ditangani oleh Supabase Auth
         status: 'pending',
-        role: 'member'
+        role: role // Gunakan peran yang diterima dari request
       });
 
     if (insertError) {
