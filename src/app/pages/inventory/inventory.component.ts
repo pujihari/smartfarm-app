@@ -3,14 +3,14 @@ import { CommonModule } from '@angular/common';
 import { InventoryService } from '../../services/inventory.service';
 import { NotificationService } from '../../services/notification.service';
 import { InventoryItem, ItemType } from '../../models/inventory-item.model';
-import { Observable, BehaviorSubject, combineLatest, ReplaySubject } from 'rxjs';
-import { switchMap, map, startWith, tap } from 'rxjs/operators';
+import { Observable, BehaviorSubject, combineLatest, ReplaySubject, of } from 'rxjs'; // Import 'of' here
+import { switchMap, map, startWith, tap, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { InventoryModalComponent } from '../../components/inventory-modal/inventory-modal.component';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { AuthService } from '../../services/auth.service';
 import { FarmService } from '../../services/farm.service';
 import { Farm } from '../../models/farm.model';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormControl } from '@angular/forms';
 
 interface GroupedInventory {
   type: ItemType;
@@ -28,7 +28,7 @@ interface GlobalSummaryItem {
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, InventoryModalComponent, ConfirmationModalComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, InventoryModalComponent, ConfirmationModalComponent],
   templateUrl: './inventory.component.html',
   styleUrl: './inventory.component.css'
 })
@@ -39,7 +39,12 @@ export class InventoryComponent implements OnInit {
   inventoryGroups$: Observable<GroupedInventory[]>;
   globalSummaryData$: Observable<GlobalSummaryItem[]>; // New: Observable for global summary
   farms$: Observable<Farm[]>;
+  
+  // Filter properties
   selectedFarmId: number | null = null;
+  selectedItemType: ItemType | null = null;
+  searchTerm = new FormControl('');
+  itemTypes: ItemType[] = ['PAKAN', 'VITAMIN', 'OBAT', 'VAKSIN']; // Available item types for filter
 
   isModalOpen = false;
   itemToEdit: InventoryItem | null = null;
@@ -55,14 +60,15 @@ export class InventoryComponent implements OnInit {
   ) {
     this.farms$ = this.farmService.getFarms();
 
-    // Fetch all items (or filtered by farm) and push to ReplaySubject
+    // Combine all filter changes to trigger data refresh
     combineLatest([
       this.refresh$,
-      this.authService.organizationId$.pipe(startWith(null))
+      this.authService.organizationId$.pipe(startWith(null)),
+      this.searchTerm.valueChanges.pipe(startWith(''), debounceTime(300), distinctUntilChanged()),
     ]).pipe(
-      switchMap(([_, organizationId]) => {
-        if (!organizationId) return [];
-        return this.inventoryService.getInventoryItems(this.selectedFarmId);
+      switchMap(([_, organizationId, term]) => {
+        if (!organizationId) return of<InventoryItem[]>([]); // Explicitly type 'of([])'
+        return this.inventoryService.getInventoryItems(this.selectedFarmId, this.selectedItemType, term || '');
       }),
       tap(items => this.allInventoryItems$.next(items)) // Cache the items
     ).subscribe();
@@ -75,8 +81,8 @@ export class InventoryComponent implements OnInit {
     // Global summary data (only when selectedFarmId is null)
     this.globalSummaryData$ = this.allInventoryItems$.pipe(
       map(items => {
-        if (this.selectedFarmId !== null) {
-          return []; // Only show summary for global view
+        if (this.selectedFarmId !== null || this.selectedItemType !== null || this.searchTerm.value) {
+          return []; // Only show summary for global view without other filters
         }
         return this.calculateGlobalSummary(items);
       })
@@ -130,8 +136,8 @@ export class InventoryComponent implements OnInit {
     });
   }
 
-  onFarmFilterChange(): void {
-    this.refresh$.next(); // Trigger data refresh when filter changes
+  onFilterChange(): void {
+    this.refresh$.next(); // Trigger data refresh when any filter changes
   }
 
   openAddModal(): void {

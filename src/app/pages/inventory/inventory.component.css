@@ -41,6 +41,12 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
+.filter-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
 .filter-container .form-group {
   margin-bottom: 0; /* Remove bottom margin for filter group */
 }
@@ -51,7 +57,7 @@
   color: #333;
 }
 
-.filter-container select {
+.filter-container select, .filter-container input {
   width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
@@ -140,6 +146,10 @@
 }
 
 @media (max-width: 768px) {
+  .filter-row {
+    grid-template-columns: 1fr;
+  }
+
   .table-container {
     box-shadow: none;
     background-color: transparent;

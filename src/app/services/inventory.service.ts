@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { from, Observable, throwError } from 'rxjs';
 import { map, catchError, switchMap, take } from 'rxjs/operators';
-import { InventoryItem } from '../models/inventory-item.model';
+import { InventoryItem, ItemType } from '../models/inventory-item.model';
 import { supabase } from '../supabase.client';
 import { AuthService } from './auth.service';
 
@@ -14,11 +14,24 @@ export class InventoryService {
     return throwError(() => new Error(error.message || `Server error in ${context}`));
   }
 
-  getInventoryItems(farmId: number | null = null): Observable<InventoryItem[]> {
+  getInventoryItems(farmId: number | null = null, itemType: ItemType | null = null, searchTerm: string = ''): Observable<InventoryItem[]> {
     let query = supabase.from('inventory_items').select('*, farms!left(name)').order('name');
 
     if (farmId) {
       query = query.eq('farm_id', farmId);
+    } else {
+      // If no specific farm is selected, also include items with null farm_id (global items)
+      // This is handled by RLS, but explicitly stating it here for clarity if needed for future complex queries
+      // For now, the RLS policy 'Akses inventori organisasi sendiri' handles this by checking organization_id
+    }
+
+    if (itemType) {
+      query = query.eq('item_type', itemType);
+    }
+
+    if (searchTerm) {
+      // Perform a case-insensitive search on item name or item code
+      query = query.or(`name.ilike.%${searchTerm}%,item_code.ilike.%${searchTerm}%`);
     }
 
     return from(query).pipe(

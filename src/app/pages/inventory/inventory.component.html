@@ -7,56 +7,67 @@
   </div>
 
   <div class="filter-container">
-    <div class="form-group">
-      <label for="farmFilter">Filter berdasarkan Farm:</label>
-      <select id="farmFilter" [(ngModel)]="selectedFarmId" (change)="onFarmFilterChange()">
-        <option [ngValue]="null">Semua Farm (Global)</option>
-        @for (farm of (farms$ | async); track farm.id) {
-          <option [value]="farm.id">{{ farm.name }}</option>
-        }
-      </select>
+    <div class="filter-row">
+      <div class="form-group">
+        <label for="farmFilter">Filter Farm:</label>
+        <select id="farmFilter" [(ngModel)]="selectedFarmId" (change)="onFilterChange()">
+          <option [ngValue]="null">Semua Farm (Global)</option>
+          @for (farm of (farms$ | async); track farm.id) {
+            <option [value]="farm.id">{{ farm.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="itemTypeFilter">Filter Jenis Item:</label>
+        <select id="itemTypeFilter" [(ngModel)]="selectedItemType" (change)="onFilterChange()">
+          <option [ngValue]="null">Semua Jenis</option>
+          @for (type of itemTypes; track type) {
+            <option [value]="type">{{ type }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="searchTerm">Cari Nama/Kode Item:</label>
+        <input id="searchTerm" type="text" [formControl]="searchTerm" placeholder="Cari nama atau kode...">
+      </div>
     </div>
   </div>
 
   <!-- Global Stock Summary Section -->
-  @if (selectedFarmId === null) {
-    @if (globalSummaryData$ | async; as summaryData) {
-      @if (summaryData.length > 0) {
-        <div class="inventory-group">
-          <h2>Ringkasan Stok Global</h2>
-          <div class="table-container">
-            <table class="inventory-table summary-table">
-              <thead>
-                <tr>
-                  <th>Jenis Item</th>
-                  @if (true) { <!-- Always show Kode Pakan in summary for Pakan type -->
-                    <th>Kode Pakan</th>
-                  }
-                  <th>Nama Item</th>
-                  <th>Total Stok</th>
-                  <th>Satuan</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (summaryItem of summaryData; track summaryItem.item_type + summaryItem.name) {
-                  <tr>
-                    <td data-label="Jenis Item">{{ summaryItem.item_type }}</td>
-                    @if (summaryItem.item_type === 'PAKAN') {
-                      <td data-label="Kode Pakan">{{ summaryItem.item_code || '-' }}</td>
-                    } @else {
-                      <td data-label="Kode Pakan">-</td>
-                    }
-                    <td data-label="Nama Item">{{ summaryItem.name }}</td>
-                    <td data-label="Total Stok">{{ summaryItem.total_quantity.toLocaleString('id-ID') }}</td>
-                    <td data-label="Satuan">{{ summaryItem.unit }}</td>
-                  </tr>
+  @if (selectedFarmId === null && selectedItemType === null && !searchTerm.value && (globalSummaryData$ | async) as summaryData && summaryData.length > 0) {
+    <div class="inventory-group">
+      <h2>Ringkasan Stok Global</h2>
+      <div class="table-container">
+        <table class="inventory-table summary-table">
+          <thead>
+            <tr>
+              <th>Jenis Item</th>
+              @if (true) { <!-- Always show Kode Pakan in summary for Pakan type -->
+                <th>Kode Pakan</th>
+              }
+              <th>Nama Item</th>
+              <th>Total Stok</th>
+              <th>Satuan</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (summaryItem of summaryData; track summaryItem.item_type + summaryItem.name) {
+              <tr>
+                <td data-label="Jenis Item">{{ summaryItem.item_type }}</td>
+                @if (summaryItem.item_type === 'PAKAN') {
+                  <td data-label="Kode Pakan">{{ summaryItem.item_code || '-' }}</td>
+                } @else {
+                  <td data-label="Kode Pakan">-</td>
                 }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      }
-    }
+                <td data-label="Nama Item">{{ summaryItem.name }}</td>
+                <td data-label="Total Stok">{{ summaryItem.total_quantity.toLocaleString('id-ID') }}</td>
+                <td data-label="Satuan">{{ summaryItem.unit }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
   }
 
   <div class="inventory-content">
