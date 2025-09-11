@@ -18,6 +18,43 @@
     </div>
   </div>
 
+  <!-- Global Stock Summary Section -->
+  @if (selectedFarmId === null && (globalSummaryData$ | async) && (globalSummaryData$ | async)?.length > 0) {
+    <div class="inventory-group">
+      <h2>Ringkasan Stok Global</h2>
+      <div class="table-container">
+        <table class="inventory-table summary-table">
+          <thead>
+            <tr>
+              <th>Jenis Item</th>
+              @if (true) { <!-- Always show Kode Pakan in summary for Pakan type -->
+                <th>Kode Pakan</th>
+              }
+              <th>Nama Item</th>
+              <th>Total Stok</th>
+              <th>Satuan</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (summaryItem of (globalSummaryData$ | async); track summaryItem.item_type + summaryItem.name) {
+              <tr>
+                <td data-label="Jenis Item">{{ summaryItem.item_type }}</td>
+                @if (summaryItem.item_type === 'PAKAN') {
+                  <td data-label="Kode Pakan">{{ summaryItem.item_code || '-' }}</td>
+                } @else {
+                  <td data-label="Kode Pakan">-</td>
+                }
+                <td data-label="Nama Item">{{ summaryItem.name }}</td>
+                <td data-label="Total Stok">{{ summaryItem.total_quantity.toLocaleString('id-ID') }}</td>
+                <td data-label="Satuan">{{ summaryItem.unit }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
   <div class="inventory-content">
     @if (inventoryGroups$ | async; as groups) {
       @for (group of groups; track group.type) {
@@ -31,7 +68,7 @@
                     <th>Kode Pakan</th>
                   }
                   <th>Nama Item</th>
-                  <th>Farm</th> <!-- New: Farm column -->
+                  <th>Farm</th>
                   <th>Jumlah Stok</th>
                   <th>Satuan</th>
                   <th>Aksi</th>
@@ -44,7 +81,7 @@
                       <td data-label="Kode Pakan">{{ item.item_code }}</td>
                     }
                     <td data-label="Nama Item">{{ item.name }}</td>
-                    <td data-label="Farm">{{ item.farmName }}</td> <!-- New: Display farmName -->
+                    <td data-label="Farm">{{ item.farmName }}</td>
                     <td data-label="Jumlah Stok">{{ item.quantity.toLocaleString('id-ID') }}</td>
                     <td data-label="Satuan">{{ item.unit }}</td>
                     <td data-label="Aksi">
@@ -77,7 +114,7 @@
 @if (isModalOpen) {
   <app-inventory-modal
     [item]="itemToEdit"
-    [farms]="(farms$ | async) ?? []" <!-- Pass farms to modal -->
+    [farms]="(farms$ | async) ?? []"
     (close)="closeModal()"
     (save)="saveItem($event)">
   </app-inventory-modal>

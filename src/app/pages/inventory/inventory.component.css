@@ -132,6 +132,13 @@
   color: #999;
 }
 
+/* Styles for the summary table */
+.summary-table th:nth-child(2),
+.summary-table td:nth-child(2) {
+  /* Adjust width for 'Kode Pakan' column in summary if needed */
+  min-width: 100px;
+}
+
 @media (max-width: 768px) {
   .table-container {
     box-shadow: none;

@@ -3,32 +3,43 @@ import { CommonModule } from '@angular/common';
 import { InventoryService } from '../../services/inventory.service';
 import { NotificationService } from '../../services/notification.service';
 import { InventoryItem, ItemType } from '../../models/inventory-item.model';
-import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
-import { switchMap, map, startWith } from 'rxjs/operators';
+import { Observable, BehaviorSubject, combineLatest, ReplaySubject } from 'rxjs';
+import { switchMap, map, startWith, tap } from 'rxjs/operators';
 import { InventoryModalComponent } from '../../components/inventory-modal/inventory-modal.component';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { AuthService } from '../../services/auth.service';
-import { FarmService } from '../../services/farm.service'; // Import FarmService
-import { Farm } from '../../models/farm.model'; // Import Farm model
-import { FormsModule } from '@angular/forms'; // Import FormsModule for ngModel
+import { FarmService } from '../../services/farm.service';
+import { Farm } from '../../models/farm.model';
+import { FormsModule } from '@angular/forms';
 
 interface GroupedInventory {
   type: ItemType;
   items: InventoryItem[];
 }
 
+interface GlobalSummaryItem {
+  item_type: ItemType;
+  item_code?: string;
+  name: string;
+  total_quantity: number;
+  unit: string;
+}
+
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, InventoryModalComponent, ConfirmationModalComponent], // Add FormsModule
+  imports: [CommonModule, FormsModule, InventoryModalComponent, ConfirmationModalComponent],
   templateUrl: './inventory.component.html',
   styleUrl: './inventory.component.css'
 })
 export class InventoryComponent implements OnInit {
   private refresh$ = new BehaviorSubject<void>(undefined);
+  private allInventoryItems$ = new ReplaySubject<InventoryItem[]>(1); // Cache fetched items
+
   inventoryGroups$: Observable<GroupedInventory[]>;
-  farms$: Observable<Farm[]>; // New: Observable for farms
-  selectedFarmId: number | null = null; // New: For farm filter
+  globalSummaryData$: Observable<GlobalSummaryItem[]>; // New: Observable for global summary
+  farms$: Observable<Farm[]>;
+  selectedFarmId: number | null = null;
 
   isModalOpen = false;
   itemToEdit: InventoryItem | null = null;
@@ -40,24 +51,41 @@ export class InventoryComponent implements OnInit {
     private inventoryService: InventoryService,
     private notificationService: NotificationService,
     public authService: AuthService,
-    private farmService: FarmService // Inject FarmService
+    private farmService: FarmService
   ) {
-    this.farms$ = this.farmService.getFarms(); // Fetch all farms
+    this.farms$ = this.farmService.getFarms();
 
-    // Combine refresh$ and selectedFarmId to trigger data reload
-    this.inventoryGroups$ = combineLatest([
+    // Fetch all items (or filtered by farm) and push to ReplaySubject
+    combineLatest([
       this.refresh$,
-      this.authService.organizationId$.pipe(startWith(null)) // Ensure organizationId is available
+      this.authService.organizationId$.pipe(startWith(null))
     ]).pipe(
       switchMap(([_, organizationId]) => {
-        if (!organizationId) return []; // Don't fetch if no organization
+        if (!organizationId) return [];
         return this.inventoryService.getInventoryItems(this.selectedFarmId);
       }),
+      tap(items => this.allInventoryItems$.next(items)) // Cache the items
+    ).subscribe();
+
+    // Grouped items for display
+    this.inventoryGroups$ = this.allInventoryItems$.pipe(
       map(items => this.groupItems(items))
+    );
+
+    // Global summary data (only when selectedFarmId is null)
+    this.globalSummaryData$ = this.allInventoryItems$.pipe(
+      map(items => {
+        if (this.selectedFarmId !== null) {
+          return []; // Only show summary for global view
+        }
+        return this.calculateGlobalSummary(items);
+      })
     );
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.refresh$.next(); // Initial load
+  }
 
   private groupItems(items: InventoryItem[]): GroupedInventory[] {
     const groups = new Map<ItemType, InventoryItem[]>();
@@ -69,6 +97,37 @@ export class InventoryComponent implements OnInit {
     });
 
     return Array.from(groups.entries()).map(([type, items]) => ({ type, items }));
+  }
+
+  private calculateGlobalSummary(items: InventoryItem[]): GlobalSummaryItem[] {
+    const summaryMap = new Map<string, GlobalSummaryItem>();
+
+    items.forEach(item => {
+      // Use a unique key for each item based on type, code (if exists), and name
+      const key = `${item.item_type}-${item.item_code || ''}-${item.name}-${item.unit}`;
+      
+      if (summaryMap.has(key)) {
+        const existing = summaryMap.get(key)!;
+        existing.total_quantity += item.quantity;
+      } else {
+        summaryMap.set(key, {
+          item_type: item.item_type,
+          item_code: item.item_code,
+          name: item.name,
+          total_quantity: item.quantity,
+          unit: item.unit
+        });
+      }
+    });
+
+    // Sort by item type and then by name
+    return Array.from(summaryMap.values()).sort((a, b) => {
+      if (a.item_type < b.item_type) return -1;
+      if (a.item_type > b.item_type) return 1;
+      if (a.name < b.name) return -1;
+      if (a.name > b.name) return 1;
+      return 0;
+    });
   }
 
   onFarmFilterChange(): void {
