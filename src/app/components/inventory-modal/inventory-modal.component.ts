@@ -2,6 +2,7 @@ import { Component, EventEmitter, Output, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InventoryItem, ItemType } from '../../models/inventory-item.model';
+import { Farm } from '../../models/farm.model'; // Import Farm model
 
 @Component({
   selector: 'app-inventory-modal',
@@ -12,6 +13,7 @@ import { InventoryItem, ItemType } from '../../models/inventory-item.model';
 })
 export class InventoryModalComponent implements OnInit {
   @Input() item: InventoryItem | null = null;
+  @Input() farms: Farm[] = []; // New: Input for list of farms
   @Output() close = new EventEmitter<void>();
   @Output() save = new EventEmitter<Partial<InventoryItem>>();
 
@@ -23,6 +25,7 @@ export class InventoryModalComponent implements OnInit {
       item_type: [null, Validators.required],
       item_code: [''],
       name: ['', Validators.required],
+      farm_id: [null], // New: Add farm_id control
       quantity: [0, [Validators.required, Validators.min(0)]],
       unit: ['', Validators.required]
     });

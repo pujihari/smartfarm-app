@@ -14,17 +14,26 @@ export class InventoryService {
     return throwError(() => new Error(error.message || `Server error in ${context}`));
   }
 
-  getInventoryItems(): Observable<InventoryItem[]> {
-    return from(supabase.from('inventory_items').select('*').order('name')).pipe(
+  getInventoryItems(farmId: number | null = null): Observable<InventoryItem[]> {
+    let query = supabase.from('inventory_items').select('*, farms!left(name)').order('name');
+
+    if (farmId) {
+      query = query.eq('farm_id', farmId);
+    }
+
+    return from(query).pipe(
       map(response => {
         if (response.error) throw response.error;
-        return (response.data as InventoryItem[]) || [];
+        return (response.data || []).map((item: any) => ({
+          ...item,
+          farmName: (item.farms as any)?.name || 'Global' // 'Global' if farm_id is null
+        })) as InventoryItem[];
       }),
       catchError(err => this.handleError(err, 'getInventoryItems'))
     );
   }
 
-  addInventoryItem(itemData: Omit<InventoryItem, 'id'>): Observable<any> {
+  addInventoryItem(itemData: Omit<InventoryItem, 'id' | 'farmName'>): Observable<any> {
     return this.authService.organizationId$.pipe(
       take(1),
       switchMap(organizationId => {
@@ -39,7 +48,7 @@ export class InventoryService {
   }
 
   updateInventoryItem(itemData: Partial<InventoryItem>): Observable<any> {
-    const { id, ...updateData } = itemData;
+    const { id, farmName, ...updateData } = itemData; // Remove farmName before updating
     return from(supabase.from('inventory_items').update(updateData).eq('id', id!)).pipe(catchError(err => this.handleError(err, 'updateInventoryItem')));
   }
 

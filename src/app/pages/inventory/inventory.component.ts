@@ -3,11 +3,14 @@ import { CommonModule } from '@angular/common';
 import { InventoryService } from '../../services/inventory.service';
 import { NotificationService } from '../../services/notification.service';
 import { InventoryItem, ItemType } from '../../models/inventory-item.model';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { switchMap, map } from 'rxjs/operators';
+import { Observable, BehaviorSubject, combineLatest } from 'rxjs';
+import { switchMap, map, startWith } from 'rxjs/operators';
 import { InventoryModalComponent } from '../../components/inventory-modal/inventory-modal.component';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { AuthService } from '../../services/auth.service';
+import { FarmService } from '../../services/farm.service'; // Import FarmService
+import { Farm } from '../../models/farm.model'; // Import Farm model
+import { FormsModule } from '@angular/forms'; // Import FormsModule for ngModel
 
 interface GroupedInventory {
   type: ItemType;
@@ -17,13 +20,15 @@ interface GroupedInventory {
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, InventoryModalComponent, ConfirmationModalComponent],
+  imports: [CommonModule, FormsModule, InventoryModalComponent, ConfirmationModalComponent], // Add FormsModule
   templateUrl: './inventory.component.html',
   styleUrl: './inventory.component.css'
 })
 export class InventoryComponent implements OnInit {
   private refresh$ = new BehaviorSubject<void>(undefined);
   inventoryGroups$: Observable<GroupedInventory[]>;
+  farms$: Observable<Farm[]>; // New: Observable for farms
+  selectedFarmId: number | null = null; // New: For farm filter
 
   isModalOpen = false;
   itemToEdit: InventoryItem | null = null;
@@ -34,10 +39,20 @@ export class InventoryComponent implements OnInit {
   constructor(
     private inventoryService: InventoryService,
     private notificationService: NotificationService,
-    public authService: AuthService
+    public authService: AuthService,
+    private farmService: FarmService // Inject FarmService
   ) {
-    this.inventoryGroups$ = this.refresh$.pipe(
-      switchMap(() => this.inventoryService.getInventoryItems()),
+    this.farms$ = this.farmService.getFarms(); // Fetch all farms
+
+    // Combine refresh$ and selectedFarmId to trigger data reload
+    this.inventoryGroups$ = combineLatest([
+      this.refresh$,
+      this.authService.organizationId$.pipe(startWith(null)) // Ensure organizationId is available
+    ]).pipe(
+      switchMap(([_, organizationId]) => {
+        if (!organizationId) return []; // Don't fetch if no organization
+        return this.inventoryService.getInventoryItems(this.selectedFarmId);
+      }),
       map(items => this.groupItems(items))
     );
   }
@@ -54,6 +69,10 @@ export class InventoryComponent implements OnInit {
     });
 
     return Array.from(groups.entries()).map(([type, items]) => ({ type, items }));
+  }
+
+  onFarmFilterChange(): void {
+    this.refresh$.next(); // Trigger data refresh when filter changes
   }
 
   openAddModal(): void {
@@ -74,7 +93,7 @@ export class InventoryComponent implements OnInit {
   saveItem(itemData: Partial<InventoryItem>): void {
     const saveObservable = itemData.id
       ? this.inventoryService.updateInventoryItem(itemData)
-      : this.inventoryService.addInventoryItem(itemData as Omit<InventoryItem, 'id'>);
+      : this.inventoryService.addInventoryItem(itemData as Omit<InventoryItem, 'id' | 'farmName'>);
 
     saveObservable.subscribe({
       next: () => {

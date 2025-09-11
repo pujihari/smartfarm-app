@@ -7,4 +7,6 @@ export interface InventoryItem {
   name: string;
   quantity: number;
   unit: string;
+  farm_id?: number; // New: Optional farm ID
+  farmName?: string; // New: For display purposes
 }

@@ -6,6 +6,18 @@
     }
   </div>
 
+  <div class="filter-container">
+    <div class="form-group">
+      <label for="farmFilter">Filter berdasarkan Farm:</label>
+      <select id="farmFilter" [(ngModel)]="selectedFarmId" (change)="onFarmFilterChange()">
+        <option [ngValue]="null">Semua Farm (Global)</option>
+        @for (farm of (farms$ | async); track farm.id) {
+          <option [value]="farm.id">{{ farm.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
   <div class="inventory-content">
     @if (inventoryGroups$ | async; as groups) {
       @for (group of groups; track group.type) {
@@ -19,6 +31,7 @@
                     <th>Kode Pakan</th>
                   }
                   <th>Nama Item</th>
+                  <th>Farm</th> <!-- New: Farm column -->
                   <th>Jumlah Stok</th>
                   <th>Satuan</th>
                   <th>Aksi</th>
@@ -31,6 +44,7 @@
                       <td data-label="Kode Pakan">{{ item.item_code }}</td>
                     }
                     <td data-label="Nama Item">{{ item.name }}</td>
+                    <td data-label="Farm">{{ item.farmName }}</td> <!-- New: Display farmName -->
                     <td data-label="Jumlah Stok">{{ item.quantity.toLocaleString('id-ID') }}</td>
                     <td data-label="Satuan">{{ item.unit }}</td>
                     <td data-label="Aksi">
@@ -44,8 +58,8 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td [attr.colspan]="group.type === 'PAKAN' ? 5 : 4" class="empty-state">
-                      Belum ada data untuk kategori {{ group.type }}.
+                    <td [attr.colspan]="group.type === 'PAKAN' ? 6 : 5" class="empty-state">
+                      Belum ada data untuk kategori {{ group.type }} di farm ini.
                     </td>
                   </tr>
                 }
@@ -63,6 +77,7 @@
 @if (isModalOpen) {
   <app-inventory-modal
     [item]="itemToEdit"
+    [farms]="(farms$ | async) ?? []" <!-- Pass farms to modal -->
     (close)="closeModal()"
     (save)="saveItem($event)">
   </app-inventory-modal>

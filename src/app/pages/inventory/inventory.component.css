@@ -34,6 +34,31 @@
   background-color: #083a75;
 }
 
+.filter-container {
+  background-color: #ffffff;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.filter-container .form-group {
+  margin-bottom: 0; /* Remove bottom margin for filter group */
+}
+
+.filter-container label {
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.filter-container select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
 .inventory-content {
   display: flex;
   flex-direction: column;

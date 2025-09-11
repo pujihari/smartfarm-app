@@ -28,6 +28,16 @@
           <input id="name" type="text" formControlName="name" placeholder="Contoh: Jagung Giling">
         </div>
 
+        <div class="form-group">
+          <label for="farm_id">Farm (Opsional)</label>
+          <select id="farm_id" formControlName="farm_id">
+            <option [ngValue]="null">Global (Tidak Terkait Farm)</option>
+            @for (farm of farms; track farm.id) {
+              <option [value]="farm.id">{{ farm.name }}</option>
+            }
+          </select>
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label for="quantity">Jumlah Stok</label>
