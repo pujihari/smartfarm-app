@@ -1,0 +1,70 @@
+<div class="page-container">
+  <h1 class="page-title">Performa Mingguan Flok</h1>
+
+  <div class="filter-container">
+    <h2>Filter Performa</h2>
+    <form [formGroup]="performanceForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="flock_id">Pilih Flok</label>
+          <select id="flock_id" formControlName="flock_id">
+            <option [ngValue]="null" disabled>Pilih Flok</option>
+            @for (flock of (flocks$ | async); track flock.id) {
+              <option [value]="flock.id">{{ flock.name }} ({{ flock.farmName }})</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="metric_type">Pilih Metrik</label>
+          <select id="metric_type" formControlName="metric_type">
+            <option value="hen_day_production_percent">Hen Day Production (%)</option>
+            <option value="avg_egg_weight_g">Berat Telur Rata-rata (g)</option>
+            <option value="avg_feed_intake_g_per_day">Konsumsi Pakan Rata-rata (g/ekor/hari)</option>
+            <option value="fcr">FCR (Feed Conversion Ratio)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="startDate">Tanggal Mulai</label>
+          <input id="startDate" type="date" formControlName="startDate">
+        </div>
+        <div class="form-group">
+          <label for="endDate">Tanggal Selesai</label>
+          <input id="endDate" type="date" formControlName="endDate">
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="chart-container">
+    <h2>Tren Performa Mingguan</h2>
+    @if (isChartLoading) {
+      <div class="loading-state">Memuat grafik...</div>
+    } @else {
+      @if (lineChartData.labels && lineChartData.labels.length > 0) {
+        <div class="chart-wrapper">
+          <canvas baseChart
+            [data]="lineChartData"
+            [options]="lineChartOptions"
+            [legend]="lineChartLegend"
+            type="line">
+          </canvas>
+        </div>
+      } @else {
+        <p class="placeholder-text">Pilih flok dan metrik untuk melihat grafik performa mingguan.</p>
+      }
+    }
+  </div>
+
+  <!-- Tabel riwayat respirasi dihapus atau akan diganti dengan tabel ringkasan performa jika diperlukan -->
+  <div class="table-container">
+    <h2>Ringkasan Data Performa</h2>
+    <p class="empty-state">Data ringkasan performa akan ditampilkan di sini.</p>
+  </div>
+</div>
+
+@if (isConfirmModalOpen) {
+  <app-confirmation-modal
+    (confirm)="confirmDelete()"
+    (cancel)="closeDeleteModal()">
+  </app-confirmation-modal>
+}

@@ -15,7 +15,7 @@ import { MembersComponent } from './pages/members/members.component';
 import { authGuard } from './auth.guard';
 import { publicGuard } from './public.guard';
 import { BodyWeightComponent } from './pages/body-weight/body-weight.component';
-import { RespiratoryComponent } from './pages/respiratory/respiratory.component';
+import { WeeklyPerformanceComponent } from './pages/weekly-performance/weekly-performance.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [publicGuard] },
@@ -33,7 +33,7 @@ export const routes: Routes = [
       { path: 'health', component: HealthComponent },
       { path: 'production', component: ProductionComponent },
       { path: 'body-weight', component: BodyWeightComponent },
-      { path: 'respiratory', component: RespiratoryComponent },
+      { path: 'weekly-performance', component: WeeklyPerformanceComponent },
       { path: 'inventory', component: InventoryComponent },
       { path: 'reports', component: ReportsComponent },
       { path: 'members', component: MembersComponent },

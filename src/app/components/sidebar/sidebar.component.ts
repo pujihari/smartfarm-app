@@ -20,7 +20,7 @@ export class SidebarComponent {
     { path: '/health', icon: '❤️', name: 'Kesehatan', ownerOnly: false },
     { path: '/production', icon: '🥚', name: 'Produksi', ownerOnly: false },
     { path: '/body-weight', icon: '⚖️', name: 'Timbang BB', ownerOnly: false },
-    { path: '/respiratory', icon: '🫁', name: 'Respirasi', ownerOnly: false },
+    { path: '/weekly-performance', icon: '📈', name: 'Performa Mingguan', ownerOnly: false }, // Diperbarui
     { path: '/inventory', icon: '📦', name: 'Inventori', ownerOnly: false },
     { path: '/reports', icon: '📄', name: 'Laporan', ownerOnly: false },
     { path: '/members', icon: '👥', name: 'Manajemen Anggota', ownerOnly: true },
