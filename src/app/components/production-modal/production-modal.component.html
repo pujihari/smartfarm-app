@@ -60,7 +60,12 @@
           <legend>Konsumsi Pakan</legend>
           @for (feed of feed_consumption.controls; track $index) {
             <div class="feed-row" [formGroupName]="$index">
-              <input type="text" formControlName="feed_code" placeholder="Kode Pakan">
+              <select formControlName="feed_code">
+                <option [ngValue]="''" disabled>Pilih Kode Pakan</option>
+                @for (option of feedOptions; track option.item_code) {
+                  <option [value]="option.item_code">{{ option.name }} ({{ option.item_code }})</option>
+                }
+              </select>
               <input type="number" formControlName="quantity_kg" placeholder="Jumlah (kg)">
               <button type="button" class="remove-feed-btn" (click)="removeFeed($index)" [disabled]="feed_consumption.controls.length <= 1">Hapus</button>
             </div>

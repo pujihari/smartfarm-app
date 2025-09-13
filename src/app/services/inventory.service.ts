@@ -5,6 +5,11 @@ import { InventoryItem, ItemType } from '../models/inventory-item.model';
 import { supabase } from '../supabase.client';
 import { AuthService } from './auth.service';
 
+export interface FeedOption {
+  item_code: string;
+  name: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
   constructor(private authService: AuthService) {}
@@ -67,5 +72,22 @@ export class InventoryService {
 
   deleteInventoryItem(itemId: number): Observable<any> {
     return from(supabase.from('inventory_items').delete().eq('id', itemId)).pipe(catchError(err => this.handleError(err, 'deleteInventoryItem')));
+  }
+
+  getFeedOptions(): Observable<FeedOption[]> {
+    return from(
+      supabase
+        .from('inventory_items')
+        .select('item_code, name')
+        .eq('item_type', 'PAKAN')
+        .not('item_code', 'is', null) // Pastikan item_code tidak null
+        .order('name', { ascending: true })
+    ).pipe(
+      map(response => {
+        if (response.error) throw response.error;
+        return (response.data || []) as FeedOption[];
+      }),
+      catchError(err => this.handleError(err, 'getFeedOptions'))
+    );
   }
 }

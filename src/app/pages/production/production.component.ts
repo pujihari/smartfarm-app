@@ -11,6 +11,7 @@ import { Flock } from '../../models/flock.model';
 import { ProductionModalComponent } from '../../components/production-modal/production-modal.component';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { AuthService } from '../../services/auth.service';
+import { InventoryService, FeedOption } from '../../services/inventory.service'; // Import InventoryService dan FeedOption
 
 type ProductionDataWithDetails = ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number };
 type FlockWithFarmInfo = Flock & { farmName: string };
@@ -37,13 +38,15 @@ export class ProductionComponent implements OnInit {
   stagedProductionData: Partial<ProductionDataWithDetails>[] = [];
   isSavingBatch = false;
   private allFlocks: FlockWithFarmInfo[] = [];
+  feedOptions: FeedOption[] = []; // Properti baru untuk opsi pakan di formulir batch
 
   constructor(
     private fb: FormBuilder,
     private productionService: ProductionService,
     private flockService: FlockService,
     private notificationService: NotificationService,
-    public authService: AuthService
+    public authService: AuthService,
+    private inventoryService: InventoryService // Inject InventoryService
   ) {
     this.productionData$ = this.refresh$.pipe(
       switchMap(() => this.productionService.getProductionDataWithDetails())
@@ -71,6 +74,12 @@ export class ProductionComponent implements OnInit {
 
   ngOnInit(): void {
     this.addFeedToBatchForm(); // Add one empty feed row by default
+
+    // Muat opsi pakan untuk formulir batch
+    this.inventoryService.getFeedOptions().subscribe({
+      next: (options) => this.feedOptions = options,
+      error: (err) => console.error('Error loading feed options for batch form:', err)
+    });
   }
 
   // --- Batch Input Methods ---

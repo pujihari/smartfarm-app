@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
 import { ProductionData, FeedConsumption } from '../../models/production-data.model';
 import { Flock } from '../../models/flock.model';
+import { InventoryService, FeedOption } from '../../services/inventory.service'; // Import InventoryService dan FeedOption
 
 @Component({
   selector: 'app-production-modal',
@@ -18,8 +19,9 @@ export class ProductionModalComponent implements OnInit {
   @Output() save = new EventEmitter<Partial<ProductionData>>();
 
   productionForm: FormGroup;
+  feedOptions: FeedOption[] = []; // Properti baru untuk menyimpan opsi pakan
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private inventoryService: InventoryService) { // Inject InventoryService
     this.productionForm = this.fb.group({
       flock_id: [null, Validators.required],
       date: ['', Validators.required],
@@ -34,6 +36,12 @@ export class ProductionModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Muat opsi pakan saat komponen diinisialisasi
+    this.inventoryService.getFeedOptions().subscribe({
+      next: (options) => this.feedOptions = options,
+      error: (err) => console.error('Error loading feed options:', err)
+    });
+
     if (this.data) {
       const formattedData = {
         ...this.data,
@@ -43,7 +51,7 @@ export class ProductionModalComponent implements OnInit {
       this.feed_consumption.clear();
       this.data.feed_consumption.forEach(feed => this.addFeed(feed));
     } else {
-      this.addFeed(); // Add one empty feed row by default
+      this.addFeed(); // Tambahkan satu baris pakan kosong secara default
     }
   }
 
