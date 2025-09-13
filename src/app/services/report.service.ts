@@ -11,6 +11,12 @@ export interface ProductionStandard {
 export interface ProductionStandardData {
   age_weeks: number;
   hen_day_production_percent: number;
+  body_weight_g?: number; // Optional, as it might not always be present
+  feed_consumption_g_per_day?: number; // New: for Feed Intake
+  egg_weight_g?: number; // New: for Average Egg Weight
+  feed_conversion_ratio?: number; // New: for FCR
+  mortality_percent?: number; // New: for Mortality
+  uniformity_percent?: number; // New: for Uniformity
 }
 
 export interface ReportFilters {
@@ -56,7 +62,7 @@ export class ReportService {
     return from(
       supabase
         .from('production_standard_data')
-        .select('age_weeks, hen_day_production_percent')
+        .select('age_weeks, hen_day_production_percent, body_weight_g, feed_consumption_g_per_day, egg_weight_g, feed_conversion_ratio, mortality_percent, uniformity_percent') // Select new columns
         .eq('standard_id', standardId)
         .order('age_weeks')
     ).pipe(
