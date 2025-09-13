@@ -46,8 +46,7 @@
                 }
               ],
               "outputHashing": "all",
-              "serviceWorker": true,
-              "ngswConfigPath": "src/ngsw-config.json"
+              "serviceWorker": true
             },
             "development": {
               "optimization": false,
