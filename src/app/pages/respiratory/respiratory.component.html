@@ -45,6 +45,27 @@
     </form>
   </div>
 
+  <!-- New: Weekly Performance Chart Section -->
+  <div class="chart-container">
+    <h2>Tren Skor Respirasi Mingguan</h2>
+    @if (isChartLoading) {
+      <div class="loading-state">Memuat grafik...</div>
+    } @else {
+      @if (lineChartData.labels && lineChartData.labels.length > 0) {
+        <div class="chart-wrapper">
+          <canvas baseChart
+            [data]="lineChartData"
+            [options]="lineChartOptions"
+            [legend]="lineChartLegend"
+            type="line">
+          </canvas>
+        </div>
+      } @else {
+        <p class="placeholder-text">Belum ada data respirasi yang cukup untuk menampilkan grafik tren mingguan.</p>
+      }
+    }
+  </div>
+
   <div class="table-container">
     <h2>Riwayat Cek Respirasi</h2>
     <table class="history-table">
