@@ -67,3 +67,5 @@ src/
 ## License
 
 SmartFarm App is a farm management application designed for agricultural operations.
+
+<!-- Trigger Vercel redeploy -->
