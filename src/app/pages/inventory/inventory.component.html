@@ -34,40 +34,42 @@
   </div>
 
   <!-- Global Stock Summary Section -->
-  @if (selectedFarmId === null && selectedItemType === null && !searchTerm.value && (globalSummaryData$ | async) as summaryData && summaryData.length > 0) {
-    <div class="inventory-group">
-      <h2>Ringkasan Stok Global</h2>
-      <div class="table-container">
-        <table class="inventory-table summary-table">
-          <thead>
-            <tr>
-              <th>Jenis Item</th>
-              @if (true) { <!-- Always show Kode Pakan in summary for Pakan type -->
-                <th>Kode Pakan</th>
-              }
-              <th>Nama Item</th>
-              <th>Total Stok</th>
-              <th>Satuan</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (summaryItem of summaryData; track summaryItem.item_type + summaryItem.name) {
+  @if (globalSummaryData$ | async; as summaryData) {
+    @if (selectedFarmId === null && selectedItemType === null && !searchTerm.value && summaryData.length > 0) {
+      <div class="inventory-group">
+        <h2>Ringkasan Stok Global</h2>
+        <div class="table-container">
+          <table class="inventory-table summary-table">
+            <thead>
               <tr>
-                <td data-label="Jenis Item">{{ summaryItem.item_type }}</td>
-                @if (summaryItem.item_type === 'PAKAN') {
-                  <td data-label="Kode Pakan">{{ summaryItem.item_code || '-' }}</td>
-                } @else {
-                  <td data-label="Kode Pakan">-</td>
+                <th>Jenis Item</th>
+                @if (true) { <!-- Always show Kode Pakan in summary for Pakan type -->
+                  <th>Kode Pakan</th>
                 }
-                <td data-label="Nama Item">{{ summaryItem.name }}</td>
-                <td data-label="Total Stok">{{ summaryItem.total_quantity.toLocaleString('id-ID') }}</td>
-                <td data-label="Satuan">{{ summaryItem.unit }}</td>
+                <th>Nama Item</th>
+                <th>Total Stok</th>
+                <th>Satuan</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (summaryItem of summaryData; track summaryItem.item_type + summaryItem.name) {
+                <tr>
+                  <td data-label="Jenis Item">{{ summaryItem.item_type }}</td>
+                  @if (summaryItem.item_type === 'PAKAN') {
+                    <td data-label="Kode Pakan">{{ summaryItem.item_code || '-' }}</td>
+                  } @else {
+                    <td data-label="Kode Pakan">-</td>
+                  }
+                  <td data-label="Nama Item">{{ summaryItem.name }}</td>
+                  <td data-label="Total Stok">{{ summaryItem.total_quantity.toLocaleString('id-ID') }}</td>
+                  <td data-label="Satuan">{{ summaryItem.unit }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    }
   }
 
   <div class="inventory-content">
