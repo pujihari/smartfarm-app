@@ -46,7 +46,7 @@
                 }
               ],
               "outputHashing": "all",
-              "serviceWorker": true
+              "serviceWorker": "ngsw-worker.js"
             },
             "development": {
               "optimization": false,
