@@ -14,7 +14,7 @@
         <div class="form-group">
           <label for="role">Peran</label>
           <select id="role" formControlName="role">
-            @for (role of memberRoles; track role) {
+            @for (role of inviteableRoles; track role) {
               <option [value]="role">{{ role | titlecase }}</option>
             }
           </select>

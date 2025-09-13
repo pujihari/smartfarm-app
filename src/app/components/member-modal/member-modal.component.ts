@@ -14,13 +14,15 @@ export class MemberModalComponent {
   @Output() close = new EventEmitter<void>();
   @Output() save = new EventEmitter<{ email: string, role: MemberRole }>(); // Update EventEmitter type
 
+  // Daftar peran yang dapat diundang, tidak termasuk 'owner'
+  inviteableRoles: MemberRole[] = ['manager', 'supervisor', 'staff_gudang', 'operator_kandang']; 
+
   inviteForm: FormGroup;
-  memberRoles: MemberRole[] = ['owner', 'manager', 'supervisor', 'staff_gudang', 'operator_kandang']; // Define available roles
 
   constructor(private fb: FormBuilder) {
     this.inviteForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      role: ['staff_gudang', Validators.required] // Default role to 'staff_gudang'
+      role: ['staff_gudang', Validators.required] // Default role ke 'staff_gudang'
     });
   }
 
