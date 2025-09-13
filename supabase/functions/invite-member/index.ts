@@ -50,8 +50,9 @@ serve(async (req: Request) => {
       throw new Error('Profil Anda tidak ditemukan di organisasi manapun.');
     }
 
-    if (inviterMembership.role !== 'owner') {
-      throw new Error('Hanya pemilik organisasi yang dapat mengundang anggota baru.');
+    // Memperbarui logika izin: Owner dan Manager dapat mengundang anggota baru
+    if (inviterMembership.role !== 'owner' && inviterMembership.role !== 'manager') {
+      throw new Error('Hanya pemilik atau manajer organisasi yang dapat mengundang anggota baru.');
     }
     
     const organizationId = inviterMembership.organization_id; // Dapatkan ID organisasi pengundang
