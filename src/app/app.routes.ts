@@ -16,6 +16,7 @@ import { authGuard } from './auth.guard';
 import { publicGuard } from './public.guard';
 import { BodyWeightComponent } from './pages/body-weight/body-weight.component';
 import { WeeklyPerformanceComponent } from './pages/weekly-performance/weekly-performance.component';
+import { roleGuard } from './role.guard'; // Import roleGuard
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [publicGuard] },
@@ -23,7 +24,7 @@ export const routes: Routes = [
   {
     path: '',
     component: LayoutComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard], // Pastikan pengguna terautentikasi terlebih dahulu
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
@@ -36,8 +37,19 @@ export const routes: Routes = [
       { path: 'weekly-performance', component: WeeklyPerformanceComponent },
       { path: 'inventory', component: InventoryComponent },
       { path: 'reports', component: ReportsComponent },
-      { path: 'members', component: MembersComponent },
-      { path: 'settings', component: SettingsComponent },
+      // Rute yang dilindungi oleh roleGuard
+      { 
+        path: 'members', 
+        component: MembersComponent, 
+        canActivate: [roleGuard], 
+        data: { roles: ['owner', 'manager'] } // Hanya owner dan manager yang bisa mengakses
+      },
+      { 
+        path: 'settings', 
+        component: SettingsComponent, 
+        canActivate: [roleGuard], 
+        data: { roles: ['owner'] } // Hanya owner yang bisa mengakses
+      },
     ]
   },
   { path: '**', redirectTo: '' }
