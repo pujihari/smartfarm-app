@@ -1,7 +1,12 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
-  "newProjectRoot": "projects",
+  "newProjectRoot": "<think>**Analyzing Build Configuration**
+
+The primary reason for the Vercel deployment failure is now clear: the missing `ngsw-config.json` in the `assets` section of `angular.json`. While warnings about exceeded budgets exist, addressing the incorrect asset configuration is essential to ensure the service worker is properly configured and deployed, thus fixing the Angular build itself.
+
+
+</think>projects",
   "projects": {
     "smartfarm-app": {
       "projectType": "application",
@@ -23,7 +28,8 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
-              "src/manifest.webmanifest"
+              "src/manifest.webmanifest",
+              "src/ngsw-config.json"
             ],
             "styles": [
               "node_modules/ngx-toastr/toastr.css",
