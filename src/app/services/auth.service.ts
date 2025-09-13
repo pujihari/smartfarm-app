@@ -31,7 +31,13 @@ export class AuthService {
   );
 
   public readonly canWriteData$: Observable<boolean> = this.memberRole$.pipe(
-    map(role => role === 'owner' || role === 'member')
+    map(role => 
+      role === 'owner' || 
+      role === 'manager' || 
+      role === 'supervisor' || 
+      role === 'staff_gudang' || 
+      role === 'operator_kandang'
+    )
   );
 
   constructor(

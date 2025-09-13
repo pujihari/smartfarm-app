@@ -15,12 +15,12 @@ export class MemberModalComponent {
   @Output() save = new EventEmitter<{ email: string, role: MemberRole }>(); // Update EventEmitter type
 
   inviteForm: FormGroup;
-  memberRoles: MemberRole[] = ['member', 'owner']; // Define available roles
+  memberRoles: MemberRole[] = ['owner', 'manager', 'supervisor', 'staff_gudang', 'operator_kandang']; // Define available roles
 
   constructor(private fb: FormBuilder) {
     this.inviteForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      role: ['member', Validators.required] // Default role to 'member'
+      role: ['staff_gudang', Validators.required] // Default role to 'staff_gudang'
     });
   }
 

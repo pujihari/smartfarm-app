@@ -1,4 +1,4 @@
-export type MemberRole = 'owner' | 'member';
+export type MemberRole = 'owner' | 'manager' | 'supervisor' | 'staff_gudang' | 'operator_kandang';
 
 export interface Member {
   id: string; // UUID

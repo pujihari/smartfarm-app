@@ -18,8 +18,10 @@ serve(async (req: Request) => {
     if (!email) {
       throw new Error("Email wajib diisi.");
     }
-    if (!role || (role !== 'member' && role !== 'owner')) { // Validasi peran
-      throw new Error("Peran tidak valid. Harus 'member' atau 'owner'.");
+    // Validasi peran baru
+    const validRoles = ['owner', 'manager', 'supervisor', 'staff_gudang', 'operator_kandang'];
+    if (!role || !validRoles.includes(role)) { 
+      throw new Error(`Peran tidak valid. Harus salah satu dari: ${validRoles.join(', ')}.`);
     }
 
     const supabaseClient = createClient(
