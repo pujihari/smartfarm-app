@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "framework": "angular",
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist/smartfarm-app",
   "routes": [
