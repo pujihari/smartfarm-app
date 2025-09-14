@@ -32,7 +32,7 @@
       </div>
       <app-flock-list 
         [flocks]="(flocks$ | async) ?? []"
-        [canWriteData]="authService.canWriteData$ | async" <!-- Pass canWriteData$ here -->
+        [canWriteData]="authService.canWriteData$ | async"
         (edit)="openEditFlockModal($event)"
         (delete)="openDeleteFlockModal($event)">
       </app-flock-list>
