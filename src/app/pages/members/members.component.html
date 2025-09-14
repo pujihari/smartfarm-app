@@ -1,7 +1,7 @@
 <div class="page-container">
   <div class="page-header">
     <h1 class="page-title">Manajemen Anggota</h1>
-    @if (authService.isOwner$ | async) {
+    @if (authService.memberRole$ | async as role && (role === 'owner' || role === 'manager')) { <!-- Changed from isOwner$ -->
       <button class="add-button" (click)="openInviteModal()">+ Undang Anggota</button>
     }
   </div>
@@ -29,11 +29,13 @@
               </td>
               <td data-label="Aksi">
                 <div class="action-buttons">
-                  @if ((authService.isOwner$ | async) && member.status === 'invited') {
-                    <button class="action-btn delete-btn" (click)="openCancelModal(member)">Batalkan Undangan</button>
-                  }
-                  @if ((authService.isOwner$ | async) && member.status === 'active' && member.role !== 'owner') {
-                    <button class="action-btn delete-btn" (click)="openDeleteModal(member)">Hapus</button>
+                  @if (authService.memberRole$ | async as role && (role === 'owner' || role === 'manager')) { <!-- Changed from isOwner$ -->
+                    @if (member.status === 'invited') {
+                      <button class="action-btn delete-btn" (click)="openCancelModal(member)">Batalkan Undangan</button>
+                    }
+                    @if (member.status === 'active' && member.role !== 'owner') {
+                      <button class="action-btn delete-btn" (click)="openDeleteModal(member)">Hapus</button>
+                    }
                   }
                 </div>
               </td>

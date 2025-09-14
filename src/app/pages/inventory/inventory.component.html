@@ -1,7 +1,7 @@
 <div class="page-container">
   <div class="page-header">
     <h1 class="page-title">Manajemen Inventori</h1>
-    @if (authService.isOwner$ | async) {
+    @if (authService.canWriteData$ | async) { <!-- Changed from isOwner$ -->
       <button class="add-button" (click)="openAddModal()">+ Tambah Item Baru</button>
     }
   </div>
@@ -102,7 +102,7 @@
                     <td data-label="Jumlah Stok">{{ item.quantity.toLocaleString('id-ID') }}</td>
                     <td data-label="Satuan">{{ item.unit }}</td>
                     <td data-label="Aksi">
-                      @if (authService.isOwner$ | async) {
+                      @if (authService.canWriteData$ | async) { <!-- Changed from isOwner$ -->
                         <div class="action-buttons">
                           <button class="action-btn edit-btn" (click)="openEditModal(item)">Edit</button>
                           <button class="action-btn delete-btn" (click)="openDeleteModal(item)">Hapus</button>

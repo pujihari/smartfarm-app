@@ -1,7 +1,7 @@
 <div class="page-container">
   <div class="page-header">
     <h1 class="page-title">Manajemen Flok</h1>
-    @if (authService.canWriteData$ | async) {
+    @if (authService.canWriteData$ | async) { <!-- Changed from isOwner$ -->
       <button class="add-button" (click)="openAddModal()">+ Tambah Flok Baru</button>
     }
   </div>
@@ -35,7 +35,7 @@
               </td>
               <td data-label="Aksi">
                 <div class="action-buttons">
-                  @if (authService.isOwner$ | async) {
+                  @if (authService.canWriteData$ | async) { <!-- Changed from isOwner$ -->
                     <button class="action-btn edit-btn" (click)="openEditModal(flock)">Edit</button>
                     <button class="action-btn delete-btn" (click)="openDeleteModal(flock)">Hapus</button>
                   }

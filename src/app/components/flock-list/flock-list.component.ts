@@ -12,6 +12,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class FlockListComponent {
   @Input() flocks: Flock[] = [];
+  @Input() canWriteData: boolean | null = false; // New input for write permission
   @Output() edit = new EventEmitter<Flock>();
   @Output() delete = new EventEmitter<Flock>();
 
