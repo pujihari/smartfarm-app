@@ -49,9 +49,6 @@
               "outputHashing": "all",
               "serviceWorker": "ngsw-config.json",
               "optimization": true,
-              "buildOptimizer": true,
-              "aot": true,
-              "vendorChunk": false,
               "extractLicenses": true,
               "sourceMap": false,
               "namedChunks": false
