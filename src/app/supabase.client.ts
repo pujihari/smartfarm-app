@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { environment } from '@env/environment';
+import { environment } from '../environments/environment';
 
 const supabaseUrl = environment.supabaseUrl;
 const supabaseKey = environment.supabaseKey;
