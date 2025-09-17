@@ -5,7 +5,7 @@ import { DashboardService, DashboardKpis, ChartData } from '../../services/dashb
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { BaseChartDirective } from 'ng2-charts';
-import { ChartOptions, ChartConfiguration } from 'chart.js';
+import { ChartOptions, ChartConfiguration, TooltipItem } from 'chart.js'; // Menambahkan TooltipItem
 import { OrganizationService } from '../../services/organization.service';
 import { Organization } from '../../models/organization.model';
 
@@ -42,7 +42,7 @@ export class DashboardComponent implements OnInit {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: function(value) {
+          callback: function(value: number | string) { // Menambahkan tipe 'number | string'
             if (typeof value === 'number') {
               return value.toLocaleString('id-ID');
             }
@@ -57,7 +57,7 @@ export class DashboardComponent implements OnInit {
       },
       tooltip: {
         callbacks: {
-          label: function(context) {
+          label: function(context: TooltipItem<'bar'>) { // Menambahkan tipe TooltipItem<'bar'>
             let label = context.dataset.label || '';
             if (label) {
               label += ': ';
