@@ -3,9 +3,8 @@
   "index": "/index.html",
   "assetGroups": [
     {
-      "name": "app-shell",
+      "name": "app",
       "installMode": "prefetch",
-      "updateMode": "prefetch",
       "resources": {
         "files": [
           "/favicon.ico",
@@ -25,20 +24,6 @@
           "/assets/**",
           "/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
         ]
-      }
-    }
-  ],
-  "dataGroups": [
-    {
-      "name": "api-data",
-      "urls": [
-        "https://zrnsngrdhvgcgwjdhgrf.supabase.co/rest/v1/**"
-      ],
-      "cacheConfig": {
-        "maxSize": 100,
-        "maxAge": "1h",
-        "strategy": "NetworkFirst",
-        "timeout": "5s"
       }
     }
   ]
