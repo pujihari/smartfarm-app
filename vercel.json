@@ -5,46 +5,14 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist/smartfarm-app/browser",
-        "cleanDistDir": true
+        "distDir": "dist/smartfarm-app/browser"
       }
     }
   ],
   "routes": [
     {
-      "src": "/manifest.webmanifest",
-      "headers": {
-        "Content-Type": "application/manifest+json",
-        "Access-Control-Allow-Origin": "*"
-      }
-    },
-    {
       "src": "/(.*)",
-      "dest": "/index.html",
-      "headers": {
-        "Content-Type": "text/html"
-      }
-    },
-    {
-      "src": "/assets/(.*)",
-      "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
-      "src": "/(.*\\.js)",
-      "headers": {
-        "Content-Type": "application/javascript"
-      }
-    },
-    {
-      "src": "/(.*\\.css)",
-      "headers": {
-        "Content-Type": "text/css"
-      }
+      "dest": "/index.html"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
