@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/smartfarm-app/browser",
+            "outputPath": "dist/smartfarm-app",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [
@@ -23,7 +23,11 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
-              "src/manifest.webmanifest"
+              {
+                "glob": "manifest.webmanifest",
+                "input": "src",
+                "output": "/"
+              }
             ],
             "styles": [
               "node_modules/ngx-toastr/toastr.css",

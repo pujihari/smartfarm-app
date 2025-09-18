@@ -5,8 +5,8 @@
     "ng": "ng",
     "start": "ng serve",
     "dev": "ng serve",
-    "build": "ng build --configuration=production --output-path=dist/smartfarm-app/browser",
-    "vercel-build": "ng build --configuration=production --output-path=dist/smartfarm-app/browser",
+    "build": "ng build --configuration=production",
+    "vercel-build": "ng build --configuration=production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint"
