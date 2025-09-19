@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { from, Observable, throwError } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, tap } from 'rxjs/operators'; // Import tap
 import { supabase } from '../supabase.client';
 import { MemberRole } from '../models/member.model';
 import { FunctionsHttpError } from '@supabase/supabase-js'; // Import FunctionsHttpError
@@ -64,6 +64,13 @@ export class MemberService {
 
   getMembers(): Observable<MemberDetails[]> {
     return from(supabase.rpc('get_organization_members_with_invites')).pipe(
+      tap(response => { // Add tap operator here
+        if (response.error) {
+          console.error('MemberService: Error from get_organization_members_with_invites RPC:', response.error);
+        } else {
+          console.log('MemberService: Data from get_organization_members_with_invites RPC:', response.data);
+        }
+      }),
       map(response => {
         if (response.error) throw response.error;
         return (response.data || []) as MemberDetails[];
