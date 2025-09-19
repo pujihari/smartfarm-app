@@ -25,15 +25,23 @@ export class FlockService {
   }
 
   getFlocksWithFarmInfo(): Observable<(Flock & { farmName: string })[]> {
+    console.log('Fetching flocks with farm info...');
     return from(supabase.from('flocks').select('*, farms ( name )')).pipe(
       map(response => {
-        if (response.error) throw response.error;
+        if (response.error) {
+          console.error('Supabase error in getFlocksWithFarmInfo:', response.error);
+          throw response.error;
+        }
+        console.log('Flocks data received:', response.data);
         return (response.data || []).map((flock: any) => ({
           ...flock,
           farmName: (flock.farms as any)?.name || 'N/A'
         })) as (Flock & { farmName: string })[];
       }),
-      catchError(err => this.handleError(err, 'getFlocksWithFarmInfo'))
+      catchError(err => {
+        console.error('Caught error in getFlocksWithFarmInfo pipe:', err);
+        return this.handleError(err, 'getFlocksWithFarmInfo');
+      })
     );
   }
 
