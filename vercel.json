@@ -1,11 +1,5 @@
 {
   "rewrites": [
-    { "source": "/assets/(.*)", "destination": "/assets/$1" },
-    { "source": "/favicon.ico", "destination": "/favicon.ico" },
-    { "source": "/manifest.webmanifest", "destination": "/manifest.webmanifest" },
-    { "source": "/ngsw-worker.js", "destination": "/ngsw-worker.js" },
-    { "source": "/(.*\\.js)", "destination": "/$1" },
-    { "source": "/(.*\\.css)", "destination": "/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
