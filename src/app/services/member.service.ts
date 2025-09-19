@@ -2,13 +2,14 @@ import { Injectable } from '@angular/core';
 import { from, Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { supabase } from '../supabase.client';
-import { MemberRole } from '../models/member.model'; // Import MemberRole
+import { MemberRole } from '../models/member.model';
+import { FunctionsHttpError } from '@supabase/supabase-js'; // Import FunctionsHttpError
 
 // This interface should reflect the data you want to display
 export interface MemberDetails {
   id: string; // member id
   user_id: string;
-  role: 'owner' | 'member';
+  role: MemberRole;
   email: string;
   status: 'active' | 'invited';
 }
@@ -22,40 +23,42 @@ export class MemberService {
     return throwError(() => new Error(error.message || `Server error in ${context}`));
   }
 
-  getMembers(): Observable<MemberDetails[]> {
-    // This is a more complex query now. We need to join members with users and check invites.
-    // This is a simplified version. A database function would be better.
-    return from(supabase.rpc('get_organization_members_with_invites')).pipe(
-      map((response: any) => {
-        if (response.error) throw response.error;
-        return response.data as MemberDetails[];
-      }),
-      catchError(err => this.handleError(err, 'getMembers'))
-    );
-  }
-
   async inviteMember(email: string, role: MemberRole): Promise<{ data: any, error: string | null }> {
     const { data, error } = await supabase.functions.invoke('invite-member', {
-      body: { email, role }, // Pass the role to the Edge Function
+      body: { email, role },
     });
 
     if (error) {
       console.error("Gagal memanggil fungsi:", error);
-      // Check if the error is a FunctionsHttpError and if data contains a specific error message
-      if (data && data.error) {
-        return { data: null, error: data.error }; // Use the specific error message from the Edge Function
+      let specificErrorMessage: string | null = null;
+
+      // Check if it's a FunctionsHttpError and try to extract the specific error from its context
+      if (error instanceof FunctionsHttpError && error.context && error.context.data && error.context.data.error) {
+        specificErrorMessage = error.context.data.error;
+      } else if (data && data.error) { // Fallback for cases where data might directly contain error (less likely with FunctionsHttpError)
+        specificErrorMessage = data.error;
       }
-      return { data: null, error: `Gagal menghubungi server: ${error.message}` }; // Fallback to generic message
+      
+      return { data: null, error: specificErrorMessage || `Gagal menghubungi server: ${error.message}` };
     }
     
-    // This block is technically redundant if the above logic is correct,
-    // as a successful 2xx response from the Edge Function would not have `data.error`.
-    // However, keeping it for robustness if the Edge Function somehow returns 2xx with an error field.
+    // This block is for cases where the Edge Function might return a 2xx status but still include an 'error' field in its body.
+    // This is generally not expected if the Edge Function is designed to return 4xx/5xx for errors.
     if (data && data.error) {
        return { data: null, error: data.error };
     }
 
     return { data, error: null };
+  }
+
+  getMembers(): Observable<MemberDetails[]> {
+    return from(supabase.rpc('get_organization_members_with_invites')).pipe(
+      map(response => {
+        if (response.error) throw response.error;
+        return (response.data || []) as MemberDetails[];
+      }),
+      catchError(err => this.handleError(err, 'getMembers'))
+    );
   }
 
   cancelInvitation(inviteId: string): Observable<any> {
