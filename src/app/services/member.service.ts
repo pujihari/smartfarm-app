@@ -7,7 +7,7 @@ import { FunctionsHttpError } from '@supabase/supabase-js'; // Import FunctionsH
 
 // This interface should reflect the data you want to display
 export interface MemberDetails {
-  id: string; // member id
+  id: string; // member id (this will be mapped from member_id from RPC)
   user_id: string;
   role: MemberRole;
   email: string;
@@ -73,7 +73,14 @@ export class MemberService {
       }),
       map(response => {
         if (response.error) throw response.error;
-        return (response.data || []) as MemberDetails[];
+        // Map the 'member_id' from the RPC response to 'id' in the MemberDetails interface
+        return (response.data || []).map((item: any) => ({
+          id: item.member_id, // Map member_id to id
+          user_id: item.user_id,
+          role: item.role,
+          email: item.email,
+          status: item.status
+        })) as MemberDetails[];
       }),
       catchError(err => this.handleError(err, 'getMembers'))
     );
