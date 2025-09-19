@@ -1,13 +1,39 @@
 <nav class="sidebar">
   <ul>
-    @for (item of menuItems; track item.path) {
-      @if (!item.ownerOnly || (authService.isOwner$ | async)) {
-        <li>
-          <a [routerLink]="item.path" routerLinkActive="active" (click)="onItemClick()">
+    @for (item of menuItems; track item.name) {
+      @if (item.children) {
+        <li [class.expanded]="selectedParentMenu === item.name">
+          <a (click)="toggleParentMenu(item.name)" class="parent-menu-item" [class.active]="selectedParentMenu === item.name">
             <span class="icon">{{ item.icon }}</span>
             <span class="name">{{ item.name }}</span>
+            <span class="arrow" [class.rotated]="selectedParentMenu === item.name">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
           </a>
+          @if (selectedParentMenu === item.name) {
+            <ul class="submenu">
+              @for (child of item.children; track child.name) {
+                @if (!child.ownerOnly || (authService.isOwner$ | async)) {
+                  <li>
+                    <a [routerLink]="child.path" routerLinkActive="active" (click)="onItemClick()">
+                      <span class="icon">{{ child.icon }}</span>
+                      <span class="name">{{ child.name }}</span>
+                    </a>
+                  </li>
+                }
+              }
+            </ul>
+          }
         </li>
+      } @else {
+        @if (!item.ownerOnly || (authService.isOwner$ | async)) {
+          <li>
+            <a [routerLink]="item.path" routerLinkActive="active" (click)="onItemClick()">
+              <span class="icon">{{ item.icon }}</span>
+              <span class="name">{{ item.name }}</span>
+            </a>
+          </li>
+        }
       }
     }
   </ul>

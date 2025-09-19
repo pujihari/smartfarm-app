@@ -4,6 +4,7 @@
   color: white;
   padding-top: 24px;
   height: 100%;
+  overflow-y: auto; /* Tambahkan scroll jika menu terlalu panjang */
 }
 
 .sidebar ul {
@@ -32,6 +33,48 @@
   font-weight: bold;
 }
 
+/* Gaya untuk menu induk */
+.sidebar ul li .parent-menu-item {
+  cursor: pointer;
+  position: relative;
+}
+
+.sidebar ul li .parent-menu-item .arrow {
+  margin-left: auto;
+  transition: transform 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar ul li .parent-menu-item .arrow.rotated {
+  transform: rotate(180deg);
+}
+
+/* Gaya untuk sub-menu */
+.sidebar ul .submenu {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  background-color: #083a75; /* Warna latar belakang sedikit lebih gelap untuk sub-menu */
+}
+
+.sidebar ul .submenu li a {
+  padding-left: 48px; /* Indentasi untuk sub-menu */
+  font-size: 0.95rem;
+  color: #c0c0c0;
+}
+
+.sidebar ul .submenu li a:hover {
+  background-color: #062a5a;
+}
+
+.sidebar ul .submenu li a.active {
+  background-color: #F5A623;
+  color: #0A4D9D;
+  font-weight: bold;
+}
+
+
 .sidebar .icon {
   font-size: 1.5rem;
 }
@@ -51,5 +94,8 @@
   }
   .sidebar .name {
     font-size: 0.9rem;
+  }
+  .sidebar ul .submenu li a {
+    padding-left: 40px; /* Sesuaikan indentasi untuk mobile */
   }
 }
