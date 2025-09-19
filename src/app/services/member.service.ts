@@ -32,18 +32,18 @@ export class MemberService {
       console.error("Gagal memanggil fungsi:", error);
       let specificErrorMessage: string | null = null;
 
-      // Check if it's a FunctionsHttpError and try to extract the specific error from its context
-      if (error instanceof FunctionsHttpError && error.context && error.context.data && error.context.data.error) {
-        specificErrorMessage = error.context.data.error;
-      } else if (data && data.error) { // Fallback for cases where data might directly contain error (less likely with FunctionsHttpError)
-        specificErrorMessage = data.error;
+      if (error instanceof FunctionsHttpError) {
+        const errorBody = error.context?.data;
+        // Log the full error context data to understand its structure
+        console.log("FunctionsHttpError context data:", errorBody); 
+        if (errorBody && typeof errorBody === 'object' && errorBody !== null && 'error' in errorBody) {
+          specificErrorMessage = (errorBody as { error: string }).error;
+        }
       }
       
       return { data: null, error: specificErrorMessage || `Gagal menghubungi server: ${error.message}` };
     }
     
-    // This block is for cases where the Edge Function might return a 2xx status but still include an 'error' field in its body.
-    // This is generally not expected if the Edge Function is designed to return 4xx/5xx for errors.
     if (data && data.error) {
        return { data: null, error: data.error };
     }
