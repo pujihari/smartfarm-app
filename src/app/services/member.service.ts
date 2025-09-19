@@ -34,10 +34,21 @@ export class MemberService {
 
       if (error instanceof FunctionsHttpError) {
         const errorBody = error.context?.data;
-        // Log the full error context data to understand its structure
+        const rawResponse = error.context?.rawResponse; // Dapatkan string respons mentah
         console.log("FunctionsHttpError context data:", errorBody); 
+        console.log("FunctionsHttpError rawResponse:", rawResponse); // Log respons mentah
+
         if (errorBody && typeof errorBody === 'object' && errorBody !== null && 'error' in errorBody) {
           specificErrorMessage = (errorBody as { error: string }).error;
+        } else if (rawResponse) {
+          try {
+            const parsedRaw = JSON.parse(rawResponse);
+            if (parsedRaw && typeof parsedRaw === 'object' && 'error' in parsedRaw) {
+              specificErrorMessage = parsedRaw.error;
+            }
+          } catch (parseError) {
+            console.warn("Gagal mengurai rawResponse dari FunctionsHttpError:", parseError);
+          }
         }
       }
       
