@@ -45,7 +45,7 @@ export class AuthService {
     private profileService: ProfileService
   ) {
     supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
-      console.log('Auth state changed:', event, session); // Log ini
+      console.log('AuthService: Auth state changed:', event, session); // Log ini
       this._currentUser.next(session?.user ?? null);
       if (session?.user) {
         this.fetchMemberDetails(session.user.id);
@@ -58,7 +58,7 @@ export class AuthService {
         this._organizationId.next(null);
         this._profile.next(null);
         if (this.router.url !== '/login' && this.router.url !== '/register') {
-          console.log('Navigating to login page after SIGNED_OUT event.'); // Log ini
+          console.log('AuthService: Navigasi ke halaman login setelah SIGNED_OUT.'); // Log ini
           this.router.navigate(['/login']);
         }
       }
@@ -74,12 +74,12 @@ export class AuthService {
       .single()
       .then(({ data, error }: { data: { role: MemberRole; organization_id: string } | null; error: any }) => {
         if (error && error.code !== 'PGRST116') { // PGRST116 berarti tidak ada baris yang ditemukan
-          console.error('Error fetching member details:', error);
+          console.error('AuthService: Error fetching member details:', error);
           this._memberRole.next(null);
           this._organizationId.next(null);
         } else if (!data && retries > 0) {
           // Jika tidak ada data yang ditemukan, coba lagi setelah penundaan
-          console.warn(`No organization member data found for user ${userId}. Retrying in ${delay}ms... (${retries} retries left)`);
+          console.warn(`AuthService: Tidak ada data anggota organisasi ditemukan untuk pengguna ${userId}. Mencoba lagi dalam ${delay}ms... (${retries} percobaan tersisa)`);
           setTimeout(() => this.fetchMemberDetails(userId, retries - 1, delay * 2), delay);
         } else {
           this._memberRole.next((data?.role as MemberRole) || null);
@@ -109,8 +109,6 @@ export class AuthService {
   async signUp(credentials: { email: string; password: string; organizationName: string }) {
     const { email, password, organizationName } = credentials;
     
-    // Pendaftaran pengguna dengan Supabase Auth.
-    // Ini akan memicu fungsi database `handle_new_user` yang akan membuat organisasi dan keanggotaan.
     const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
 
     if (authError) {
@@ -120,23 +118,16 @@ export class AuthService {
       return { data: null, error: { message: 'Pendaftaran gagal, pengguna tidak dibuat.' } as AuthError };
     }
 
-    // PENTING: Panggilan ke Edge Function 'create-organization-and-member' telah dihapus.
-    // Fungsi database `handle_new_user` sudah menangani pembuatan organisasi dan keanggotaan owner
-    // secara otomatis setelah pengguna berhasil dibuat oleh `supabase.auth.signUp`.
-    // Memanggil Edge Function lagi akan menyebabkan konflik karena organisasi sudah ada.
-
-    // Mengembalikan sukses selama pengguna dibuat, sehingga frontend dapat menampilkan pesan "Periksa email Anda".
     return { data: authData, error: null };
   }
 
   async signOut(): Promise<void> {
-    console.log('Attempting to sign out via Supabase...'); // Log ini
+    console.log('AuthService: Mencoba untuk keluar via Supabase...'); // Log ini
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error('Error signing out:', error);
+      console.error('AuthService: Error saat keluar:', error);
     } else {
-      console.log('Supabase signOut call completed without error.'); // Log ini
+      console.log('AuthService: Panggilan signOut Supabase selesai tanpa error.'); // Log ini
     }
-    // Navigasi sekarang ditangani oleh listener onAuthStateChange.
   }
 }
