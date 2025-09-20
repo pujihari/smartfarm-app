@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "headers": [
+    {
+      "source": "/ngsw-worker.js",
+      "headers": [
+        { "key": "Content-Type", "value": "application/javascript" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    }
+  ]
+}
