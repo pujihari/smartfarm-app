@@ -2,17 +2,19 @@ import { Routes } from '@angular/router';
 import { LayoutComponent } from './components/layout/layout.component';
 import { LoginComponent } from './pages/login/login.component';
 import { RegisterComponent } from './pages/register/register.component';
+import { UpdatePasswordComponent } from './pages/update-password/update-password.component'; // Import baru
 import { authGuard } from './auth.guard';
 import { publicGuard } from './public.guard';
-import { roleGuard } from './role.guard'; // Import roleGuard
+import { roleGuard } from './role.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [publicGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [publicGuard] },
+  { path: 'update-password', component: UpdatePasswordComponent, canActivate: [authGuard] }, // Rute baru
   {
     path: '',
     component: LayoutComponent,
-    canActivate: [authGuard], // Pastikan pengguna terautentikasi terlebih dahulu
+    canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { 

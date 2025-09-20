@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { from, Observable, BehaviorSubject, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { supabase } from '../supabase.client';
-import { Session, User, AuthError, AuthChangeEvent } from '@supabase/supabase-js';
+import { Session, User, AuthError, AuthChangeEvent, UserAttributes } from '@supabase/supabase-js';
 import { MemberRole } from '../models/member.model';
 import { ProfileService, Profile } from './profile.service';
 
@@ -45,20 +45,31 @@ export class AuthService {
     private profileService: ProfileService
   ) {
     supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
-      console.log('AuthService: Auth state changed:', event, session); // Log ini
+      console.log('AuthService: Auth state changed:', event, session);
       this._currentUser.next(session?.user ?? null);
+      
       if (session?.user) {
         this.fetchMemberDetails(session.user.id);
         this.fetchProfile();
-        if (event === 'SIGNED_IN') {
+
+        // Logika baru untuk pengguna undangan
+        if (event === 'SIGNED_IN' && session.user.identities?.length === 0) {
+          // Pengguna yang baru diundang belum memiliki 'identities'.
+          // Ini adalah cara untuk mendeteksi mereka dan mengarahkan ke halaman update password.
+          this.router.navigate(['/update-password']);
+        } else if (event === 'USER_UPDATED') {
+          // Setelah pengguna memperbarui kata sandi, arahkan ke dashboard.
+          this.router.navigate(['/dashboard']);
+        } else if (event === 'SIGNED_IN') {
           this.router.navigate(['/dashboard']);
         }
+
       } else {
         this._memberRole.next(null);
         this._organizationId.next(null);
         this._profile.next(null);
-        if (this.router.url !== '/login' && this.router.url !== '/register') {
-          console.log('AuthService: Navigasi ke halaman login setelah SIGNED_OUT.'); // Log ini
+        if (this.router.url !== '/login' && this.router.url !== '/register' && this.router.url !== '/update-password') {
+          console.log('AuthService: Navigasi ke halaman login setelah SIGNED_OUT.');
           this.router.navigate(['/login']);
         }
       }
@@ -73,12 +84,11 @@ export class AuthService {
       .eq('user_id', userId)
       .single()
       .then(({ data, error }: { data: { role: MemberRole; organization_id: string } | null; error: any }) => {
-        if (error && error.code !== 'PGRST116') { // PGRST116 berarti tidak ada baris yang ditemukan
+        if (error && error.code !== 'PGRST116') {
           console.error('AuthService: Error fetching member details:', error);
           this._memberRole.next(null);
           this._organizationId.next(null);
         } else if (!data && retries > 0) {
-          // Jika tidak ada data yang ditemukan, coba lagi setelah penundaan
           console.warn(`AuthService: Tidak ada data anggota organisasi ditemukan untuk pengguna ${userId}. Mencoba lagi dalam ${delay}ms... (${retries} percobaan tersisa)`);
           setTimeout(() => this.fetchMemberDetails(userId, retries - 1, delay * 2), delay);
         } else {
@@ -122,12 +132,25 @@ export class AuthService {
   }
 
   async signOut(): Promise<void> {
-    console.log('AuthService: Mencoba untuk keluar via Supabase...'); // Log ini
+    console.log('AuthService: Mencoba untuk keluar via Supabase...');
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('AuthService: Error saat keluar:', error);
     } else {
-      console.log('AuthService: Panggilan signOut Supabase selesai tanpa error.'); // Log ini
+      console.log('AuthService: Panggilan signOut Supabase selesai tanpa error.');
     }
+  }
+
+  // Metode baru untuk memperbarui pengguna
+  async updateUser(attributes: UserAttributes) {
+    const { data, error } = await supabase.auth.updateUser(attributes);
+    if (!error && data.user) {
+      // Setelah berhasil memperbarui, kita juga perlu memperbarui profil publik mereka
+      if (attributes.data && (attributes.data as any).display_name) {
+        await supabase.from('profiles').update({ display_name: (attributes.data as any).display_name }).eq('id', data.user.id);
+        this.refreshProfile(); // Refresh profil di AuthService
+      }
+    }
+    return { data, error };
   }
 }
