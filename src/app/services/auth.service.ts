@@ -52,15 +52,19 @@ export class AuthService {
         this.fetchMemberDetails(session.user.id);
         this.fetchProfile();
 
-        // Logika baru untuk pengguna undangan
-        if (event === 'SIGNED_IN' && session.user.identities?.length === 0) {
-          // Pengguna yang baru diundang belum memiliki 'identities'.
-          // Ini adalah cara untuk mendeteksi mereka dan mengarahkan ke halaman update password.
-          this.router.navigate(['/update-password']);
+        if (event === 'SIGNED_IN') {
+          if (session.user.identities?.length === 0) {
+            // This is a new user who was invited.
+            console.log('AuthService: Invited user detected. Navigating to /update-password.');
+            this.router.navigate(['/update-password']);
+          } else {
+            // This is a returning user signing in.
+            console.log('AuthService: Returning user signed in. Navigating to /dashboard.');
+            this.router.navigate(['/dashboard']);
+          }
         } else if (event === 'USER_UPDATED') {
-          // Setelah pengguna memperbarui kata sandi, arahkan ke dashboard.
-          this.router.navigate(['/dashboard']);
-        } else if (event === 'SIGNED_IN') {
+          // This happens after the user sets their password on the update page.
+          console.log('AuthService: User updated. Navigating to /dashboard.');
           this.router.navigate(['/dashboard']);
         }
 
@@ -69,7 +73,7 @@ export class AuthService {
         this._organizationId.next(null);
         this._profile.next(null);
         if (this.router.url !== '/login' && this.router.url !== '/register' && this.router.url !== '/update-password') {
-          console.log('AuthService: Navigasi ke halaman login setelah SIGNED_OUT.');
+          console.log('AuthService: Navigating to login page after SIGNED_OUT.');
           this.router.navigate(['/login']);
         }
       }
@@ -89,7 +93,7 @@ export class AuthService {
           this._memberRole.next(null);
           this._organizationId.next(null);
         } else if (!data && retries > 0) {
-          console.warn(`AuthService: Tidak ada data anggota organisasi ditemukan untuk pengguna ${userId}. Mencoba lagi dalam ${delay}ms... (${retries} percobaan tersisa)`);
+          console.warn(`AuthService: No organization member data found for user ${userId}. Retrying in ${delay}ms... (${retries} retries left)`);
           setTimeout(() => this.fetchMemberDetails(userId, retries - 1, delay * 2), delay);
         } else {
           this._memberRole.next((data?.role as MemberRole) || null);
@@ -132,23 +136,21 @@ export class AuthService {
   }
 
   async signOut(): Promise<void> {
-    console.log('AuthService: Mencoba untuk keluar via Supabase...');
+    console.log('AuthService: Attempting to sign out via Supabase...');
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error('AuthService: Error saat keluar:', error);
+      console.error('AuthService: Error during sign out:', error);
     } else {
-      console.log('AuthService: Panggilan signOut Supabase selesai tanpa error.');
+      console.log('AuthService: Supabase signOut call completed without error.');
     }
   }
 
-  // Metode baru untuk memperbarui pengguna
   async updateUser(attributes: UserAttributes) {
     const { data, error } = await supabase.auth.updateUser(attributes);
     if (!error && data.user) {
-      // Setelah berhasil memperbarui, kita juga perlu memperbarui profil publik mereka
       if (attributes.data && (attributes.data as any).display_name) {
         await supabase.from('profiles').update({ display_name: (attributes.data as any).display_name }).eq('id', data.user.id);
-        this.refreshProfile(); // Refresh profil di AuthService
+        this.refreshProfile();
       }
     }
     return { data, error };
