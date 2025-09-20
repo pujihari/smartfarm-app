@@ -228,6 +228,17 @@
   color: #999;
 }
 
+.flock-age-info {
+  background-color: #e9f5ff;
+  border: 1px solid #b3d9ff;
+  color: #004085;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
 @media (max-width: 768px) {
   .batch-form .top-row {
     grid-template-columns: 1fr;

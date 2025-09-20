@@ -4,14 +4,14 @@ import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } fr
 import { ProductionService } from '../../services/production.service';
 import { FlockService } from '../../services/flock.service';
 import { NotificationService } from '../../services/notification.service';
-import { Observable, BehaviorSubject, of, lastValueFrom } from 'rxjs';
-import { switchMap, map } from 'rxjs/operators';
+import { Observable, BehaviorSubject, of, lastValueFrom, combineLatest } from 'rxjs';
+import { switchMap, map, startWith } from 'rxjs/operators';
 import { ProductionData, FeedConsumption } from '../../models/production-data.model';
 import { Flock } from '../../models/flock.model';
 import { ProductionModalComponent } from '../../components/production-modal/production-modal.component';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { AuthService } from '../../services/auth.service';
-import { InventoryService, FeedOption } from '../../services/inventory.service'; // Import InventoryService dan FeedOption
+import { InventoryService, FeedOption } from '../../services/inventory.service';
 
 type ProductionDataWithDetails = ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number };
 type FlockWithFarmInfo = Flock & { farmName: string };
@@ -24,7 +24,6 @@ type FlockWithFarmInfo = Flock & { farmName: string };
   styleUrl: './production.component.css'
 })
 export class ProductionComponent implements OnInit {
-  // Existing properties for modal and main table
   isModalOpen = false;
   dataToEdit: ProductionData | null = null;
   private refresh$ = new BehaviorSubject<void>(undefined);
@@ -33,12 +32,14 @@ export class ProductionComponent implements OnInit {
   isConfirmModalOpen = false;
   dataToDelete: ProductionData | null = null;
 
-  // New properties for batch input
   batchProductionForm: FormGroup;
   stagedProductionData: Partial<ProductionDataWithDetails>[] = [];
   isSavingBatch = false;
   private allFlocks: FlockWithFarmInfo[] = [];
-  feedOptions: FeedOption[] = []; // Properti baru untuk opsi pakan di formulir batch
+  feedOptions: FeedOption[] = [];
+
+  currentFlockAgeInDays: number | null = null;
+  showEggProductionFields = false;
 
   constructor(
     private fb: FormBuilder,
@@ -46,7 +47,7 @@ export class ProductionComponent implements OnInit {
     private flockService: FlockService,
     private notificationService: NotificationService,
     public authService: AuthService,
-    private inventoryService: InventoryService // Inject InventoryService
+    private inventoryService: InventoryService
   ) {
     this.productionData$ = this.refresh$.pipe(
       switchMap(() => this.productionService.getProductionDataWithDetails())
@@ -58,31 +59,83 @@ export class ProductionComponent implements OnInit {
       })
     );
 
-    // Initialize form for batch input
     this.batchProductionForm = this.fb.group({
       flock_id: [null, Validators.required],
       date: [new Date().toISOString().split('T')[0], Validators.required],
-      normal_eggs: [null, [Validators.required, Validators.min(0)]],
-      white_eggs: [null, [Validators.required, Validators.min(0)]],
-      cracked_eggs: [null, [Validators.required, Validators.min(0)]],
-      normal_eggs_weight_kg: [null, [Validators.required, Validators.min(0)]],
-      white_eggs_weight_kg: [null, [Validators.required, Validators.min(0)]],
-      cracked_eggs_weight_kg: [null, [Validators.required, Validators.min(0)]],
+      normal_eggs: [null],
+      white_eggs: [null],
+      cracked_eggs: [null],
+      normal_eggs_weight_kg: [null],
+      white_eggs_weight_kg: [null],
+      cracked_eggs_weight_kg: [null],
       feed_consumption: this.fb.array([])
     });
   }
 
   ngOnInit(): void {
-    this.addFeedToBatchForm(); // Add one empty feed row by default
+    this.addFeedToBatchForm();
 
-    // Muat opsi pakan untuk formulir batch
     this.inventoryService.getFeedOptions().subscribe({
       next: (options) => this.feedOptions = options,
       error: (err) => console.error('Error loading feed options for batch form:', err)
     });
+
+    combineLatest([
+      this.batchProductionForm.get('flock_id')!.valueChanges.pipe(startWith(this.batchProductionForm.get('flock_id')!.value)),
+      this.batchProductionForm.get('date')!.valueChanges.pipe(startWith(this.batchProductionForm.get('date')!.value))
+    ]).subscribe(([flockId, date]) => {
+      this.calculateFlockAge(flockId, date);
+    });
   }
 
-  // --- Batch Input Methods ---
+  private calculateFlockAge(flockId: number | null, date: string | null): void {
+    if (!flockId || !date) {
+      this.currentFlockAgeInDays = null;
+      this.updateEggFieldsVisibility(false);
+      return;
+    }
+
+    const selectedFlock = this.allFlocks.find(f => f.id === Number(flockId));
+    if (!selectedFlock) {
+      this.currentFlockAgeInDays = null;
+      this.updateEggFieldsVisibility(false);
+      return;
+    }
+
+    const startDate = new Date(selectedFlock.start_date);
+    const recordingDate = new Date(date);
+    const timeDiff = recordingDate.getTime() - startDate.getTime();
+    const dayDiff = Math.round(timeDiff / (1000 * 60 * 60 * 24));
+    
+    const age = dayDiff + selectedFlock.entry_age_days;
+    this.currentFlockAgeInDays = age;
+
+    this.updateEggFieldsVisibility(age > 126);
+  }
+
+  private updateEggFieldsVisibility(show: boolean): void {
+    this.showEggProductionFields = show;
+    const eggControls = [
+      'normal_eggs', 'white_eggs', 'cracked_eggs',
+      'normal_eggs_weight_kg', 'white_eggs_weight_kg', 'cracked_eggs_weight_kg'
+    ];
+
+    eggControls.forEach(controlName => {
+      const control = this.batchProductionForm.get(controlName);
+      if (control) {
+        if (show) {
+          control.setValidators([Validators.required, Validators.min(0)]);
+          if (control.value === null) {
+            control.setValue(0);
+          }
+        } else {
+          control.clearValidators();
+          control.setValue(null);
+        }
+        control.updateValueAndValidity();
+      }
+    });
+  }
 
   get batch_feed_consumption(): FormArray {
     return this.batchProductionForm.get('feed_consumption') as FormArray;
@@ -104,10 +157,23 @@ export class ProductionComponent implements OnInit {
   }
 
   addToStage(): void {
-    if (this.batchProductionForm.invalid) return;
+    this.batchProductionForm.markAllAsTouched();
+    if (this.batchProductionForm.invalid) {
+      this.notificationService.showWarning('Harap isi semua field yang wajib diisi.');
+      return;
+    }
 
     const newEntry = this.batchProductionForm.getRawValue();
     newEntry.flock_id = Number(newEntry.flock_id);
+
+    if (!this.showEggProductionFields) {
+      newEntry.normal_eggs = 0;
+      newEntry.white_eggs = 0;
+      newEntry.cracked_eggs = 0;
+      newEntry.normal_eggs_weight_kg = 0;
+      newEntry.white_eggs_weight_kg = 0;
+      newEntry.cracked_eggs_weight_kg = 0;
+    }
 
     const existingIndex = this.stagedProductionData.findIndex(
       item => item.flock_id === newEntry.flock_id && item.date === newEntry.date
@@ -139,12 +205,12 @@ export class ProductionComponent implements OnInit {
     }
 
     this.batchProductionForm.patchValue({
-      normal_eggs: null,
-      white_eggs: null,
-      cracked_eggs: null,
-      normal_eggs_weight_kg: null,
-      white_eggs_weight_kg: null,
-      cracked_eggs_weight_kg: null,
+      normal_eggs: this.showEggProductionFields ? 0 : null,
+      white_eggs: this.showEggProductionFields ? 0 : null,
+      cracked_eggs: this.showEggProductionFields ? 0 : null,
+      normal_eggs_weight_kg: this.showEggProductionFields ? 0 : null,
+      white_eggs_weight_kg: this.showEggProductionFields ? 0 : null,
+      cracked_eggs_weight_kg: this.showEggProductionFields ? 0 : null,
     });
     this.batch_feed_consumption.clear();
     this.addFeedToBatchForm();
@@ -188,8 +254,6 @@ export class ProductionComponent implements OnInit {
       this.refresh$.next();
     }
   }
-
-  // --- Existing Methods for Modal ---
 
   openAddModal(): void {
     this.dataToEdit = null;
