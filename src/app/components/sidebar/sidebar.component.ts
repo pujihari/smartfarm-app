@@ -27,7 +27,7 @@ export class SidebarComponent {
   menuItems: MenuItem[] = [
     { path: '/dashboard', icon: '📊', name: 'Dashboard' },
     { path: '/health', icon: '❤️', name: 'Kesehatan' },
-    { path: '/production', icon: '🥚', name: 'Produksi' },
+    { path: '/production', icon: '📋', name: 'Recording' },
     { path: '/body-weight', icon: '⚖️', name: 'Timbang BB' },
     { path: '/weekly-performance', icon: '📈', name: 'Performa Mingguan' },
     { path: '/inventory', icon: '📦', name: 'Inventori' },
