@@ -9,8 +9,7 @@
     </div>
     <div class="modal-footer">
       <button class="cancel-btn" (click)="onCancel()">Batal</button>
--     <button [class]="confirmButtonClass" (click)="onConfirm()">{{ confirmButtonText }}</button>
-+     <button [class]="confirmButtonClass" (click)="onConfirm()" aria-describedby="dialog-description">{{ confirmButtonText }}</button>
+      <button [class]="confirmButtonClass" (click)="onConfirm()" aria-describedby="dialog-description">{{ confirmButtonText }}</button>
     </div>
   </div>
 </div>
