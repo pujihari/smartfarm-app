@@ -30,6 +30,10 @@ export class AuthService {
     map(role => role === 'owner')
   );
 
+  public readonly isManagerOrOwner$: Observable<boolean> = this.memberRole$.pipe(
+    map(role => role === 'owner' || role === 'manager')
+  );
+
   public readonly canWriteData$: Observable<boolean> = this.memberRole$.pipe(
     map(role => 
       role === 'owner' || 

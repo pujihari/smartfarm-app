@@ -2,13 +2,14 @@ import { Component, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { MemberRole } from '../../models/member.model';
 
 interface MenuItem {
-  path?: string; // Optional for parent items
+  path?: string;
   icon: string;
   name: string;
-  ownerOnly: boolean;
-  children?: MenuItem[]; // For nested items
+  requiredRoles?: MemberRole[];
+  children?: MenuItem[];
 }
 
 @Component({
@@ -21,25 +22,24 @@ interface MenuItem {
 export class SidebarComponent {
   @Output() itemClicked = new EventEmitter<void>();
 
-  selectedParentMenu: string | null = null; // State untuk melacak menu induk yang diperluas
+  selectedParentMenu: string | null = null;
 
   menuItems: MenuItem[] = [
-    { path: '/dashboard', icon: '📊', name: 'Dashboard', ownerOnly: false },
-    { path: '/health', icon: '❤️', name: 'Kesehatan', ownerOnly: false },
-    { path: '/production', icon: '🥚', name: 'Produksi', ownerOnly: false },
-    { path: '/body-weight', icon: '⚖️', name: 'Timbang BB', ownerOnly: false },
-    { path: '/weekly-performance', icon: '📈', name: 'Performa Mingguan', ownerOnly: false },
-    { path: '/inventory', icon: '📦', name: 'Inventori', ownerOnly: false },
-    { path: '/reports', icon: '📄', name: 'Laporan', ownerOnly: false },
+    { path: '/dashboard', icon: '📊', name: 'Dashboard' },
+    { path: '/health', icon: '❤️', name: 'Kesehatan' },
+    { path: '/production', icon: '🥚', name: 'Produksi' },
+    { path: '/body-weight', icon: '⚖️', name: 'Timbang BB' },
+    { path: '/weekly-performance', icon: '📈', name: 'Performa Mingguan' },
+    { path: '/inventory', icon: '📦', name: 'Inventori' },
+    { path: '/reports', icon: '📄', name: 'Laporan' },
     {
       icon: '⚙️',
       name: 'Pengaturan',
-      ownerOnly: false, // Menu induk 'Pengaturan' tidak ownerOnly agar selalu terlihat
       children: [
-        { path: '/farms', icon: '🏞️', name: 'Manajemen Farm', ownerOnly: false },
-        { path: '/flocks', icon: '🐔', name: 'Manajemen Flok', ownerOnly: false },
-        { path: '/members', icon: '👥', name: 'Manajemen Anggota', ownerOnly: true },
-        { path: '/settings', icon: '⚙️', name: 'Pengaturan Organisasi', ownerOnly: true },
+        { path: '/farms', icon: '🏞️', name: 'Manajemen Farm' },
+        { path: '/flocks', icon: '🐔', name: 'Manajemen Flok' },
+        { path: '/members', icon: '👥', name: 'Manajemen Anggota', requiredRoles: ['owner', 'manager'] },
+        { path: '/settings', icon: '⚙️', name: 'Pengaturan Organisasi', requiredRoles: ['owner'] },
       ]
     },
   ];

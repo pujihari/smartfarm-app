@@ -1,7 +1,7 @@
 <div class="page-container">
   <div class="page-header">
     <h1 class="page-title">Manajemen Farm</h1>
-    @if (authService.isOwner$ | async) {
+    @if (authService.isManagerOrOwner$ | async) {
       <button class="add-button" (click)="openAddModal()">+ Tambah Farm Baru</button>
     }
   </div>
@@ -34,7 +34,7 @@
               <td data-label="Aksi">
                 <div class="action-buttons">
                   <a [routerLink]="['/farms', farm.id]" class="action-btn detail-btn">Detail</a>
-                  @if (authService.isOwner$ | async) {
+                  @if (authService.isManagerOrOwner$ | async) {
                     <button class="action-btn edit-btn" (click)="openEditModal(farm)">Edit</button>
                     <button class="action-btn delete-btn" (click)="openDeleteModal(farm)">Hapus</button>
                   }
