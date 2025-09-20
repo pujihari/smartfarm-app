@@ -15,7 +15,7 @@
               @if (selectedParentMenu === item.name) {
                 <ul class="submenu">
                   @for (child of item.children; track child.name) {
-                    @if (!child.requiredRoles || (userRole && child.requiredRoles.includes(child.requiredRoles))) {
+                    @if (!child.requiredRoles || (userRole && child.requiredRoles.includes(userRole))) {
                       <li>
                         <a [routerLink]="child.path" routerLinkActive="active" (click)="onItemClick()">
                           <span class="icon">{{ child.icon }}</span>
