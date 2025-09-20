@@ -87,7 +87,15 @@ export class MemberService {
   }
 
   cancelInvitation(inviteId: string): Observable<any> {
-    return from(supabase.from('invites').delete().eq('id', inviteId)).pipe(
+    // Updated to call the new Edge Function
+    return from(supabase.functions.invoke('cancel-invitation', {
+      body: { inviteId },
+    })).pipe(
+      map(response => {
+        if (response.error) throw new Error(response.error.message);
+        if (response.data.error) throw new Error(response.data.error);
+        return response.data;
+      }),
       catchError(err => this.handleError(err, 'cancelInvitation'))
     );
   }
