@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core'; // Import NgZone
 import { Router } from '@angular/router';
 import { from, Observable, BehaviorSubject, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
@@ -46,7 +46,8 @@ export class AuthService {
 
   constructor(
     private router: Router,
-    private profileService: ProfileService
+    private profileService: ProfileService,
+    private ngZone: NgZone // Inject NgZone
   ) {
     supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       console.log('AuthService: Auth state changed:', event, session);
@@ -56,30 +57,34 @@ export class AuthService {
         this.fetchMemberDetails(session.user.id);
         this.fetchProfile();
 
-        if (event === 'SIGNED_IN') {
-          if (session.user.identities?.length === 0) {
-            // This is a new user who was invited.
-            console.log('AuthService: Invited user detected. Navigating to /update-password.');
-            this.router.navigate(['/update-password']);
-          } else {
-            // This is a returning user signing in.
-            console.log('AuthService: Returning user signed in. Navigating to /dashboard.');
+        this.ngZone.run(() => { // Wrap navigation in ngZone.run()
+          if (event === 'SIGNED_IN') {
+            if (session.user.identities?.length === 0) {
+              // This is a new user who was invited.
+              console.log('AuthService: Invited user detected. Navigating to /update-password.');
+              this.router.navigate(['/update-password']);
+            } else {
+              // This is a returning user signing in.
+              console.log('AuthService: Returning user signed in. Navigating to /dashboard.');
+              this.router.navigate(['/dashboard']);
+            }
+          } else if (event === 'USER_UPDATED') {
+            // This happens after the user sets their password on the update page.
+            console.log('AuthService: User updated. Navigating to /dashboard.');
             this.router.navigate(['/dashboard']);
           }
-        } else if (event === 'USER_UPDATED') {
-          // This happens after the user sets their password on the update page.
-          console.log('AuthService: User updated. Navigating to /dashboard.');
-          this.router.navigate(['/dashboard']);
-        }
+        });
 
       } else {
         this._memberRole.next(null);
         this._organizationId.next(null);
         this._profile.next(null);
-        if (this.router.url !== '/login' && this.router.url !== '/register' && this.router.url !== '/update-password') {
-          console.log('AuthService: Navigating to login page after SIGNED_OUT.');
-          this.router.navigate(['/login']);
-        }
+        this.ngZone.run(() => { // Wrap navigation in ngZone.run()
+          if (this.router.url !== '/login' && this.router.url !== '/register' && this.router.url !== '/update-password') {
+            console.log('AuthService: Navigating to login page after SIGNED_OUT.');
+            this.router.navigate(['/login']);
+          }
+        });
       }
       this._isInitialized.next(true);
     });
