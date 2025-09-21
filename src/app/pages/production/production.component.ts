@@ -13,8 +13,18 @@ import { ConfirmationModalComponent } from '../../components/confirmation-modal/
 import { AuthService } from '../../services/auth.service';
 import { InventoryService, FeedOption } from '../../services/inventory.service';
 
-type ProductionDataWithDetails = ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, totalDepletion: number };
+type ProductionDataWithDetails = ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, flockPopulation: number, totalDepletion: number };
 type FlockWithFarmInfo = Flock & { farmName: string };
+
+// New interface for staged data to ensure calculated fields are always numbers
+interface StagedProductionItem extends Partial<ProductionData> {
+  id?: number;
+  flockName: string;
+  farmName: string;
+  totalEggCount: number;
+  totalFeedConsumption: number;
+  totalDepletion: number;
+}
 
 @Component({
   selector: 'app-production',
@@ -33,7 +43,7 @@ export class ProductionComponent implements OnInit {
   dataToDelete: ProductionData | null = null;
 
   batchProductionForm: FormGroup;
-  stagedProductionData: (Partial<ProductionDataWithDetails> & { id?: number })[] = []; // Added id to staged data
+  stagedProductionData: StagedProductionItem[] = []; // Updated type to StagedProductionItem[]
   isSavingBatch = false;
   private allFlocks: FlockWithFarmInfo[] = [];
   feedOptions: FeedOption[] = [];
@@ -232,25 +242,28 @@ export class ProductionComponent implements OnInit {
     }
 
     const flockInfo = this.allFlocks.find(f => f.id === newEntry.flock_id);
-    newEntry.flockName = flockInfo?.name || 'N/A';
-    newEntry.farmName = flockInfo?.farmName || 'N/A'; // Add farmName for display
-
-    // Calculate total eggs and feed for display in staging area
-    newEntry.totalEggCount = (newEntry.normal_eggs || 0) + (newEntry.white_eggs || 0) + (newEntry.cracked_eggs || 0);
-    newEntry.totalFeedConsumption = (newEntry.feed_consumption || []).reduce((sum: number, feed: FeedConsumption) => sum + (feed.quantity_kg || 0), 0);
-    newEntry.totalDepletion = (newEntry.mortality_count || 0) + (newEntry.culling_count || 0);
+    
+    // Ensure these properties are always numbers for StagedProductionItem
+    const stagedItem: StagedProductionItem = {
+      ...newEntry,
+      flockName: flockInfo?.name || 'N/A',
+      farmName: flockInfo?.farmName || 'N/A',
+      totalEggCount: (newEntry.normal_eggs || 0) + (newEntry.white_eggs || 0) + (newEntry.cracked_eggs || 0),
+      totalFeedConsumption: (newEntry.feed_consumption || []).reduce((sum: number, feed: FeedConsumption) => sum + (feed.quantity_kg || 0), 0),
+      totalDepletion: (newEntry.mortality_count || 0) + (newEntry.culling_count || 0),
+    };
 
     const existingIndexInStaging = this.stagedProductionData.findIndex(
-      item => item.flock_id === newEntry.flock_id && item.date === newEntry.date
+      item => item.flock_id === stagedItem.flock_id && item.date === stagedItem.date
     );
 
     if (existingIndexInStaging > -1) {
       // Update existing entry in staging
-      this.stagedProductionData[existingIndexInStaging] = newEntry;
+      this.stagedProductionData[existingIndexInStaging] = stagedItem;
       this.notificationService.showInfo('Data untuk flok dan tanggal ini diperbarui di daftar.');
     } else {
       // Add new entry to staging
-      this.stagedProductionData.push(newEntry);
+      this.stagedProductionData.push(stagedItem);
       this.notificationService.showSuccess('Data ditambahkan ke daftar.');
     }
 
