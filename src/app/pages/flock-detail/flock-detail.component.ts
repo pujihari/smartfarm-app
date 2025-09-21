@@ -183,17 +183,23 @@ export class FlockDetailComponent implements OnInit {
     const henDayData = productionHistory.map(p => flock.population > 0 ? (p.totalEggCount / flock.population) * 100 : 0);
     const feedConsumptionData = productionHistory.map(p => p.totalFeedConsumption);
 
-    const standardHenDayData = productionHistory.map(p => {
+    const standardHenDayDataMin = productionHistory.map(p => {
       const ageWeeks = Math.floor((new Date(p.date).getTime() - new Date(flock.start_date).getTime()) / (1000 * 60 * 60 * 24 * 7)) + Math.floor(flock.entry_age_days / 7);
       const standardPoint = standardData.find(s => s.age_weeks === ageWeeks);
-      return standardPoint?.hen_day_production_percent || null;
+      return standardPoint?.hen_day_production_percent_min || null;
+    });
+    const standardHenDayDataMax = productionHistory.map(p => {
+      const ageWeeks = Math.floor((new Date(p.date).getTime() - new Date(flock.start_date).getTime()) / (1000 * 60 * 60 * 24 * 7)) + Math.floor(flock.entry_age_days / 7);
+      const standardPoint = standardData.find(s => s.age_weeks === ageWeeks);
+      return standardPoint?.hen_day_production_percent_max || null;
     });
 
     this.productionChartData = {
       labels: labels,
       datasets: [
         { data: henDayData, label: 'HD% Aktual', borderColor: '#0A4D9D', tension: 0.2, fill: false },
-        { data: standardHenDayData, label: 'HD% Standar', borderColor: '#F5A623', tension: 0.2, borderDash: [5, 5], fill: false },
+        { data: standardHenDayDataMin, label: 'HD% Standar (Min)', borderColor: '#F5A623', backgroundColor: 'rgba(245, 166, 35, 0.2)', tension: 0.2, borderDash: [5, 5], fill: '+1' },
+        { data: standardHenDayDataMax, label: 'HD% Standar (Max)', borderColor: '#F5A623', tension: 0.2, borderDash: [5, 5], fill: false },
         { data: feedConsumptionData, label: 'Konsumsi Pakan (kg)', borderColor: '#28a745', tension: 0.2, fill: false, yAxisID: 'y1' }
       ]
     };
@@ -255,17 +261,23 @@ export class FlockDetailComponent implements OnInit {
     const labels = bodyWeightHistory.map(b => this.datePipe.transform(b.weighing_date, 'shortDate') || '');
     const actualWeightData = bodyWeightHistory.map(b => b.avg_body_weight_actual);
 
-    const standardWeightData = bodyWeightHistory.map(b => {
+    const standardWeightDataMin = bodyWeightHistory.map(b => {
       const ageWeeks = Math.floor(b.age_days / 7);
       const standardPoint = standardData.find(s => s.age_weeks === ageWeeks);
-      return standardPoint?.body_weight_g || null;
+      return standardPoint?.body_weight_g_min || null;
+    });
+    const standardWeightDataMax = bodyWeightHistory.map(b => {
+      const ageWeeks = Math.floor(b.age_days / 7);
+      const standardPoint = standardData.find(s => s.age_weeks === ageWeeks);
+      return standardPoint?.body_weight_g_max || null;
     });
 
     this.bodyWeightChartData = {
       labels: labels,
       datasets: [
         { data: actualWeightData, label: 'BB Aktual (g)', borderColor: '#0A4D9D', tension: 0.2, fill: false },
-        { data: standardWeightData, label: 'BB Standar (g)', borderColor: '#F5A623', tension: 0.2, borderDash: [5, 5], fill: false }
+        { data: standardWeightDataMin, label: 'BB Standar (Min)', borderColor: '#F5A623', backgroundColor: 'rgba(245, 166, 35, 0.2)', tension: 0.2, borderDash: [5, 5], fill: '+1' },
+        { data: standardWeightDataMax, label: 'BB Standar (Max)', borderColor: '#F5A623', tension: 0.2, borderDash: [5, 5], fill: false }
       ]
     };
     this.bodyWeightChartOptions = {

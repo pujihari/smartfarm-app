@@ -111,16 +111,37 @@ export class GrowthChartComponent implements OnInit {
           return entry ? entry.totalWeight / entry.count : null;
         });
 
-        const standardDataPoints = Array.from({ length: maxWeek + 1 }, (_, i) => {
+        const standardDataPointsMin = Array.from({ length: maxWeek + 1 }, (_, i) => {
           const standard = standardHistory.find(s => s.age_weeks === i);
-          return standard?.body_weight_g ?? null;
+          return standard?.body_weight_g_min ?? null;
+        });
+
+        const standardDataPointsMax = Array.from({ length: maxWeek + 1 }, (_, i) => {
+          const standard = standardHistory.find(s => s.age_weeks === i);
+          return standard?.body_weight_g_max ?? null;
         });
 
         this.lineChartData = {
           labels,
           datasets: [
             { data: actualDataPoints, label: 'Berat Badan Aktual (g)', borderColor: '#0A4D9D', tension: 0.2, fill: false },
-            { data: standardDataPoints, label: 'Berat Badan Standar (g)', borderColor: '#F5A623', tension: 0.2, borderDash: [5, 5], fill: false }
+            { 
+              data: standardDataPointsMin, 
+              label: 'Berat Badan Standar (Min)', 
+              borderColor: '#F5A623', 
+              backgroundColor: 'rgba(245, 166, 35, 0.2)', // Light orange fill
+              tension: 0.2, 
+              borderDash: [5, 5], 
+              fill: '+1' // Fill to the next dataset (max)
+            },
+            { 
+              data: standardDataPointsMax, 
+              label: 'Berat Badan Standar (Max)', 
+              borderColor: '#F5A623', 
+              tension: 0.2, 
+              borderDash: [5, 5], 
+              fill: false // Do not fill above this line
+            }
           ]
         };
         return undefined;

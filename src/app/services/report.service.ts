@@ -10,13 +10,25 @@ export interface ProductionStandard {
 }
 export interface ProductionStandardData {
   age_weeks: number;
-  hen_day_production_percent: number;
+  hen_day_production_percent?: number; // Optional, as it might not always be present
+  hen_day_production_percent_min?: number; // New: Min value for HD%
+  hen_day_production_percent_max?: number; // New: Max value for HD%
   body_weight_g?: number; // Optional, as it might not always be present
+  body_weight_g_min?: number; // New: Min value for Body Weight
+  body_weight_g_max?: number; // New: Max value for Body Weight
   feed_consumption_g_per_day?: number; // New: for Feed Intake
+  feed_consumption_g_per_day_min?: number; // New: Min value for Feed Consumption
+  feed_consumption_g_per_day_max?: number; // New: Max value for Feed Consumption
   egg_weight_g?: number; // New: for Average Egg Weight
+  egg_weight_g_min?: number; // New: Min value for Egg Weight
+  egg_weight_g_max?: number; // New: Max value for Egg Weight
   feed_conversion_ratio?: number; // New: for FCR
   mortality_percent?: number; // New: for Mortality
+  mortality_percent_min?: number; // New: Min value for Mortality
+  mortality_percent_max?: number; // New: Max value for Mortality
   uniformity_percent?: number; // New: for Uniformity
+  uniformity_percent_min?: number; // New: Min value for Uniformity
+  uniformity_percent_max?: number; // New: Max value for Uniformity
 }
 
 export interface ReportFilters {
@@ -35,7 +47,7 @@ export interface ReportData {
   };
   chartData: {
     labels: string[];
-    datasets: { data: (number | null)[], label: string, borderColor: string, tension: number, borderDash?: number[] }[];
+    datasets: { data: (number | null)[], label: string, borderColor: string, tension: number, borderDash?: number[], fill?: string | boolean, backgroundColor?: string }[];
   };
 }
 
@@ -62,7 +74,7 @@ export class ReportService {
     return from(
       supabase
         .from('production_standard_data')
-        .select('age_weeks, hen_day_production_percent, body_weight_g, feed_consumption_g_per_day, egg_weight_g, feed_conversion_ratio, mortality_percent, uniformity_percent') // Select new columns
+        .select('age_weeks, hen_day_production_percent, hen_day_production_percent_min, hen_day_production_percent_max, body_weight_g, body_weight_g_min, body_weight_g_max, feed_consumption_g_per_day, feed_consumption_g_per_day_min, feed_consumption_g_per_day_max, egg_weight_g, egg_weight_g_min, egg_weight_g_max, feed_conversion_ratio, mortality_percent, mortality_percent_min, mortality_percent_max, uniformity_percent, uniformity_percent_min, uniformity_percent_max')
         .eq('standard_id', standardId)
         .order('age_weeks')
     ).pipe(
@@ -92,6 +104,8 @@ export class ReportService {
   }
 
   getStandardBodyWeight(standardId: number, ageWeeks: number): Observable<number | null> {
+    // This method still returns a single value, as it's used by the BodyWeightComponent for a single standard line.
+    // For charts, we will use the min/max values directly from getStandardData.
     return from(
       supabase
         .from('production_standard_data')
@@ -168,26 +182,47 @@ export class ReportService {
         const chartData: ReportData['chartData'] = {
           labels: sortedDates.map(d => new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })),
           datasets: [
-            { data: actualHdData, label: 'HD% Aktual', borderColor: '#0A4D9D', tension: 0.2, borderDash: [] },
+            { data: actualHdData, label: 'HD% Aktual', borderColor: '#0A4D9D', tension: 0.2, borderDash: [], fill: false },
           ]
         };
 
         if (standardData.length > 0 && actualData.length > 0) {
             const firstFlockStartDate = new Date( (actualData[0] as any).flocks.start_date );
-            const standardHdData = sortedDates.map(dateStr => {
+            
+            const standardHdDataMin = sortedDates.map(dateStr => {
                 const currentDate = new Date(dateStr);
                 const diffTime = Math.abs(currentDate.getTime() - firstFlockStartDate.getTime());
                 const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
                 const standardPoint = standardData.find(d => d.age_weeks === diffWeeks);
-                return standardPoint ? standardPoint.hen_day_production_percent : null;
+                return standardPoint?.hen_day_production_percent_min ?? null;
             });
-            chartData.datasets.push({
-                data: standardHdData,
-                label: 'HD% Standar',
-                borderColor: '#F5A623',
-                tension: 0.2,
-                borderDash: [5, 5]
+            const standardHdDataMax = sortedDates.map(dateStr => {
+                const currentDate = new Date(dateStr);
+                const diffTime = Math.abs(currentDate.getTime() - firstFlockStartDate.getTime());
+                const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
+                const standardPoint = standardData.find(d => d.age_weeks === diffWeeks);
+                return standardPoint?.hen_day_production_percent_max ?? null;
             });
+
+            chartData.datasets.push(
+                {
+                    data: standardHdDataMin,
+                    label: 'HD% Standar (Min)',
+                    borderColor: '#F5A623',
+                    backgroundColor: 'rgba(245, 166, 35, 0.2)', // Light orange fill
+                    tension: 0.2,
+                    borderDash: [5, 5],
+                    fill: '+1' // Fill to the next dataset (max)
+                },
+                {
+                    data: standardHdDataMax,
+                    label: 'HD% Standar (Max)',
+                    borderColor: '#F5A623',
+                    tension: 0.2,
+                    borderDash: [5, 5],
+                    fill: false // Do not fill above this line
+                }
+            );
         }
 
         return { kpis, chartData };

@@ -170,7 +170,7 @@ export class WeeklyPerformanceComponent implements OnInit {
         const maxWeek = 90; // Default end week for standard
         const allWeeks: number[] = Array.from({ length: maxWeek - minWeek + 1 }, (_, i) => minWeek + i); // Explicitly typed
 
-        const labels = allWeeks.map((week: number) => `${week}`); // Added type to 'week'
+        const labels = allWeeks.map((week: number) => `Minggu ${week}`); // Added type to 'week'
         
         const weeklyActualDataMap = new Map<number, {
           totalEggs: number;
@@ -225,27 +225,66 @@ export class WeeklyPerformanceComponent implements OnInit {
           }
         });
 
-        const standardMetricData = allWeeks.map((ageWeeks: number) => { // Added type to 'ageWeeks'
+        const standardMetricDataMin = allWeeks.map((ageWeeks: number) => { // Added type to 'ageWeeks'
           const standardPoint = standardPerformanceData.find((d: ProductionStandardData) => d.age_weeks === ageWeeks);
           if (!standardPoint) return null;
 
           switch (metricType) {
             case 'hen_day_production_percent':
-              return standardPoint.hen_day_production_percent;
+              return standardPoint.hen_day_production_percent_min ?? null;
             case 'avg_egg_weight_g':
-              return standardPoint.egg_weight_g ?? null;
+              return standardPoint.egg_weight_g_min ?? null;
             case 'avg_feed_intake_g_per_day':
-              return standardPoint.feed_consumption_g_per_day ?? null;
+              return standardPoint.feed_consumption_g_per_day_min ?? null;
             case 'fcr':
-              return standardPoint.feed_conversion_ratio ?? null;
+              return standardPoint.feed_conversion_ratio ?? null; // FCR currently only has single value
             default:
               return null;
           }
         });
 
-        const datasets: ChartConfiguration<'line'>['data']['datasets'] = [
-          { data: standardMetricData, label: 'Standar', borderColor: '#F5A623', tension: 0.2, borderDash: [5, 5], fill: false }
-        ];
+        const standardMetricDataMax = allWeeks.map((ageWeeks: number) => { // Added type to 'ageWeeks'
+          const standardPoint = standardPerformanceData.find((d: ProductionStandardData) => d.age_weeks === ageWeeks);
+          if (!standardPoint) return null;
+
+          switch (metricType) {
+            case 'hen_day_production_percent':
+              return standardPoint.hen_day_production_percent_max ?? null;
+            case 'avg_egg_weight_g':
+              return standardPoint.egg_weight_g_max ?? null;
+            case 'avg_feed_intake_g_per_day':
+              return standardPoint.feed_consumption_g_per_day_max ?? null;
+            case 'fcr':
+              return standardPoint.feed_conversion_ratio ?? null; // FCR currently only has single value
+            default:
+              return null;
+          }
+        });
+
+        const datasets: ChartConfiguration<'line'>['data']['datasets'] = [];
+
+        // Add standard min/max datasets if available for the metric
+        if (standardMetricDataMin.some(val => val !== null) || standardMetricDataMax.some(val => val !== null)) {
+          datasets.push(
+            { 
+              data: standardMetricDataMin, 
+              label: 'Standar (Min)', 
+              borderColor: '#F5A623', 
+              backgroundColor: 'rgba(245, 166, 35, 0.2)', // Light orange fill
+              tension: 0.2, 
+              borderDash: [5, 5], 
+              fill: '+1' // Fill to the next dataset (max)
+            },
+            { 
+              data: standardMetricDataMax, 
+              label: 'Standar (Max)', 
+              borderColor: '#F5A623', 
+              tension: 0.2, 
+              borderDash: [5, 5], 
+              fill: false // Do not fill above this line
+            }
+          );
+        }
 
         // Only add actual data if there is any actual production data
         if (actualProductionData.length > 0) {
