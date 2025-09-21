@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { LayoutComponent } from './components/layout/layout.component';
 import { LoginComponent } from './pages/login/login.component';
 import { RegisterComponent } from './pages/register/register.component';
-import { UpdatePasswordComponent } from './pages/update-password/update-password.component'; // Import baru
+import { UpdatePasswordComponent } from './pages/update-password/update-password.component';
 import { authGuard } from './auth.guard';
 import { publicGuard } from './public.guard';
 import { roleGuard } from './role.guard';
@@ -10,7 +10,7 @@ import { roleGuard } from './role.guard';
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [publicGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [publicGuard] },
-  { path: 'update-password', component: UpdatePasswordComponent, canActivate: [authGuard] }, // Rute baru
+  { path: 'update-password', component: UpdatePasswordComponent, canActivate: [authGuard] },
   {
     path: '',
     component: LayoutComponent,
@@ -30,11 +30,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/farm-detail/farm-detail.component').then(m => m.FarmDetailComponent) 
       },
       { 
-        path: 'flocks', // This route now points to the list component
+        path: 'flocks',
         loadComponent: () => import('./pages/flocks-page/flocks-page.component').then(m => m.FlocksPageComponent) 
       },
       { 
-        path: 'flocks/:id', // New route for flock detail
+        path: 'flocks/:id',
         loadComponent: () => import('./pages/flock-detail/flock-detail.component').then(m => m.FlockDetailComponent) 
       },
       { 
@@ -48,6 +48,10 @@ export const routes: Routes = [
       { 
         path: 'body-weight', 
         loadComponent: () => import('./pages/body-weight/body-weight.component').then(m => m.BodyWeightComponent) 
+      },
+      { 
+        path: 'growth-chart', 
+        loadComponent: () => import('./pages/growth-chart/growth-chart.component').then(m => m.GrowthChartComponent) 
       },
       { 
         path: 'weekly-performance', 

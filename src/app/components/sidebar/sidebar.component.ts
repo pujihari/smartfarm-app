@@ -29,6 +29,7 @@ export class SidebarComponent {
     { path: '/health', icon: '❤️', name: 'Kesehatan' },
     { path: '/production', icon: '📋', name: 'Recording' },
     { path: '/body-weight', icon: '⚖️', name: 'Timbang BB' },
+    { path: '/growth-chart', icon: '🌱', name: 'Grafik Pertumbuhan' },
     { path: '/weekly-performance', icon: '📈', name: 'Performa Mingguan' },
     { path: '/inventory', icon: '📦', name: 'Inventori' },
     { path: '/reports', icon: '📄', name: 'Laporan' },

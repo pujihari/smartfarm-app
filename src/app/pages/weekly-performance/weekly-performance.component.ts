@@ -166,7 +166,7 @@ export class WeeklyPerformanceComponent implements OnInit {
 
     return combineLatest([actualData$, standardData$]).pipe(
       map(([actualProductionData, standardPerformanceData]) => {
-        const minWeek = 18; // Default start week for standard
+        const minWeek = 18; // Reverted to 18
         const maxWeek = 90; // Default end week for standard
         const allWeeks: number[] = Array.from({ length: maxWeek - minWeek + 1 }, (_, i) => minWeek + i); // Explicitly typed
 

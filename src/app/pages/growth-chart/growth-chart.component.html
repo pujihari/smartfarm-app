@@ -1,0 +1,48 @@
+<div class="page-container">
+  <h1 class="page-title">Grafik Pertumbuhan Flok</h1>
+
+  <div class="filter-container">
+    <h2>Filter Grafik</h2>
+    <form [formGroup]="filterForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="flock_id">Pilih Flok</label>
+          <select id="flock_id" formControlName="flock_id">
+            <option [ngValue]="null" disabled>Pilih Flok</option>
+            @for (flock of (flocks$ | async); track flock.id) {
+              <option [value]="flock.id">{{ flock.name }} ({{ flock.farmName }})</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="startDate">Tanggal Mulai</label>
+          <input id="startDate" type="date" formControlName="startDate">
+        </div>
+        <div class="form-group">
+          <label for="endDate">Tanggal Selesai</label>
+          <input id="endDate" type="date" formControlName="endDate">
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="chart-container">
+    <h2>Tren Berat Badan (Aktual vs. Standar)</h2>
+    @if (isChartLoading) {
+      <div class="loading-state">Memuat grafik...</div>
+    } @else {
+      @if (lineChartData.labels && lineChartData.labels.length > 0 && filterForm.get('flock_id')?.value) {
+        <div class="chart-wrapper">
+          <canvas baseChart
+            [data]="lineChartData"
+            [options]="lineChartOptions"
+            [legend]="lineChartLegend"
+            type="line">
+          </canvas>
+        </div>
+      } @else {
+        <p class="placeholder-text">Pilih flok untuk melihat grafik pertumbuhan.</p>
+      }
+    }
+  </div>
+</div>
