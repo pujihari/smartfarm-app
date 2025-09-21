@@ -138,8 +138,8 @@
                     <td>{{ item.flockName }}</td>
                     <td>{{ item.date | date: 'dd/MM/yy' }}</td>
                     <td>{{ item.totalDepletion }}</td>
-                    <td>{{ item.totalEggCount.toLocaleString('id-ID') }}</td>
-                    <td>{{ item.totalFeedConsumption.toLocaleString('id-ID') }}</td>
+                    <td>{{ (item.totalEggCount ?? 0).toLocaleString('id-ID') }}</td>
+                    <td>{{ (item.totalFeedConsumption ?? 0).toLocaleString('id-ID') }}</td>
                     <td>{{ item.notes || '-' }}</td>
                     <td><button class="action-btn delete-btn" (click)="removeFromStage($index)">Hapus</button></td>
                   </tr>
@@ -178,9 +178,9 @@
               <td data-label="Farm">{{ item.farmName }}</td>
               <td data-label="Flok">{{ item.flockName }}</td>
               <td data-label="Deplesi (ekor)">{{ item.totalDepletion }}</td>
-              <td data-label="Total Telur (butir)">{{ item.totalEggCount.toLocaleString('id-ID') }}</td>
-              <td data-label="Total Produksi (kg)">{{ item.totalEggWeightKg.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
-              <td data-label="Total Pakan (kg)">{{ item.totalFeedConsumption.toLocaleString('id-ID') }}</td>
+              <td data-label="Total Telur (butir)">{{ (item.totalEggCount ?? 0).toLocaleString('id-ID') }}</td>
+              <td data-label="Total Produksi (kg)">{{ (item.totalEggWeightKg ?? 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</td>
+              <td data-label="Total Pakan (kg)">{{ (item.totalFeedConsumption ?? 0).toLocaleString('id-ID') }}</td>
               <td data-label="Catatan">{{ item.notes || '-' }}</td>
               <td data-label="Aksi">
                 @if (authService.canWriteData$ | async) {
