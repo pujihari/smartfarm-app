@@ -14,4 +14,6 @@ export interface ProductionData {
   white_eggs_weight_kg: number;
   cracked_eggs_weight_kg: number;
   feed_consumption: FeedConsumption[];
+  mortality_count?: number; // New optional field
+  culling_count?: number; // New optional field
 }

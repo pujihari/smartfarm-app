@@ -13,14 +13,19 @@ export class ProductionService {
     return throwError(() => new Error(error.message || `Server error in ${context}`));
   }
 
-  getProductionDataWithDetails(): Observable<(ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, flockPopulation: number })[]> {
-    return from(supabase.from('production_data').select('*, feed_consumption(*), flocks!inner(name, population, farms!inner(name))')).pipe(
+  getProductionDataWithDetails(): Observable<(ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, flockPopulation: number, totalDepletion: number })[]> {
+    return from(supabase.from('production_data')
+      .select('*, feed_consumption(*), flocks!inner(name, population, farms!inner(name)), mortality_data!left(mortality_count, culling_count)')
+      .order('date', { ascending: false })
+    ).pipe(
       map(response => {
         if (response.error) throw response.error;
         const dataWithDetails = (response.data || []).map((item: any) => {
           const totalEggCount = (item.normal_eggs || 0) + (item.white_eggs || 0) + (item.cracked_eggs || 0);
           const totalFeedConsumption = (item.feed_consumption || []).reduce((sum: number, feed: { quantity_kg: number }) => sum + (feed.quantity_kg || 0), 0);
           const totalEggWeightKg = (item.normal_eggs_weight_kg || 0) + (item.white_eggs_weight_kg || 0) + (item.cracked_eggs_weight_kg || 0);
+          const mortality = item.mortality_data[0]?.mortality_count || 0;
+          const culling = item.mortality_data[0]?.culling_count || 0;
           return {
             ...item,
             feedConsumption: item.feed_consumption,
@@ -29,16 +34,19 @@ export class ProductionService {
             flockPopulation: (item.flocks as any)?.population || 0,
             totalEggCount,
             totalFeedConsumption,
-            totalEggWeightKg
+            totalEggWeightKg,
+            mortality_count: mortality,
+            culling_count: culling,
+            totalDepletion: mortality + culling
           };
         });
-        return dataWithDetails.sort((a: { date: string }, b: { date: string }) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return dataWithDetails;
       }),
       catchError(err => this.handleError(err, 'getProductionDataWithDetails'))
     );
   }
 
-  addProductionData(data: Omit<ProductionData, 'id'>): Observable<any> {
+  addDailyLog(data: Omit<ProductionData, 'id'>): Observable<any> {
     const params = {
       p_flock_id: data.flock_id,
       p_date: data.date,
@@ -48,9 +56,11 @@ export class ProductionService {
       p_normal_eggs_weight_kg: data.normal_eggs_weight_kg,
       p_white_eggs_weight_kg: data.white_eggs_weight_kg,
       p_cracked_eggs_weight_kg: data.cracked_eggs_weight_kg,
-      p_feed_consumption: data.feed_consumption
+      p_feed_consumption: data.feed_consumption,
+      p_mortality_count: data.mortality_count || 0,
+      p_culling_count: data.culling_count || 0
     };
-    return from(supabase.rpc('add_production_data_with_feed', params)).pipe(catchError(err => this.handleError(err, 'addProductionData')));
+    return from(supabase.rpc('add_daily_log', params)).pipe(catchError(err => this.handleError(err, 'addDailyLog')));
   }
 
   updateProductionData(data: Partial<ProductionData>): Observable<any> {
@@ -66,6 +76,8 @@ export class ProductionService {
       p_cracked_eggs_weight_kg: data.cracked_eggs_weight_kg,
       p_feed_consumption: data.feed_consumption
     };
+    // Note: Update logic for mortality needs a separate RPC or direct table update if required.
+    // For now, focusing on adding data.
     return from(supabase.rpc('update_production_data_with_feed', params)).pipe(catchError(err => this.handleError(err, 'updateProductionData')));
   }
 
