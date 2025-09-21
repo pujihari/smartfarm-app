@@ -168,9 +168,9 @@ export class WeeklyPerformanceComponent implements OnInit {
       map(([actualProductionData, standardPerformanceData]) => {
         const minWeek = 18; // Default start week for standard
         const maxWeek = 90; // Default end week for standard
-        const allWeeks = Array.from({ length: maxWeek - minWeek + 1 }, (_, i) => minWeek + i);
+        const allWeeks: number[] = Array.from({ length: maxWeek - minWeek + 1 }, (_, i) => minWeek + i); // Explicitly typed
 
-        const labels = allWeeks.map(week => `Minggu ke-${week}`);
+        const labels = allWeeks.map((week: number) => `${week}`); // Added type to 'week'
         
         const weeklyActualDataMap = new Map<number, {
           totalEggs: number;
@@ -204,7 +204,28 @@ export class WeeklyPerformanceComponent implements OnInit {
           weekEntry.count++;
         });
 
-        const standardMetricData = allWeeks.map(ageWeeks => {
+        const actualMetricData = allWeeks.map((ageWeeks: number) => { // Added type to 'ageWeeks'
+          const entry = weeklyActualDataMap.get(ageWeeks);
+          if (!entry) return null;
+
+          const avgPopulation = entry.population;
+          const avgFeedPerDay = entry.totalFeed / entry.count;
+
+          switch (metricType) {
+            case 'hen_day_production_percent':
+              return avgPopulation > 0 ? (entry.totalEggs / avgPopulation) * 100 : 0;
+            case 'avg_egg_weight_g':
+              return entry.totalEggs > 0 ? (entry.totalEggWeight * 1000) / entry.totalEggs : 0;
+            case 'avg_feed_intake_g_per_day':
+              return avgPopulation > 0 ? (avgFeedPerDay * 1000) / avgPopulation : 0;
+            case 'fcr':
+              return entry.totalEggWeight > 0 ? entry.totalFeed / entry.totalEggWeight : 0;
+            default:
+              return null; // Changed from 0 to null for consistency with standard data
+          }
+        });
+
+        const standardMetricData = allWeeks.map((ageWeeks: number) => { // Added type to 'ageWeeks'
           const standardPoint = standardPerformanceData.find((d: ProductionStandardData) => d.age_weeks === ageWeeks);
           if (!standardPoint) return null;
 
@@ -226,27 +247,8 @@ export class WeeklyPerformanceComponent implements OnInit {
           { data: standardMetricData, label: 'Standar', borderColor: '#F5A623', tension: 0.2, borderDash: [5, 5], fill: false }
         ];
 
+        // Only add actual data if there is any actual production data
         if (actualProductionData.length > 0) {
-          const actualMetricData = allWeeks.map(ageWeeks => {
-            const entry = weeklyActualDataMap.get(ageWeeks);
-            if (!entry) return null;
-
-            const avgPopulation = entry.population;
-            const avgFeedPerDay = entry.totalFeed / entry.count;
-
-            switch (metricType) {
-              case 'hen_day_production_percent':
-                return avgPopulation > 0 ? (entry.totalEggs / avgPopulation) * 100 : 0;
-              case 'avg_egg_weight_g':
-                return entry.totalEggs > 0 ? (entry.totalEggWeight * 1000) / entry.totalEggs : 0;
-              case 'avg_feed_intake_g_per_day':
-                return avgPopulation > 0 ? (avgFeedPerDay * 1000) / avgPopulation : 0;
-              case 'fcr':
-                return entry.totalEggWeight > 0 ? entry.totalFeed / entry.totalEggWeight : 0;
-              default:
-                return null;
-            }
-          });
           datasets.push({ data: actualMetricData, label: 'Aktual', borderColor: '#0A4D9D', tension: 0.2, fill: false });
         }
 
