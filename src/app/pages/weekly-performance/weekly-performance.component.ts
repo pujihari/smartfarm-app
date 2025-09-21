@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray, FormControl } from '@angular/forms';
-import { Observable, BehaviorSubject, switchMap, map, tap, combineLatest, startWith, of, catchError } from 'rxjs'; // Menambahkan 'of' dan 'catchError'
+import { Observable, BehaviorSubject, switchMap, map, tap, combineLatest, startWith, of, catchError } from 'rxjs';
 import { FlockService } from '../../services/flock.service';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
@@ -95,8 +95,8 @@ export class WeeklyPerformanceComponent implements OnInit {
     public authService: AuthService,
     private notificationService: NotificationService,
     private datePipe: DatePipe,
-    private reportService: ReportService, // Inject ReportService
-    private productionService: ProductionService // Inject ProductionService
+    private reportService: ReportService,
+    private productionService: ProductionService
   ) {
     const today = new Date();
     const threeMonthsAgo = new Date();
@@ -115,16 +115,15 @@ export class WeeklyPerformanceComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Trigger data load whenever form values change
     this.performanceForm.valueChanges.pipe(
-      startWith(this.performanceForm.value), // Initial load
-      tap(() => this.isChartLoading = true), // Set loading state
+      startWith(this.performanceForm.value),
+      tap(() => this.isChartLoading = true),
       switchMap(filters => this.loadPerformanceData(filters))
     ).subscribe(
-      () => this.isChartLoading = false, // Clear loading state on success
-      (error: any) => { // Menambahkan tipe 'any' untuk error
+      () => this.isChartLoading = false,
+      (error: any) => {
         this.notificationService.showError(`Gagal memuat data performa: ${error.message}`);
-        this.isChartLoading = false; // Clear loading state on error
+        this.isChartLoading = false;
       }
     );
   }
@@ -159,13 +158,13 @@ export class WeeklyPerformanceComponent implements OnInit {
         if (standard) {
           return this.reportService.getStandardData(standard.id);
         }
-        return of<ProductionStandardData[]>([]); // Memberikan tipe eksplisit
+        return of<ProductionStandardData[]>([]);
       })
     );
 
     return combineLatest([actualData$, standardData$]).pipe(
       map(([actualProductionData, standardPerformanceData]) => {
-        const weeklyDataMap = new Map<number, { // Key by age_weeks
+        const weeklyDataMap = new Map<number, {
           totalEggs: number;
           totalEggWeight: number;
           totalFeed: number;
@@ -177,15 +176,18 @@ export class WeeklyPerformanceComponent implements OnInit {
         actualProductionData.forEach(item => {
           const itemDate = new Date(item.date);
           const flockStartDate = new Date(selectedFlock.start_date);
-          const ageDays = Math.round((itemDate.getTime() - flockStartDate.getTime()) / (1000 * 60 * 60 * 24)) + selectedFlock.entry_age_days;
-          const ageWeeks = Math.floor(ageDays / 7);
+          
+          // Calculate age in weeks more robustly, aligning with flock-detail.component.ts
+          const diffTime = Math.abs(itemDate.getTime() - flockStartDate.getTime());
+          const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
+          const ageWeeks = diffWeeks + Math.floor(selectedFlock.entry_age_days / 7);
 
           if (!weeklyDataMap.has(ageWeeks)) {
             weeklyDataMap.set(ageWeeks, {
               totalEggs: 0,
               totalEggWeight: 0,
               totalFeed: 0,
-              population: selectedFlock.population, // Assuming population is constant for the flock
+              population: selectedFlock.population,
               count: 0,
               dates: []
             });
@@ -203,8 +205,8 @@ export class WeeklyPerformanceComponent implements OnInit {
 
         const actualMetricData = sortedAgeWeeks.map(week => {
           const entry = weeklyDataMap.get(week)!;
-          const avgPopulation = entry.population; // Use flock's population
-          const avgFeedPerDay = entry.totalFeed / entry.count; // Total feed for the week / number of days with data
+          const avgPopulation = entry.population;
+          const avgFeedPerDay = entry.totalFeed / entry.count;
 
           switch (metricType) {
             case 'hen_day_production_percent':
@@ -221,18 +223,18 @@ export class WeeklyPerformanceComponent implements OnInit {
         });
 
         const standardMetricData = sortedAgeWeeks.map(ageWeeks => {
-          const standardPoint = (standardPerformanceData as ProductionStandardData[]).find((d: ProductionStandardData) => d.age_weeks === ageWeeks); // Memberikan tipe eksplisit
+          const standardPoint = (standardPerformanceData as ProductionStandardData[]).find((d: ProductionStandardData) => d.age_weeks === ageWeeks);
           if (!standardPoint) return null;
 
           switch (metricType) {
             case 'hen_day_production_percent':
               return standardPoint.hen_day_production_percent;
             case 'avg_egg_weight_g':
-              return standardPoint.egg_weight_g ?? null; // Mengubah undefined menjadi null
+              return standardPoint.egg_weight_g ?? null;
             case 'avg_feed_intake_g_per_day':
-              return standardPoint.feed_consumption_g_per_day ?? null; // Mengubah undefined menjadi null
+              return standardPoint.feed_consumption_g_per_day ?? null;
             case 'fcr':
-              return standardPoint.feed_conversion_ratio ?? null; // Mengubah undefined menjadi null
+              return standardPoint.feed_conversion_ratio ?? null;
             default:
               return null;
           }
@@ -246,7 +248,6 @@ export class WeeklyPerformanceComponent implements OnInit {
           ]
         };
 
-        // Update Y-axis title based on selected metric
         let yAxisTitle = 'Nilai Metrik';
         switch (metricType) {
           case 'hen_day_production_percent': yAxisTitle = 'Hen Day Production (%)'; break;
@@ -260,7 +261,7 @@ export class WeeklyPerformanceComponent implements OnInit {
         
         return undefined;
       }),
-      catchError((err: any) => { // Memberikan tipe 'any' untuk error
+      catchError((err: any) => {
         console.error('Error processing performance data:', err);
         this.notificationService.showError(`Gagal memproses data performa: ${err.message}`);
         this.lineChartData = { labels: [], datasets: [] };
@@ -278,7 +279,6 @@ export class WeeklyPerformanceComponent implements OnInit {
     return weekNo;
   }
 
-  // Metode save, open/close delete modal tidak lagi relevan untuk halaman ini
   saveData(): void {
     this.notificationService.showInfo('Fungsi simpan tidak tersedia di halaman performa mingguan.');
   }
