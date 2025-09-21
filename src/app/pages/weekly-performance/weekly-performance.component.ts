@@ -40,6 +40,12 @@ export class WeeklyPerformanceComponent implements OnInit {
     responsive: true,
     maintainAspectRatio: false,
     scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Umur Flok (Minggu)'
+        }
+      },
       y: {
         beginAtZero: true,
         title: {
@@ -62,6 +68,10 @@ export class WeeklyPerformanceComponent implements OnInit {
       },
       tooltip: {
         callbacks: {
+          title: function(context) {
+            // Display the week number as the title
+            return context[0].label;
+          },
           label: function(context) {
             let label = context.dataset.label || '';
             if (label) {
@@ -155,7 +165,7 @@ export class WeeklyPerformanceComponent implements OnInit {
 
     return combineLatest([actualData$, standardData$]).pipe(
       map(([actualProductionData, standardPerformanceData]) => {
-        const weeklyDataMap = new Map<string, {
+        const weeklyDataMap = new Map<number, { // Key by age_weeks
           totalEggs: number;
           totalEggWeight: number;
           totalFeed: number;
@@ -166,12 +176,12 @@ export class WeeklyPerformanceComponent implements OnInit {
 
         actualProductionData.forEach(item => {
           const itemDate = new Date(item.date);
-          const weekNumber = this.getWeekNumber(itemDate);
-          const year = itemDate.getFullYear();
-          const weekKey = `${year}-W${weekNumber.toString().padStart(2, '0')}`;
+          const flockStartDate = new Date(selectedFlock.start_date);
+          const ageDays = Math.round((itemDate.getTime() - flockStartDate.getTime()) / (1000 * 60 * 60 * 24)) + selectedFlock.entry_age_days;
+          const ageWeeks = Math.floor(ageDays / 7);
 
-          if (!weeklyDataMap.has(weekKey)) {
-            weeklyDataMap.set(weekKey, {
+          if (!weeklyDataMap.has(ageWeeks)) {
+            weeklyDataMap.set(ageWeeks, {
               totalEggs: 0,
               totalEggWeight: 0,
               totalFeed: 0,
@@ -180,7 +190,7 @@ export class WeeklyPerformanceComponent implements OnInit {
               dates: []
             });
           }
-          const weekEntry = weeklyDataMap.get(weekKey)!;
+          const weekEntry = weeklyDataMap.get(ageWeeks)!;
           weekEntry.totalEggs += item.totalEggCount;
           weekEntry.totalEggWeight += item.totalEggWeightKg;
           weekEntry.totalFeed += item.totalFeedConsumption;
@@ -188,19 +198,11 @@ export class WeeklyPerformanceComponent implements OnInit {
           weekEntry.dates.push(itemDate);
         });
 
-        const sortedWeekKeys = Array.from(weeklyDataMap.keys()).sort();
-        const labels = sortedWeekKeys.map(key => {
-          const datesInWeek = weeklyDataMap.get(key)?.dates || [];
-          if (datesInWeek.length > 0) {
-            const firstDay = new Date(Math.min(...datesInWeek.map(d => d.getTime())));
-            const lastDay = new Date(Math.max(...datesInWeek.map(d => d.getTime())));
-            return `${this.datePipe.transform(firstDay, 'dd/MM')} - ${this.datePipe.transform(lastDay, 'dd/MM')}`;
-          }
-          return key;
-        });
+        const sortedAgeWeeks = Array.from(weeklyDataMap.keys()).sort((a, b) => a - b);
+        const labels = sortedAgeWeeks.map(week => `Minggu ke-${week}`);
 
-        const actualMetricData = sortedWeekKeys.map(key => {
-          const entry = weeklyDataMap.get(key)!;
+        const actualMetricData = sortedAgeWeeks.map(week => {
+          const entry = weeklyDataMap.get(week)!;
           const avgPopulation = entry.population; // Use flock's population
           const avgFeedPerDay = entry.totalFeed / entry.count; // Total feed for the week / number of days with data
 
@@ -218,15 +220,7 @@ export class WeeklyPerformanceComponent implements OnInit {
           }
         });
 
-        const standardMetricData = sortedWeekKeys.map(key => {
-          const datesInWeek = weeklyDataMap.get(key)?.dates || [];
-          if (datesInWeek.length === 0) return null;
-
-          const firstDayOfWeek = new Date(Math.min(...datesInWeek.map(d => d.getTime())));
-          const diffTime = Math.abs(firstDayOfWeek.getTime() - new Date(selectedFlock.start_date).getTime());
-          const ageDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + selectedFlock.entry_age_days;
-          const ageWeeks = Math.floor(ageDays / 7);
-
+        const standardMetricData = sortedAgeWeeks.map(ageWeeks => {
           const standardPoint = (standardPerformanceData as ProductionStandardData[]).find((d: ProductionStandardData) => d.age_weeks === ageWeeks); // Memberikan tipe eksplisit
           if (!standardPoint) return null;
 
@@ -275,7 +269,7 @@ export class WeeklyPerformanceComponent implements OnInit {
     );
   }
 
-  // Helper function to get week number (ISO week date)
+  // Helper function to get week number (ISO week date) - Not used for labels anymore, but kept for reference if needed
   private getWeekNumber(d: Date): number {
     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
