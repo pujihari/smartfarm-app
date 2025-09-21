@@ -1,72 +1,64 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { FarmService } from '../../services/farm.service';
 import { FlockService } from '../../services/flock.service';
 import { NotificationService } from '../../services/notification.service';
-import { Farm } from '../../models/farm.model';
-import { Flock } from '../../models/flock.model';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { FlockListComponent } from '../../components/flock-list/flock-list.component'; // Updated import
+import { Farm } from '../../models/farm.model';
+import { Flock } from '../../models/flock.model';
 import { FlockModalComponent } from '../../components/flock-modal/flock-modal.component';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { AuthService } from '../../services/auth.service';
+import { FlockListComponent } from '../../components/flock-list/flock-list.component'; // Import the reusable component
+
+type FlockWithFarmInfo = Flock & { farmName: string };
 
 @Component({
-  selector: 'app-farm-detail',
+  selector: 'app-flocks-page', // Updated selector
   standalone: true,
-  imports: [CommonModule, RouterModule, FlockListComponent, FlockModalComponent, ConfirmationModalComponent],
-  templateUrl: './farm-detail.component.html',
-  styleUrl: './farm-detail.component.css'
+  imports: [CommonModule, RouterModule, FlockModalComponent, ConfirmationModalComponent, FlockListComponent], // Added FlockListComponent
+  templateUrl: './flocks-page.component.html',
+  styleUrl: './flocks-page.component.css'
 })
-export class FarmDetailComponent implements OnInit {
-  farm$: Observable<Farm | undefined> | undefined;
-  flocks$: Observable<Flock[]> | undefined;
-  farms$: Observable<Farm[]>;
-  
-  private refreshFlocks$ = new BehaviorSubject<void>(undefined);
-
-  isFlockModalOpen = false;
+export class FlocksPageComponent implements OnInit { // Updated class name
+  isModalOpen = false;
   flockToEdit: Flock | null = null;
-  currentFarmId: number | null = null;
+  
+  private refresh$ = new BehaviorSubject<void>(undefined);
+  flocks$: Observable<FlockWithFarmInfo[]>;
+  farms$: Observable<Farm[]>;
 
   isConfirmModalOpen = false;
   flockToDelete: Flock | null = null;
 
   constructor(
-    private route: ActivatedRoute,
     private farmService: FarmService,
     private flockService: FlockService,
     private notificationService: NotificationService,
     public authService: AuthService
   ) {
+    this.flocks$ = this.refresh$.pipe(
+      switchMap(() => this.flockService.getFlocksWithFarmInfo())
+    );
     this.farms$ = this.farmService.getFarms();
   }
 
-  ngOnInit(): void {
-    const farmId = Number(this.route.snapshot.paramMap.get('id'));
-    this.currentFarmId = farmId;
-    if (farmId) {
-      this.farm$ = this.farmService.getFarmById(farmId);
-      this.flocks$ = this.refreshFlocks$.pipe(
-        switchMap(() => this.flockService.getFlocksByFarmId(farmId))
-      );
-    }
-  }
+  ngOnInit(): void {}
 
-  openAddFlockModal(): void {
+  openAddModal(): void {
     this.flockToEdit = null;
-    this.isFlockModalOpen = true;
+    this.isModalOpen = true;
   }
 
-  openEditFlockModal(flock: Flock): void {
+  openEditModal(flock: Flock): void {
     this.flockToEdit = flock;
-    this.isFlockModalOpen = true;
+    this.isModalOpen = true;
   }
 
-  closeFlockModal(): void {
-    this.isFlockModalOpen = false;
+  closeModal(): void {
+    this.isModalOpen = false;
     this.flockToEdit = null;
   }
 
@@ -74,12 +66,12 @@ export class FarmDetailComponent implements OnInit {
     const saveObservable = flockData.id
       ? this.flockService.updateFlock(flockData)
       : this.flockService.addFlock(flockData as Omit<Flock, 'id' | 'organization_id'>);
-
+    
     saveObservable.subscribe({
       next: () => {
         this.notificationService.showSuccess('Data flok berhasil disimpan.');
-        this.closeFlockModal();
-        this.refreshFlocks$.next();
+        this.closeModal();
+        this.refresh$.next();
       },
       error: (err) => {
         this.notificationService.showError(`Gagal menyimpan flok: ${err.message}`);
@@ -87,27 +79,27 @@ export class FarmDetailComponent implements OnInit {
     });
   }
 
-  openDeleteFlockModal(flock: Flock): void {
+  openDeleteModal(flock: Flock): void {
     this.flockToDelete = flock;
     this.isConfirmModalOpen = true;
   }
 
-  closeDeleteFlockModal(): void {
+  closeDeleteModal(): void {
     this.isConfirmModalOpen = false;
     this.flockToDelete = null;
   }
 
-  confirmDeleteFlock(): void {
+  confirmDelete(): void {
     if (this.flockToDelete) {
       this.flockService.deleteFlock(this.flockToDelete.id).subscribe({
         next: () => {
           this.notificationService.showSuccess('Flok berhasil dihapus.');
-          this.closeDeleteFlockModal();
-          this.refreshFlocks$.next();
+          this.closeDeleteModal();
+          this.refresh$.next();
         },
         error: (err) => {
           this.notificationService.showError(`Gagal menghapus flok: ${err.message}`);
-          this.closeDeleteFlockModal();
+          this.closeDeleteModal();
         }
       });
     }

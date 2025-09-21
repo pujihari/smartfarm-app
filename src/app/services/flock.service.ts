@@ -45,6 +45,20 @@ export class FlockService {
     );
   }
 
+  getFlockById(id: number): Observable<Flock & { farmName: string } | undefined> {
+    return from(supabase.from('flocks').select('*, farms ( name )').eq('id', id).single()).pipe(
+      map(response => {
+        if (response.error && response.error.code !== 'PGRST116') throw response.error;
+        if (!response.data) return undefined;
+        return {
+          ...response.data,
+          farmName: (response.data.farms as any)?.name || 'N/A'
+        } as Flock & { farmName: string };
+      }),
+      catchError(err => this.handleError(err, 'getFlockById'))
+    );
+  }
+
   addFlock(flockData: Omit<Flock, 'id' | 'organization_id'>): Observable<any> {
     return this.authService.organizationId$.pipe(
       take(1),

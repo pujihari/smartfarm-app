@@ -37,7 +37,7 @@ export class SidebarComponent {
       name: 'Pengaturan',
       children: [
         { path: '/farms', icon: '🏞️', name: 'Manajemen Farm' },
-        { path: '/flocks', icon: '🐔', name: 'Manajemen Flok' },
+        { path: '/flocks', icon: '🐔', name: 'Manajemen Flok' }, // Updated path to the list component
         { path: '/members', icon: '👥', name: 'Manajemen Anggota', requiredRoles: ['owner', 'manager'] },
         { path: '/settings', icon: '⚙️', name: 'Pengaturan Organisasi', requiredRoles: ['owner'] },
       ]

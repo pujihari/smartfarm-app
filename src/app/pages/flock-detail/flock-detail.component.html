@@ -1,0 +1,135 @@
+<div class="page-container">
+  @if (flockDetail$ | async; as data) {
+    <div class="page-header">
+      <a routerLink="/flocks" class="back-link">← Kembali ke Daftar Flok</a>
+      <h1 class="page-title">{{ data.flock.name }}</h1>
+      <span class="status" [class.status-active]="data.flock.status === 'Aktif'" [class.status-finished]="data.flock.status === 'Selesai'">
+        {{ data.flock.status }}
+      </span>
+    </div>
+
+    <div class="details-grid">
+      <div class="detail-card">
+        <h3>Farm</h3>
+        <p><a [routerLink]="['/farms', data.flock.farm_id]">{{ data.flock.farmName }}</a></p>
+      </div>
+      <div class="detail-card">
+        <h3>Jenis Ayam</h3>
+        <p>{{ data.flock.breed }}</p>
+      </div>
+      <div class="detail-card">
+        <h3>Populasi Awal</h3>
+        <p>{{ data.flock.population.toLocaleString('id-ID') }} ekor</p>
+      </div>
+      <div class="detail-card">
+        <h3>Populasi Saat Ini</h3>
+        <p>{{ data.kpis.currentPopulation.toLocaleString('id-ID') }} ekor</p>
+      </div>
+      <div class="detail-card">
+        <h3>Tanggal Mulai</h3>
+        <p>{{ data.flock.start_date | date: 'dd MMMM yyyy' }}</p>
+      </div>
+      <div class="detail-card">
+        <h3>Umur Saat Ini</h3>
+        <p>{{ data.currentAgeDays }} hari</p>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <h3>Total Telur</h3>
+        <p>{{ data.kpis.totalEggs.toLocaleString('id-ID') }} butir</p>
+      </div>
+      <div class="kpi-card">
+        <h3>HD% Rata-rata</h3>
+        <p>{{ data.kpis.avgHenDayProduction.toFixed(1) }}%</p>
+      </div>
+      <div class="kpi-card">
+        <h3>Total Pakan</h3>
+        <p>{{ data.kpis.totalFeedConsumption.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} kg</p>
+      </div>
+      <div class="kpi-card">
+        <h3>FCR</h3>
+        <p>{{ data.kpis.fcr.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
+      </div>
+      <div class="kpi-card">
+        <h3>Total Kematian</h3>
+        <p>{{ data.kpis.totalMortality.toLocaleString('id-ID') }} ekor</p>
+      </div>
+      <div class="kpi-card">
+        <h3>Total Culling</h3>
+        <p>{{ data.kpis.totalCulling.toLocaleString('id-ID') }} ekor</p>
+      </div>
+      <div class="kpi-card">
+        <h3>Tingkat Deplesi</h3>
+        <p>{{ data.kpis.totalDepletionRate.toFixed(2) }}%</p>
+      </div>
+    </div>
+
+    <div class="chart-section">
+      <h2>Tren Produksi & Pakan</h2>
+      <div class="chart-wrapper">
+        <canvas baseChart
+          [data]="productionChartData"
+          [options]="productionChartOptions"
+          type="line">
+        </canvas>
+      </div>
+    </div>
+
+    <div class="chart-section">
+      <h2>Tren Berat Badan</h2>
+      <div class="chart-wrapper">
+        <canvas baseChart
+          [data]="bodyWeightChartData"
+          [options]="bodyWeightChartOptions"
+          type="line">
+        </canvas>
+      </div>
+    </div>
+
+    <div class="chart-section">
+      <h2>Tren Deplesi Harian</h2>
+      <div class="chart-wrapper">
+        <canvas baseChart
+          [data]="depletionChartData"
+          [options]="depletionChartOptions"
+          type="bar">
+        </canvas>
+      </div>
+    </div>
+
+    <div class="section-container">
+      <h2>Riwayat Kejadian Kesehatan</h2>
+      <div class="table-container">
+        <table class="health-table">
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Jenis Kejadian</th>
+              <th>Deskripsi</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (data.healthEvents.length > 0) {
+              @for (event of data.healthEvents; track event.id) {
+                <tr>
+                  <td>{{ event.date | date: 'dd MMMM yyyy' }}</td>
+                  <td>{{ event.event_type }}</td>
+                  <td>{{ event.description }}</td>
+                </tr>
+              }
+            } @else {
+              <tr>
+                <td colspan="3" class="empty-state">Belum ada catatan kesehatan untuk flok ini.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  } @else {
+    <p>Memuat detail flok atau flok tidak ditemukan.</p>
+  }
+</div>

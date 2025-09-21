@@ -15,13 +15,13 @@ import { AuthService } from '../../services/auth.service';
 type FlockWithFarmInfo = Flock & { farmName: string };
 
 @Component({
-  selector: 'app-flocks',
+  selector: 'app-flock-list',
   standalone: true,
   imports: [CommonModule, RouterModule, FlockModalComponent, ConfirmationModalComponent],
-  templateUrl: './flocks.component.html',
-  styleUrl: './flocks.component.css'
+  templateUrl: './flock-list.component.html',
+  styleUrl: './flock-list.component.css'
 })
-export class FlocksComponent implements OnInit {
+export class FlockListComponent implements OnInit {
   isModalOpen = false;
   flockToEdit: Flock | null = null;
   

@@ -2,11 +2,12 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Flock } from '../../models/flock.model';
 import { AuthService } from '../../services/auth.service';
+import { RouterModule } from '@angular/router'; // Import RouterModule
 
 @Component({
   selector: 'app-flock-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule], // Add RouterModule here
   templateUrl: './flock-list.component.html',
   styleUrl: './flock-list.component.css'
 })

@@ -28,6 +28,25 @@ export class HealthService {
     );
   }
 
+  getHealthEventsByFlockId(flockId: number, startDate?: string, endDate?: string): Observable<HealthEvent[]> {
+    let query = supabase.from('health_events').select('*').eq('flock_id', flockId).order('date', { ascending: true });
+
+    if (startDate) {
+      query = query.gte('date', startDate);
+    }
+    if (endDate) {
+      query = query.lte('date', endDate);
+    }
+
+    return from(query).pipe(
+      map(response => {
+        if (response.error) throw response.error;
+        return response.data || [];
+      }),
+      catchError(err => this.handleError(err, 'getHealthEventsByFlockId'))
+    );
+  }
+
   addHealthEvent(eventData: Omit<HealthEvent, 'id' | 'organization_id'>): Observable<any> {
     return this.authService.organizationId$.pipe(
       take(1),

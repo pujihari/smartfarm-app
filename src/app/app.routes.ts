@@ -30,8 +30,12 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/farm-detail/farm-detail.component').then(m => m.FarmDetailComponent) 
       },
       { 
-        path: 'flocks', 
-        loadComponent: () => import('./pages/flocks/flocks.component').then(m => m.FlocksComponent) 
+        path: 'flocks', // This route now points to the list component
+        loadComponent: () => import('./pages/flocks-page/flocks-page.component').then(m => m.FlocksPageComponent) 
+      },
+      { 
+        path: 'flocks/:id', // New route for flock detail
+        loadComponent: () => import('./pages/flock-detail/flock-detail.component').then(m => m.FlockDetailComponent) 
       },
       { 
         path: 'health', 

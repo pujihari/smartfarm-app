@@ -27,6 +27,25 @@ export class BodyWeightService {
     );
   }
 
+  getBodyWeightHistoryByFlockId(flockId: number, startDate?: string, endDate?: string): Observable<BodyWeightData[]> {
+    let query = supabase.from('body_weight_data').select('*').eq('flock_id', flockId).order('weighing_date', { ascending: true });
+
+    if (startDate) {
+      query = query.gte('weighing_date', startDate);
+    }
+    if (endDate) {
+      query = query.lte('weighing_date', endDate);
+    }
+
+    return from(query).pipe(
+      map(response => {
+        if (response.error) throw response.error;
+        return response.data || [];
+      }),
+      catchError(err => this.handleError(err, 'getBodyWeightHistoryByFlockId'))
+    );
+  }
+
   saveBodyWeightData(data: Omit<BodyWeightData, 'id'>): Observable<any> {
     const params = {
       p_flock_id: data.flock_id,

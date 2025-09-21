@@ -23,7 +23,7 @@
         @if (flocks$ | async; as flocks) {
           @for (flock of flocks; track flock.id) {
             <tr>
-              <td data-label="Nama Flok">{{ flock.name }}</td>
+              <td data-label="Nama Flok"><a [routerLink]="['/flocks', flock.id]" class="farm-link">{{ flock.name }}</a></td>
               <td data-label="Nama Farm"><a [routerLink]="['/farms', flock.farm_id]" class="farm-link">{{ flock.farmName }}</a></td>
               <td data-label="Jenis Ayam">{{ flock.breed }}</td>
               <td data-label="Populasi">{{ flock.population.toLocaleString('id-ID') }}</td>
