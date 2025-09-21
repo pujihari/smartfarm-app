@@ -16,4 +16,5 @@ export interface ProductionData {
   feed_consumption: FeedConsumption[];
   mortality_count?: number; // New optional field
   culling_count?: number; // New optional field
+  notes?: string; // New optional field for general notes
 }

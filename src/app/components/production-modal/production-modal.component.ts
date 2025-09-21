@@ -31,7 +31,8 @@ export class ProductionModalComponent implements OnInit {
       normal_eggs_weight_kg: [null, [Validators.required, Validators.min(0)]],
       white_eggs_weight_kg: [null, [Validators.required, Validators.min(0)]],
       cracked_eggs_weight_kg: [null, [Validators.required, Validators.min(0)]],
-      feed_consumption: this.fb.array([])
+      feed_consumption: this.fb.array([]),
+      notes: [''] // New: notes field
     });
   }
 

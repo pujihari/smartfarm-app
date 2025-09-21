@@ -84,6 +84,33 @@ export class ProductionService {
     );
   }
 
+  // New method to get a single day's production data for a specific flock
+  getProductionDataForDay(flockId: number, date: string): Observable<(ProductionData & { mortality_count: number, culling_count: number }) | null> {
+    return from(supabase.from('production_data')
+      .select('*, feed_consumption(*), mortality_data!left(mortality_count, culling_count)')
+      .eq('flock_id', flockId)
+      .eq('date', date)
+      .limit(1)
+    ).pipe(
+      map(response => {
+        if (response.error) throw response.error;
+        if (response.data && response.data.length > 0) {
+          const item = response.data[0];
+          const mortality = item.mortality_data[0]?.mortality_count || 0;
+          const culling = item.mortality_data[0]?.culling_count || 0;
+          return {
+            ...item,
+            feed_consumption: item.feed_consumption || [],
+            mortality_count: mortality,
+            culling_count: culling
+          } as ProductionData & { mortality_count: number, culling_count: number };
+        }
+        return null;
+      }),
+      catchError(err => this.handleError(err, 'getProductionDataForDay'))
+    );
+  }
+
   addDailyLog(data: Omit<ProductionData, 'id'>): Observable<any> {
     const params = {
       p_flock_id: data.flock_id,
@@ -96,7 +123,8 @@ export class ProductionService {
       p_cracked_eggs_weight_kg: data.cracked_eggs_weight_kg,
       p_feed_consumption: data.feed_consumption,
       p_mortality_count: data.mortality_count || 0,
-      p_culling_count: data.culling_count || 0
+      p_culling_count: data.culling_count || 0,
+      p_notes: data.notes || null // Include notes
     };
     return from(supabase.rpc('add_daily_log', params)).pipe(catchError(err => this.handleError(err, 'addDailyLog')));
   }
@@ -112,10 +140,9 @@ export class ProductionService {
       p_normal_eggs_weight_kg: data.normal_eggs_weight_kg,
       p_white_eggs_weight_kg: data.white_eggs_weight_kg,
       p_cracked_eggs_weight_kg: data.cracked_eggs_weight_kg,
-      p_feed_consumption: data.feed_consumption
+      p_feed_consumption: data.feed_consumption,
+      p_notes: data.notes || null // Include notes
     };
-    // Note: Update logic for mortality needs a separate RPC or direct table update if required.
-    // For now, focusing on adding data.
     return from(supabase.rpc('update_production_data_with_feed', params)).pipe(catchError(err => this.handleError(err, 'updateProductionData')));
   }
 
