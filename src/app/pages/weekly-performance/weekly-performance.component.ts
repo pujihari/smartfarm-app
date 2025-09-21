@@ -145,14 +145,7 @@ export class WeeklyPerformanceComponent implements OnInit {
       return of(undefined);
     }
 
-    const actualData$ = this.productionService.getProductionDataWithDetails().pipe(
-      map(data => data.filter(item => 
-        item.flock_id === selectedFlockId &&
-        new Date(item.date) >= new Date(startDate) &&
-        new Date(item.date) <= new Date(endDate)
-      ))
-    );
-
+    // Fetch standard data first
     const standardData$: Observable<ProductionStandardData[]> = this.reportService.getStandardByBreed(selectedFlock.breed).pipe(
       switchMap(standard => {
         if (standard) {
@@ -162,68 +155,57 @@ export class WeeklyPerformanceComponent implements OnInit {
       })
     );
 
+    // Fetch actual data
+    const actualData$ = this.productionService.getProductionDataWithDetails().pipe(
+      map(data => data.filter(item => 
+        item.flock_id === selectedFlockId &&
+        new Date(item.date) >= new Date(startDate) &&
+        new Date(item.date) <= new Date(endDate)
+      ))
+    );
+
     return combineLatest([actualData$, standardData$]).pipe(
       map(([actualProductionData, standardPerformanceData]) => {
-        const weeklyDataMap = new Map<number, {
+        const minWeek = 18; // Default start week for standard
+        const maxWeek = 90; // Default end week for standard
+        const allWeeks = Array.from({ length: maxWeek - minWeek + 1 }, (_, i) => minWeek + i);
+
+        const labels = allWeeks.map(week => `Minggu ke-${week}`);
+        
+        const weeklyActualDataMap = new Map<number, {
           totalEggs: number;
           totalEggWeight: number;
           totalFeed: number;
           population: number;
           count: number;
-          dates: Date[];
         }>();
 
         actualProductionData.forEach(item => {
           const itemDate = new Date(item.date);
           const flockStartDate = new Date(selectedFlock.start_date);
           
-          // Calculate age in weeks more robustly, aligning with flock-detail.component.ts
           const diffTime = Math.abs(itemDate.getTime() - flockStartDate.getTime());
           const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
           const ageWeeks = diffWeeks + Math.floor(selectedFlock.entry_age_days / 7);
 
-          if (!weeklyDataMap.has(ageWeeks)) {
-            weeklyDataMap.set(ageWeeks, {
+          if (!weeklyActualDataMap.has(ageWeeks)) {
+            weeklyActualDataMap.set(ageWeeks, {
               totalEggs: 0,
               totalEggWeight: 0,
               totalFeed: 0,
-              population: selectedFlock.population,
+              population: selectedFlock.population, // Assuming population is constant for the week or using latest
               count: 0,
-              dates: []
             });
           }
-          const weekEntry = weeklyDataMap.get(ageWeeks)!;
+          const weekEntry = weeklyActualDataMap.get(ageWeeks)!;
           weekEntry.totalEggs += item.totalEggCount;
           weekEntry.totalEggWeight += item.totalEggWeightKg;
           weekEntry.totalFeed += item.totalFeedConsumption;
           weekEntry.count++;
-          weekEntry.dates.push(itemDate);
         });
 
-        const sortedAgeWeeks = Array.from(weeklyDataMap.keys()).sort((a, b) => a - b);
-        const labels = sortedAgeWeeks.map(week => `Minggu ke-${week}`);
-
-        const actualMetricData = sortedAgeWeeks.map(week => {
-          const entry = weeklyDataMap.get(week)!;
-          const avgPopulation = entry.population;
-          const avgFeedPerDay = entry.totalFeed / entry.count;
-
-          switch (metricType) {
-            case 'hen_day_production_percent':
-              return avgPopulation > 0 ? (entry.totalEggs / avgPopulation) * 100 : 0;
-            case 'avg_egg_weight_g':
-              return entry.totalEggs > 0 ? (entry.totalEggWeight * 1000) / entry.totalEggs : 0;
-            case 'avg_feed_intake_g_per_day':
-              return avgPopulation > 0 ? (avgFeedPerDay * 1000) / avgPopulation : 0;
-            case 'fcr':
-              return entry.totalEggWeight > 0 ? entry.totalFeed / entry.totalEggWeight : 0;
-            default:
-              return 0;
-          }
-        });
-
-        const standardMetricData = sortedAgeWeeks.map(ageWeeks => {
-          const standardPoint = (standardPerformanceData as ProductionStandardData[]).find((d: ProductionStandardData) => d.age_weeks === ageWeeks);
+        const standardMetricData = allWeeks.map(ageWeeks => {
+          const standardPoint = standardPerformanceData.find((d: ProductionStandardData) => d.age_weeks === ageWeeks);
           if (!standardPoint) return null;
 
           switch (metricType) {
@@ -240,12 +222,37 @@ export class WeeklyPerformanceComponent implements OnInit {
           }
         });
 
+        const datasets: ChartConfiguration<'line'>['data']['datasets'] = [
+          { data: standardMetricData, label: 'Standar', borderColor: '#F5A623', tension: 0.2, borderDash: [5, 5], fill: false }
+        ];
+
+        if (actualProductionData.length > 0) {
+          const actualMetricData = allWeeks.map(ageWeeks => {
+            const entry = weeklyActualDataMap.get(ageWeeks);
+            if (!entry) return null;
+
+            const avgPopulation = entry.population;
+            const avgFeedPerDay = entry.totalFeed / entry.count;
+
+            switch (metricType) {
+              case 'hen_day_production_percent':
+                return avgPopulation > 0 ? (entry.totalEggs / avgPopulation) * 100 : 0;
+              case 'avg_egg_weight_g':
+                return entry.totalEggs > 0 ? (entry.totalEggWeight * 1000) / entry.totalEggs : 0;
+              case 'avg_feed_intake_g_per_day':
+                return avgPopulation > 0 ? (avgFeedPerDay * 1000) / avgPopulation : 0;
+              case 'fcr':
+                return entry.totalEggWeight > 0 ? entry.totalFeed / entry.totalEggWeight : 0;
+              default:
+                return null;
+            }
+          });
+          datasets.push({ data: actualMetricData, label: 'Aktual', borderColor: '#0A4D9D', tension: 0.2, fill: false });
+        }
+
         this.lineChartData = {
           labels: labels,
-          datasets: [
-            { data: actualMetricData, label: 'Aktual', borderColor: '#0A4D9D', tension: 0.2, fill: false },
-            { data: standardMetricData, label: 'Standar', borderColor: '#F5A623', tension: 0.2, borderDash: [5, 5], fill: false }
-          ]
+          datasets: datasets
         };
 
         let yAxisTitle = 'Nilai Metrik';
