@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
-import { from, Observable, throwError } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { from, Observable, throwError, combineLatest } from 'rxjs';
+import { map, catchError, switchMap, take } from 'rxjs/operators';
 import { ProductionData } from '../models/production-data.model';
 import { supabase } from '../supabase.client';
+import { AuthService } from './auth.service'; // Import AuthService
+import { MortalityData } from './mortality.service'; // Import MortalityData
 
 @Injectable({ providedIn: 'root' })
 export class ProductionService {
-  constructor() {}
+  constructor(private authService: AuthService) {} // Inject AuthService
 
   private handleError(error: any, context: string) {
     console.error(`Supabase error in ${context}:`, error);
@@ -14,100 +16,190 @@ export class ProductionService {
   }
 
   getProductionDataWithDetails(): Observable<(ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, flockPopulation: number, totalDepletion: number })[]> {
-    return from(supabase.from('production_data')
-      .select('*, feed_consumption(*), flocks!inner(name, population, farms!inner(name)), mortality_data!left(mortality_count, culling_count)')
-      .order('date', { ascending: false })
-    ).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        const dataWithDetails = (response.data || []).map((item: any) => {
-          const totalEggCount = (item.normal_eggs || 0) + (item.white_eggs || 0) + (item.cracked_eggs || 0);
-          const totalFeedConsumption = (item.feed_consumption || []).reduce((sum: number, feed: { quantity_kg: number }) => sum + (feed.quantity_kg || 0), 0);
-          const totalEggWeightKg = (item.normal_eggs_weight_kg || 0) + (item.white_eggs_weight_kg || 0) + (item.cracked_eggs_weight_kg || 0);
-          const mortality = item.mortality_data[0]?.mortality_count || 0;
-          const culling = item.mortality_data[0]?.culling_count || 0;
-          return {
-            ...item,
-            feedConsumption: item.feed_consumption,
-            flockName: (item.flocks as any)?.name || 'N/A',
-            farmName: (item.flocks as any)?.farms?.name || 'N/A',
-            flockPopulation: (item.flocks as any)?.population || 0,
-            totalEggCount,
-            totalFeedConsumption,
-            totalEggWeightKg,
-            mortality_count: mortality,
-            culling_count: culling,
-            totalDepletion: mortality + culling
-          };
-        });
-        return dataWithDetails;
-      }),
-      catchError(err => this.handleError(err, 'getProductionDataWithDetails'))
+    return this.authService.organizationId$.pipe(
+      take(1),
+      switchMap(organizationId => {
+        if (!organizationId) {
+          return throwError(() => new Error('ID Organisasi tidak ditemukan.'));
+        }
+
+        const productionQuery = supabase.from('production_data')
+          .select('*, feed_consumption(*), flocks!inner(id, name, population, farms!inner(name))')
+          .eq('organization_id', organizationId) // Filter by organization_id
+          .order('date', { ascending: false });
+
+        const mortalityQuery = supabase.from('mortality_data')
+          .select('flock_id, date, mortality_count, culling_count')
+          .eq('organization_id', organizationId); // Filter by organization_id
+
+        return combineLatest([
+          from(productionQuery),
+          from(mortalityQuery)
+        ]).pipe(
+          map(([productionResponse, mortalityResponse]) => {
+            if (productionResponse.error) throw productionResponse.error;
+            if (mortalityResponse.error) throw mortalityResponse.error;
+
+            const mortalityMap = new Map<string, { mortality_count: number, culling_count: number }>();
+            (mortalityResponse.data || []).forEach(m => {
+              const key = `${m.flock_id}-${m.date}`;
+              mortalityMap.set(key, { mortality_count: m.mortality_count, culling_count: m.culling_count });
+            });
+
+            const dataWithDetails = (productionResponse.data || []).map((item: any) => {
+              const totalEggCount = (item.normal_eggs || 0) + (item.white_eggs || 0) + (item.cracked_eggs || 0);
+              const totalFeedConsumption = (item.feed_consumption || []).reduce((sum: number, feed: { quantity_kg: number }) => sum + (feed.quantity_kg || 0), 0);
+              const totalEggWeightKg = (item.normal_eggs_weight_kg || 0) + (item.white_eggs_weight_kg || 0) + (item.cracked_eggs_weight_kg || 0);
+
+              const mortalityKey = `${item.flock_id}-${item.date}`;
+              const matchingMortality = mortalityMap.get(mortalityKey);
+              const mortality = matchingMortality?.mortality_count || 0;
+              const culling = matchingMortality?.culling_count || 0;
+
+              return {
+                ...item,
+                feedConsumption: item.feed_consumption,
+                flockName: (item.flocks as any)?.name || 'N/A',
+                farmName: (item.flocks as any)?.farms?.name || 'N/A',
+                flockPopulation: (item.flocks as any)?.population || 0,
+                totalEggCount,
+                totalFeedConsumption,
+                totalEggWeightKg,
+                mortality_count: mortality,
+                culling_count: culling,
+                totalDepletion: mortality + culling
+              };
+            });
+            return dataWithDetails;
+          }),
+          catchError(err => this.handleError(err, 'getProductionDataWithDetails'))
+        );
+      })
     );
   }
 
   getProductionDataByFlockId(flockId: number, startDate?: string, endDate?: string): Observable<(ProductionData & { totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, totalDepletion: number })[]> {
-    let query = supabase.from('production_data')
-      .select('*, feed_consumption(*), mortality_data!left(mortality_count, culling_count)')
-      .eq('flock_id', flockId)
-      .order('date', { ascending: true });
+    return this.authService.organizationId$.pipe(
+      take(1),
+      switchMap(organizationId => {
+        if (!organizationId) {
+          return throwError(() => new Error('ID Organisasi tidak ditemukan.'));
+        }
 
-    if (startDate) {
-      query = query.gte('date', startDate);
-    }
-    if (endDate) {
-      query = query.lte('date', endDate);
-    }
+        let productionQuery = supabase.from('production_data')
+          .select('*, feed_consumption(*)')
+          .eq('flock_id', flockId)
+          .eq('organization_id', organizationId)
+          .order('date', { ascending: true });
 
-    return from(query).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        return (response.data || []).map((item: any) => {
-          const totalEggCount = (item.normal_eggs || 0) + (item.white_eggs || 0) + (item.cracked_eggs || 0);
-          const totalFeedConsumption = (item.feed_consumption || []).reduce((sum: number, feed: { quantity_kg: number }) => sum + (feed.quantity_kg || 0), 0);
-          const totalEggWeightKg = (item.normal_eggs_weight_kg || 0) + (item.white_eggs_weight_kg || 0) + (item.cracked_eggs_weight_kg || 0);
-          const mortality = item.mortality_data[0]?.mortality_count || 0;
-          const culling = item.mortality_data[0]?.culling_count || 0;
-          return {
-            ...item,
-            feedConsumption: item.feed_consumption,
-            totalEggCount,
-            totalFeedConsumption,
-            totalEggWeightKg,
-            mortality_count: mortality,
-            culling_count: culling,
-            totalDepletion: mortality + culling
-          };
-        });
-      }),
-      catchError(err => this.handleError(err, 'getProductionDataByFlockId'))
+        if (startDate) {
+          productionQuery = productionQuery.gte('date', startDate);
+        }
+        if (endDate) {
+          productionQuery = productionQuery.lte('date', endDate);
+        }
+
+        let mortalityQuery = supabase.from('mortality_data')
+          .select('flock_id, date, mortality_count, culling_count')
+          .eq('flock_id', flockId)
+          .eq('organization_id', organizationId);
+
+        if (startDate) {
+          mortalityQuery = mortalityQuery.gte('date', startDate);
+        }
+        if (endDate) {
+          mortalityQuery = mortalityQuery.lte('date', endDate);
+        }
+
+        return combineLatest([
+          from(productionQuery),
+          from(mortalityQuery)
+        ]).pipe(
+          map(([productionResponse, mortalityResponse]) => {
+            if (productionResponse.error) throw productionResponse.error;
+            if (mortalityResponse.error) throw mortalityResponse.error;
+
+            const mortalityMap = new Map<string, { mortality_count: number, culling_count: number }>();
+            (mortalityResponse.data || []).forEach(m => {
+              const key = `${m.flock_id}-${m.date}`;
+              mortalityMap.set(key, { mortality_count: m.mortality_count, culling_count: m.culling_count });
+            });
+
+            return (productionResponse.data || []).map((item: any) => {
+              const totalEggCount = (item.normal_eggs || 0) + (item.white_eggs || 0) + (item.cracked_eggs || 0);
+              const totalFeedConsumption = (item.feed_consumption || []).reduce((sum: number, feed: { quantity_kg: number }) => sum + (feed.quantity_kg || 0), 0);
+              const totalEggWeightKg = (item.normal_eggs_weight_kg || 0) + (item.white_eggs_weight_kg || 0) + (item.cracked_eggs_weight_kg || 0);
+
+              const mortalityKey = `${item.flock_id}-${item.date}`;
+              const matchingMortality = mortalityMap.get(mortalityKey);
+              const mortality = matchingMortality?.mortality_count || 0;
+              const culling = matchingMortality?.culling_count || 0;
+
+              return {
+                ...item,
+                feedConsumption: item.feed_consumption,
+                totalEggCount,
+                totalFeedConsumption,
+                totalEggWeightKg,
+                mortality_count: mortality,
+                culling_count: culling,
+                totalDepletion: mortality + culling
+              };
+            });
+          }),
+          catchError(err => this.handleError(err, 'getProductionDataByFlockId'))
+        );
+      })
     );
   }
 
   // New method to get a single day's production data for a specific flock
   getProductionDataForDay(flockId: number, date: string): Observable<(ProductionData & { mortality_count: number, culling_count: number }) | null> {
-    return from(supabase.from('production_data')
-      .select('*, feed_consumption(*), mortality_data!left(mortality_count, culling_count)')
-      .eq('flock_id', flockId)
-      .eq('date', date)
-      .limit(1)
-    ).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        if (response.data && response.data.length > 0) {
-          const item = response.data[0];
-          const mortality = item.mortality_data[0]?.mortality_count || 0;
-          const culling = item.mortality_data[0]?.culling_count || 0;
-          return {
-            ...item,
-            feed_consumption: item.feed_consumption || [],
-            mortality_count: mortality,
-            culling_count: culling
-          } as ProductionData & { mortality_count: number, culling_count: number };
+    return this.authService.organizationId$.pipe(
+      take(1),
+      switchMap(organizationId => {
+        if (!organizationId) {
+          return throwError(() => new Error('ID Organisasi tidak ditemukan.'));
         }
-        return null;
-      }),
-      catchError(err => this.handleError(err, 'getProductionDataForDay'))
+
+        const productionQuery = supabase.from('production_data')
+          .select('*, feed_consumption(*)')
+          .eq('flock_id', flockId)
+          .eq('date', date)
+          .eq('organization_id', organizationId)
+          .limit(1);
+
+        const mortalityQuery = supabase.from('mortality_data')
+          .select('mortality_count, culling_count')
+          .eq('flock_id', flockId)
+          .eq('date', date)
+          .eq('organization_id', organizationId)
+          .limit(1);
+
+        return combineLatest([
+          from(productionQuery),
+          from(mortalityQuery)
+        ]).pipe(
+          map(([productionResponse, mortalityResponse]) => {
+            if (productionResponse.error) throw productionResponse.error;
+            if (mortalityResponse.error) throw mortalityResponse.error;
+
+            if (productionResponse.data && productionResponse.data.length > 0) {
+              const item = productionResponse.data[0];
+              const mortality = mortalityResponse.data?.[0]?.mortality_count || 0;
+              const culling = mortalityResponse.data?.[0]?.culling_count || 0;
+              return {
+                ...item,
+                feed_consumption: item.feed_consumption || [],
+                mortality_count: mortality,
+                culling_count: culling
+              } as ProductionData & { mortality_count: number, culling_count: number };
+            }
+            return null;
+          }),
+          catchError(err => this.handleError(err, 'getProductionDataForDay'))
+        );
+      })
     );
   }
 
