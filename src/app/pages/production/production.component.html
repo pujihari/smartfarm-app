@@ -47,6 +47,23 @@
           </div>
         </fieldset>
 
+        <fieldset formArrayName="feed_consumption">
+          <legend>Konsumsi Pakan</legend>
+          @for (feed of batch_feed_consumption.controls; track $index) {
+            <div class="feed-row" [formGroupName]="$index">
+              <select formControlName="feed_code">
+                <option [ngValue]="''" disabled>Pilih Kode Pakan</option>
+                @for (option of feedOptions; track option.item_code) {
+                  <option [value]="option.item_code">{{ option.name }} ({{ option.item_code }})</option>
+                }
+              </select>
+              <input type="number" formControlName="quantity_kg" placeholder="Jumlah (kg)">
+              <button type="button" class="remove-feed-btn" (click)="removeFeedFromBatchForm($index)" [disabled]="batch_feed_consumption.controls.length <= 1">Hapus</button>
+            </div>
+          }
+          <button type="button" class="add-feed-btn" (click)="addFeedToBatchForm()">+ Tambah Pakan</button>
+        </fieldset>
+
         @if (showEggProductionFields) {
           <div>
             <fieldset class="egg-quality-group">
@@ -86,23 +103,6 @@
             </fieldset>
           </div>
         }
-
-        <fieldset formArrayName="feed_consumption">
-          <legend>Konsumsi Pakan</legend>
-          @for (feed of batch_feed_consumption.controls; track $index) {
-            <div class="feed-row" [formGroupName]="$index">
-              <select formControlName="feed_code">
-                <option [ngValue]="''" disabled>Pilih Kode Pakan</option>
-                @for (option of feedOptions; track option.item_code) {
-                  <option [value]="option.item_code">{{ option.name }} ({{ option.item_code }})</option>
-                }
-              </select>
-              <input type="number" formControlName="quantity_kg" placeholder="Jumlah (kg)">
-              <button type="button" class="remove-feed-btn" (click)="removeFeedFromBatchForm($index)" [disabled]="batch_feed_consumption.controls.length <= 1">Hapus</button>
-            </div>
-          }
-          <button type="button" class="add-feed-btn" (click)="addFeedToBatchForm()">+ Tambah Pakan</button>
-        </fieldset>
 
         <div class="form-group">
           <label for="batch_notes">Catatan (Opsional)</label>
