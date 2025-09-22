@@ -1,9 +1,7 @@
 <div class="page-container">
   <div class="page-header">
     <h1 class="page-title">Recording</h1>
-    @if (authService.canWriteData$ | async) {
-      <button class="add-button" (click)="openAddModal()">+ Tambah Data Tunggal</button>
-    }
+    <!-- Tombol '+ Tambah Data Tunggal' dihapus -->
   </div>
 
   <!-- Batch Input Section -->
@@ -185,7 +183,7 @@
               <td data-label="Aksi">
                 @if (authService.canWriteData$ | async) {
                   <div class="action-buttons">
-                    <button class="action-btn edit-btn" (click)="openEditModal(item)">Edit</button>
+                    <button class="action-btn edit-btn" (click)="editDailyEntry(item)">Edit</button> <!-- Mengubah openEditModal menjadi editDailyEntry -->
                     <button class="action-btn delete-btn" (click)="openDeleteModal(item)">Hapus</button>
                   </div>
                 }
@@ -202,14 +200,7 @@
   </div>
 </div>
 
-@if (isModalOpen) {
-  <app-production-modal
-    [data]="dataToEdit"
-    [flocks]="(flocks$ | async) ?? []"
-    (close)="closeModal()"
-    (save)="saveData($event)">
-  </app-production-modal>
-}
+<!-- Komponen app-production-modal dihapus -->
 
 @if (isConfirmModalOpen) {
   <app-confirmation-modal

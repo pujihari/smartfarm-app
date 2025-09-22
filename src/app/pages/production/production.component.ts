@@ -8,7 +8,7 @@ import { Observable, BehaviorSubject, of, lastValueFrom, combineLatest } from 'r
 import { switchMap, map, startWith, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProductionData, FeedConsumption } from '../../models/production-data.model';
 import { Flock } from '../../models/flock.model';
-import { ProductionModalComponent } from '../../components/production-modal/production-modal.component';
+// import { ProductionModalComponent } from '../../components/production-modal/production-modal.component'; // Dihapus
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { AuthService } from '../../services/auth.service';
 import { InventoryService, FeedOption } from '../../services/inventory.service';
@@ -29,13 +29,13 @@ interface StagedProductionItem extends Partial<ProductionData> {
 @Component({
   selector: 'app-production',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ProductionModalComponent, ConfirmationModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmationModalComponent], // ProductionModalComponent dihapus
   templateUrl: './production.component.html',
   styleUrl: './production.component.css'
 })
 export class ProductionComponent implements OnInit {
-  isModalOpen = false;
-  dataToEdit: ProductionData | null = null;
+  // isModalOpen = false; // Dihapus
+  // dataToEdit: ProductionData | null = null; // Dihapus
   private refresh$ = new BehaviorSubject<void>(undefined);
   productionData$: Observable<ProductionDataWithDetails[]>;
   flocks$: Observable<FlockWithFarmInfo[]>;
@@ -170,6 +170,7 @@ export class ProductionComponent implements OnInit {
           this.batch_feed_consumption.clear();
           data.feed_consumption.forEach(feed => this.addFeedToBatchForm(feed));
           this.batchProductionForm.get('id')?.setValue(data.id); // Set the ID for existing record
+          this.updateEggFieldsVisibility(this.currentFlockAgeInDays !== null && this.currentFlockAgeInDays > 126); // Re-evaluate visibility
         } else {
           this.resetBatchFormForNewEntry();
         }
@@ -253,18 +254,24 @@ export class ProductionComponent implements OnInit {
       totalDepletion: (newEntry.mortality_count || 0) + (newEntry.culling_count || 0),
     };
 
-    const existingIndexInStaging = this.stagedProductionData.findIndex(
-      item => item.flock_id === stagedItem.flock_id && item.date === stagedItem.date
-    );
-
-    if (existingIndexInStaging > -1) {
-      // Update existing entry in staging
-      this.stagedProductionData[existingIndexInStaging] = stagedItem;
-      this.notificationService.showInfo('Data untuk flok dan tanggal ini diperbarui di daftar.');
+    if (this.isEditingExistingEntry && stagedItem.id) {
+      // If editing an existing entry, save it directly
+      this.saveData(stagedItem as ProductionData);
     } else {
-      // Add new entry to staging
-      this.stagedProductionData.push(stagedItem);
-      this.notificationService.showSuccess('Data ditambahkan ke daftar.');
+      // Otherwise, add to staging or update in staging
+      const existingIndexInStaging = this.stagedProductionData.findIndex(
+        item => item.flock_id === stagedItem.flock_id && item.date === stagedItem.date
+      );
+
+      if (existingIndexInStaging > -1) {
+        // Update existing entry in staging
+        this.stagedProductionData[existingIndexInStaging] = stagedItem;
+        this.notificationService.showInfo('Data untuk flok dan tanggal ini diperbarui di daftar.');
+      } else {
+        // Add new entry to staging
+        this.stagedProductionData.push(stagedItem);
+        this.notificationService.showSuccess('Data ditambahkan ke daftar.');
+      }
     }
 
     // Reset form for next input, but keep flock_id and date selected
@@ -285,13 +292,8 @@ export class ProductionComponent implements OnInit {
 
     for (const data of this.stagedProductionData) {
       try {
-        if (data.id) {
-          // If data has an ID, it's an update
-          await lastValueFrom(this.productionService.updateProductionData(data as ProductionData));
-        } else {
-          // If no ID, it's a new entry
-          await lastValueFrom(this.productionService.addDailyLog(data as Omit<ProductionData, 'id'>));
-        }
+        // Staged data will always be new entries, as existing ones are saved directly
+        await lastValueFrom(this.productionService.addDailyLog(data as Omit<ProductionData, 'id'>));
       } catch (error: any) {
         this.notificationService.showError(`Gagal menyimpan data untuk ${data.flockName} (${data.date}): ${error.message}`);
       }
@@ -304,22 +306,38 @@ export class ProductionComponent implements OnInit {
     this.resetBatchFormForNewEntry(); // Reset form after saving
   }
 
-  openAddModal(): void {
-    this.dataToEdit = null;
-    this.isModalOpen = true;
+  // openAddModal(): void { // Dihapus
+  //   this.dataToEdit = null;
+  //   this.isModalOpen = true;
+  // }
+
+  editDailyEntry(data: ProductionDataWithDetails): void { // Mengubah nama method dari openEditModal
+    // Set the form to edit mode
+    this.isEditingExistingEntry = true;
+    
+    // Patch the form with the selected data
+    const formattedData = {
+      ...data,
+      date: data.date.split('T')[0] // Ensure date is in 'YYYY-MM-DD' format
+    };
+    this.batchProductionForm.patchValue(formattedData);
+    this.batchProductionForm.get('id')?.setValue(data.id); // Set the ID for existing record
+
+    // Clear existing feed consumption and add from data
+    this.batch_feed_consumption.clear();
+    data.feed_consumption.forEach(feed => this.addFeedToBatchForm(feed));
+
+    // Recalculate flock age and egg fields visibility
+    this.calculateFlockAge(data.flock_id, data.date.split('T')[0]);
+    this.notificationService.showInfo(`Memuat data untuk ${data.flockName} pada ${formattedData.date} untuk diedit.`);
   }
 
-  openEditModal(data: ProductionData): void {
-    this.dataToEdit = data;
-    this.isModalOpen = true;
-  }
+  // closeModal(): void { // Dihapus
+  //   this.isModalOpen = false;
+  //   this.dataToEdit = null;
+  // }
 
-  closeModal(): void {
-    this.isModalOpen = false;
-    this.dataToEdit = null;
-  }
-
-  saveData(data: Partial<ProductionData>): void {
+  saveData(data: Partial<ProductionData>): void { // Method ini sekarang dipanggil langsung dari addToStage jika isEditingExistingEntry true
     const saveObservable = data.id
       ? this.productionService.updateProductionData(data)
       : this.productionService.addDailyLog(data as Omit<ProductionData, 'id'>);
@@ -327,8 +345,9 @@ export class ProductionComponent implements OnInit {
     saveObservable.subscribe({
       next: () => {
         this.notificationService.showSuccess('Data produksi berhasil disimpan.');
-        this.closeModal();
+        // this.closeModal(); // Dihapus
         this.refresh$.next();
+        this.resetBatchFormForNewEntry(); // Reset form after saving
       },
       error: (err) => {
         this.notificationService.showError(`Gagal menyimpan data produksi: ${err.message}`);
