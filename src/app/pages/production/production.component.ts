@@ -45,7 +45,7 @@ export class ProductionComponent implements OnInit {
   feedOptions: FeedOption[] = [];
 
   currentFlockAgeInDays: number | null = null;
-  showEggProductionFields = true; // Always show the fields
+  showEggProductionFields = false; // Default to false
   isEditingExistingEntry = false;
 
   constructor(
@@ -72,12 +72,12 @@ export class ProductionComponent implements OnInit {
       date: [new Date().toISOString().split('T')[0], Validators.required],
       mortality_count: [0, [Validators.required, Validators.min(0)]],
       culling_count: [0, [Validators.required, Validators.min(0)]],
-      normal_eggs: [0, [Validators.required, Validators.min(0)]],
-      white_eggs: [0, [Validators.required, Validators.min(0)]],
-      cracked_eggs: [0, [Validators.required, Validators.min(0)]],
-      normal_eggs_weight_kg: [0, [Validators.required, Validators.min(0)]],
-      white_eggs_weight_kg: [0, [Validators.required, Validators.min(0)]],
-      cracked_eggs_weight_kg: [0, [Validators.required, Validators.min(0)]],
+      normal_eggs: [0],
+      white_eggs: [0],
+      cracked_eggs: [0],
+      normal_eggs_weight_kg: [0],
+      white_eggs_weight_kg: [0],
+      cracked_eggs_weight_kg: [0],
       feed_consumption: this.fb.array([]),
       notes: ['']
     });
@@ -107,12 +107,14 @@ export class ProductionComponent implements OnInit {
   private calculateFlockAge(flockId: number | null, date: string | null): void {
     if (!flockId || !date) {
       this.currentFlockAgeInDays = null;
+      this.updateEggFieldsVisibility(false);
       return;
     }
 
     const selectedFlock = this.allFlocks.find(f => f.id === Number(flockId));
     if (!selectedFlock) {
       this.currentFlockAgeInDays = null;
+      this.updateEggFieldsVisibility(false);
       return;
     }
 
@@ -123,6 +125,32 @@ export class ProductionComponent implements OnInit {
     
     const age = dayDiff + selectedFlock.entry_age_days;
     this.currentFlockAgeInDays = age;
+
+    this.updateEggFieldsVisibility(age > 126);
+  }
+
+  private updateEggFieldsVisibility(show: boolean): void {
+    this.showEggProductionFields = show;
+    const eggControls = [
+      'normal_eggs', 'white_eggs', 'cracked_eggs',
+      'normal_eggs_weight_kg', 'white_eggs_weight_kg', 'cracked_eggs_weight_kg'
+    ];
+
+    eggControls.forEach(controlName => {
+      const control = this.batchProductionForm.get(controlName);
+      if (control) {
+        if (show) {
+          control.setValidators([Validators.required, Validators.min(0)]);
+          if (control.value === null) {
+            control.setValue(0);
+          }
+        } else {
+          control.clearValidators();
+          control.setValue(0);
+        }
+        control.updateValueAndValidity();
+      }
+    });
   }
 
   private loadExistingProductionData(flockId: number, date: string): void {
@@ -138,6 +166,7 @@ export class ProductionComponent implements OnInit {
           this.batch_feed_consumption.clear();
           data.feed_consumption.forEach(feed => this.addFeedToBatchForm(feed));
           this.batchProductionForm.get('id')?.setValue(data.id);
+          this.updateEggFieldsVisibility(this.currentFlockAgeInDays !== null && this.currentFlockAgeInDays > 126);
         } else {
           this.resetBatchFormForNewEntry();
         }
@@ -199,6 +228,15 @@ export class ProductionComponent implements OnInit {
 
     const newEntry = this.batchProductionForm.getRawValue();
     newEntry.flock_id = Number(newEntry.flock_id);
+
+    if (!this.showEggProductionFields) {
+      newEntry.normal_eggs = 0;
+      newEntry.white_eggs = 0;
+      newEntry.cracked_eggs = 0;
+      newEntry.normal_eggs_weight_kg = 0;
+      newEntry.white_eggs_weight_kg = 0;
+      newEntry.cracked_eggs_weight_kg = 0;
+    }
 
     const flockInfo = this.allFlocks.find(f => f.id === newEntry.flock_id);
     
