@@ -3,6 +3,7 @@ import { LayoutComponent } from './components/layout/layout.component';
 import { LoginComponent } from './pages/login/login.component';
 import { RegisterComponent } from './pages/register/register.component';
 import { UpdatePasswordComponent } from './pages/update-password/update-password.component';
+import { RecordingComponent } from './pages/recording/recording.component';
 import { authGuard } from './auth.guard';
 import { publicGuard } from './public.guard';
 import { roleGuard } from './role.guard';
@@ -20,6 +21,10 @@ export const routes: Routes = [
       { 
         path: 'dashboard', 
         loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent) 
+      },
+      {
+        path: 'recording',
+        component: RecordingComponent
       },
       { 
         path: 'farms', 

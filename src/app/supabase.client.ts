@@ -12,5 +12,7 @@ const noOpLock = async (_name: string, _acquireTimeout: number, fn: () => Promis
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     lock: noOpLock,
+    persistSession: true,
+    autoRefreshToken: true,
   },
 });
