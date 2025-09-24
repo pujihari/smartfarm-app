@@ -5,12 +5,14 @@ import { ProductionService } from '../../services/production.service';
 import { FlockService } from '../../services/flock.service';
 import { NotificationService } from '../../services/notification.service';
 import { Observable, BehaviorSubject, of, lastValueFrom, combineLatest, Subject } from 'rxjs';
-import { switchMap, map, startWith, debounceTime, distinctUntilChanged, takeUntil, filter, catchError } from 'rxjs/operators';
+import { switchMap, map, startWith, debounceTime, distinctUntilChanged, takeUntil, filter, catchError, tap } from 'rxjs/operators'; // Import 'tap'
 import { ProductionData, FeedConsumption } from '../../models/production-data.model';
 import { Flock } from '../../models/flock.model';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { AuthService } from '../../services/auth.service';
 import { InventoryService, FeedOption } from '../../services/inventory.service';
+import { FarmService } from '../../services/farm.service'; // Import FarmService
+import { Farm } from '../../models/farm.model'; // Import Farm model
 
 type ProductionDataWithDetails = ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, flockPopulation: number, totalDepletion: number };
 type FlockWithFarmInfo = Flock & { farmName: string };
@@ -37,13 +39,14 @@ export class ProductionComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   productionData$: Observable<ProductionDataWithDetails[]>;
   flocks$: Observable<FlockWithFarmInfo[]>;
+  farms$: Observable<Farm[]>; // Declare farms$
   isConfirmModalOpen = false;
   dataToDelete: ProductionData | null = null;
 
   batchProductionForm: FormGroup;
   stagedProductionData: StagedProductionItem[] = [];
   isSavingBatch = false;
-  private allFlocks: FlockWithFarmInfo[] = [];
+  private allFlocks: FlockWithFarmInfo[] = []; // Explicitly type allFlocks
   feedOptions: FeedOption[] = [];
 
   currentFlockAgeInDays: number | null = null;
@@ -56,20 +59,18 @@ export class ProductionComponent implements OnInit, OnDestroy {
     private flockService: FlockService,
     private notificationService: NotificationService,
     public authService: AuthService,
-    private inventoryService: InventoryService
+    private inventoryService: InventoryService,
+    private farmService: FarmService // Inject FarmService
   ) {
     this.productionData$ = this.refresh$.pipe(
       switchMap(() => this.productionService.getProductionDataWithDetails())
     );
-    this.flocks$ = this.flockService.getFlocksWithFarmInfo().pipe(
-      map(flocks => {
-        this.allFlocks = flocks;
-        return flocks;
-      })
-    );
+    
+    this.farms$ = this.farmService.getFarms(); // Initialize farms$
 
     this.batchProductionForm = this.fb.group({
       id: [null],
+      farm_filter: [null], // New form control for farm filter
       flock_id: [null, Validators.required],
       date: [new Date().toISOString().split('T')[0], Validators.required],
       mortality_count: [0, [Validators.required, Validators.min(0)]],
@@ -83,6 +84,24 @@ export class ProductionComponent implements OnInit, OnDestroy {
       feed_consumption: this.fb.array([]),
       notes: ['']
     });
+
+    const allFlocks$ = this.flockService.getFlocksWithFarmInfo().pipe(
+      tap((flocks: FlockWithFarmInfo[]) => this.allFlocks = flocks) // Type 'flocks'
+    );
+
+    const farmFilterChanges$ = this.batchProductionForm.get('farm_filter')!.valueChanges.pipe(startWith(null));
+
+    this.flocks$ = combineLatest([
+      allFlocks$,
+      farmFilterChanges$
+    ]).pipe(
+      map(([allFlocks, selectedFarmId]) => {
+        if (selectedFarmId) {
+          return allFlocks.filter((flock: FlockWithFarmInfo) => flock.farm_id === Number(selectedFarmId)); // Type 'flock'
+        }
+        return allFlocks;
+      })
+    );
   }
 
   ngOnInit(): void {
@@ -93,6 +112,11 @@ export class ProductionComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (options: FeedOption[]) => this.feedOptions = options,
       error: (err: any) => console.error('Error loading feed options for batch form:', err)
+    });
+
+    // Subscribe to farm_filter changes to reset flock_id
+    this.batchProductionForm.get('farm_filter')!.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.batchProductionForm.get('flock_id')!.reset(null, { emitEvent: false });
     });
 
     const formValueChanges$ = combineLatest([
@@ -201,9 +225,11 @@ export class ProductionComponent implements OnInit, OnDestroy {
   private resetBatchFormForNewEntry(): void {
     const currentFlockId = this.batchProductionForm.get('flock_id')?.value;
     const currentDate = this.batchProductionForm.get('date')?.value;
-    
+    const currentFarmFilter = this.batchProductionForm.get('farm_filter')?.value; // Keep farm filter
+
     this.batchProductionForm.patchValue({
       id: null,
+      farm_filter: currentFarmFilter, // Retain farm filter value
       flock_id: currentFlockId,
       date: currentDate,
       mortality_count: 0,

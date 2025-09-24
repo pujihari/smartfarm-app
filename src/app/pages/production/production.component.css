@@ -75,7 +75,7 @@
 }
 
 .batch-form .top-row {
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjusted for 3 columns */
 }
 
 .batch-form fieldset {
