@@ -5,7 +5,7 @@ import { ProductionService } from '../../services/production.service';
 import { FlockService } from '../../services/flock.service';
 import { NotificationService } from '../../services/notification.service';
 import { Observable, BehaviorSubject, of, lastValueFrom, combineLatest, Subject } from 'rxjs';
-import { switchMap, map, startWith, debounceTime, distinctUntilChanged, takeUntil, filter, catchError } from 'rxjs/operators'; // Pastikan catchError diimpor
+import { switchMap, map, startWith, debounceTime, distinctUntilChanged, takeUntil, filter, catchError } from 'rxjs/operators';
 import { ProductionData, FeedConsumption } from '../../models/production-data.model';
 import { Flock } from '../../models/flock.model';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
@@ -86,7 +86,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.addFeedToBatchForm(undefined, { emitEvent: false }); // Panggil dengan emitEvent: false
+    this.addFeedToBatchForm(undefined, { emitEvent: false });
 
     this.inventoryService.getFeedOptions().pipe(
       takeUntil(this.destroy$)
@@ -95,30 +95,28 @@ export class ProductionComponent implements OnInit, OnDestroy {
       error: (err: any) => console.error('Error loading feed options for batch form:', err)
     });
 
-    // Gunakan Subject terpisah untuk mengontrol kapan memicu pemuatan data
     const formValueChanges$ = combineLatest([
       this.batchProductionForm.get('flock_id')!.valueChanges.pipe(startWith(this.batchProductionForm.get('flock_id')!.value)),
       this.batchProductionForm.get('date')!.valueChanges.pipe(startWith(this.batchProductionForm.get('date')!.value))
     ]).pipe(
-      debounceTime(100), // Debounce untuk mencegah pemicu cepat
-      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)), // Perbandingan mendalam untuk keunikan
-      filter(() => !this.suppressFormChanges), // Hanya lanjutkan jika tidak ditekan
+      debounceTime(100),
+      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
+      filter(() => !this.suppressFormChanges),
       takeUntil(this.destroy$)
     );
 
     formValueChanges$.pipe(
       switchMap(([flockId, date]: [number | null, string | null]) => {
-        this.suppressFormChanges = true; // Set flag di sini, sebelum operasi async
+        this.suppressFormChanges = true;
         if (!flockId || !date) {
-          this.resetBatchFormForNewEntry();
-          // Pastikan of(null) memiliki tipe yang sesuai
+          setTimeout(() => this.resetBatchFormForNewEntry(), 0); // Ditunda
           return of(null as (ProductionData & { mortality_count: number, culling_count: number }) | null);
         }
         this.calculateFlockAge(flockId, date);
         return this.productionService.getProductionDataForDay(Number(flockId), date).pipe(
-          catchError((err: any) => { // Menambahkan tipe 'any' untuk 'err'
+          catchError((err: any) => {
             this.notificationService.showError(`Gagal memuat data produksi harian: ${err?.message ?? err}`);
-            // Pastikan of(null) memiliki tipe yang sesuai
+            setTimeout(() => this.resetBatchFormForNewEntry(), 0); // Ditunda
             return of(null as (ProductionData & { mortality_count: number, culling_count: number }) | null);
           })
         );
@@ -134,13 +132,13 @@ export class ProductionComponent implements OnInit, OnDestroy {
           this.batchProductionForm.get('id')?.setValue(data.id, { emitEvent: false });
           this.updateEggFieldsVisibility(this.currentFlockAgeInDays !== null && this.currentFlockAgeInDays > 126);
         } else {
-          this.resetBatchFormForNewEntry();
+          setTimeout(() => this.resetBatchFormForNewEntry(), 0); // Ditunda
         }
-        this.suppressFormChanges = false; // Reset flag setelah semua pembaruan
+        this.suppressFormChanges = false;
       },
-      error: (err: any) => { // Menambahkan tipe 'any' untuk 'err'
+      error: (err: any) => {
         this.notificationService.showError(`Gagal memproses data: ${err?.message ?? err}`);
-        this.resetBatchFormForNewEntry();
+        setTimeout(() => this.resetBatchFormForNewEntry(), 0); // Ditunda
         this.suppressFormChanges = false;
       }
     });
@@ -204,7 +202,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
     const currentFlockId = this.batchProductionForm.get('flock_id')?.value;
     const currentDate = this.batchProductionForm.get('date')?.value;
     
-    // Reset main form controls
     this.batchProductionForm.patchValue({
       id: null,
       flock_id: currentFlockId,
@@ -218,14 +215,11 @@ export class ProductionComponent implements OnInit, OnDestroy {
       white_eggs_weight_kg: 0,
       cracked_eggs_weight_kg: 0,
       notes: ''
-    }, { emitEvent: false }); // Penting: mencegah emisi valueChanges
+    }, { emitEvent: false });
 
-    // Reset feed_consumption FormArray
-    // Hapus semua kontrol yang ada tanpa memancarkan valueChanges
     while (this.batch_feed_consumption.length !== 0) {
       this.batch_feed_consumption.removeAt(0, { emitEvent: false });
     }
-    // Tambahkan satu kontrol pakan default, juga tanpa memancarkan valueChanges
     this.addFeedToBatchForm(undefined, { emitEvent: false });
 
     this.isEditingExistingEntry = false;
@@ -334,11 +328,11 @@ export class ProductionComponent implements OnInit, OnDestroy {
       ...data,
       date: data.date.split('T')[0]
     };
-    this.batchProductionForm.patchValue(formattedData, { emitEvent: false }); // Gunakan emitEvent: false
-    this.batchProductionForm.get('id')?.setValue(data.id, { emitEvent: false }); // Gunakan emitEvent: false
+    this.batchProductionForm.patchValue(formattedData, { emitEvent: false });
+    this.batchProductionForm.get('id')?.setValue(data.id, { emitEvent: false });
 
-    this.batch_feed_consumption.clear({ emitEvent: false }); // Gunakan emitEvent: false
-    data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToBatchForm(feed, { emitEvent: false })); // Gunakan emitEvent: false
+    this.batch_feed_consumption.clear({ emitEvent: false });
+    data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToBatchForm(feed, { emitEvent: false }));
 
     this.calculateFlockAge(data.flock_id, data.date.split('T')[0]);
     this.notificationService.showInfo(`Memuat data untuk ${data.flockName} pada ${formattedData.date} untuk diedit.`);
