@@ -60,7 +60,7 @@
   color: #333;
 }
 
-.batch-form input, .batch-form select {
+.batch-form input, .batch-form select, .batch-form textarea { /* Added textarea here */
   width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
