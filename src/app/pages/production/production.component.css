@@ -239,6 +239,11 @@
   font-size: 0.95rem;
 }
 
+.required-indicator {
+  color: #dc3545; /* Warna merah untuk tanda bintang */
+  margin-left: 4px;
+}
+
 @media (max-width: 768px) {
   .batch-form .top-row {
     grid-template-columns: 1fr;
