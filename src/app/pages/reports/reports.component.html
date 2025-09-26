@@ -36,6 +36,9 @@
       <button type="submit" class="generate-btn" [disabled]="isLoading">
         {{ isLoading ? 'Memuat...' : 'Buat Laporan' }}
       </button>
+      @if (reportData && !isLoading) {
+        <button type="button" class="download-excel-btn" (click)="downloadReportAsExcel()">Unduh Excel</button>
+      }
     </form>
   </div>
 
