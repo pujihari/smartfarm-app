@@ -73,8 +73,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
       farm_filter: [null], // New form control for farm filter
       flock_id: [null, Validators.required],
       date: [new Date().toISOString().split('T')[0], Validators.required],
-      mortality_count: [0, Validators.min(0)], // Removed Validators.required
-      culling_count: [0, Validators.min(0)], // Removed Validators.required
+      mortality_count: [0, [Validators.required, Validators.min(0)]],
+      culling_count: [0, [Validators.required, Validators.min(0)]],
       normal_eggs: [0],
       white_eggs: [0],
       cracked_eggs: [0],
@@ -105,6 +105,11 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Add a default feed row if the form array is empty
+    if (this.batch_feed_consumption.length === 0) {
+      this.addFeedToBatchForm(undefined, { emitEvent: false });
+    }
+
     this.inventoryService.getFeedOptions().pipe(
       takeUntil(this.destroy$)
     ).subscribe({
@@ -207,7 +212,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
       const control = this.batchProductionForm.get(controlName);
       if (control) {
         if (show) {
-          control.setValidators([Validators.min(0)]); // Removed Validators.required
+          control.setValidators([Validators.required, Validators.min(0)]);
           if (control.value === null) {
             control.setValue(0, { emitEvent: false });
           }
@@ -244,6 +249,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     while (this.batch_feed_consumption.length !== 0) {
       this.batch_feed_consumption.removeAt(0, { emitEvent: false });
     }
+    this.addFeedToBatchForm(undefined, { emitEvent: false }); // Add a default feed row
     this.isEditingExistingEntry = false;
   }
 
@@ -253,8 +259,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   createFeedGroup(feed?: FeedConsumption): FormGroup {
     return this.fb.group({
-      feed_code: [feed?.feed_code || ''], // Removed Validators.required
-      quantity_kg: [feed?.quantity_kg || null, Validators.min(0)] // Removed Validators.required, changed min to 0
+      feed_code: [feed?.feed_code || '', Validators.required],
+      quantity_kg: [feed?.quantity_kg || null, [Validators.required, Validators.min(0)]]
     });
   }
 
@@ -268,12 +274,9 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   addToStage(): void {
-    // Mark only required fields as touched to show validation for them
-    this.batchProductionForm.get('flock_id')?.markAsTouched();
-    this.batchProductionForm.get('date')?.markAsTouched();
-
-    if (this.batchProductionForm.get('flock_id')?.invalid || this.batchProductionForm.get('date')?.invalid) {
-      this.notificationService.showWarning('Harap pilih Flok dan Tanggal.');
+    this.batchProductionForm.markAllAsTouched();
+    if (this.batchProductionForm.invalid) {
+      this.notificationService.showWarning('Harap isi semua field yang wajib diisi.');
       return;
     }
 
@@ -293,9 +296,9 @@ export class ProductionComponent implements OnInit, OnDestroy {
       white_eggs_weight_kg: rawEntry.white_eggs_weight_kg === null ? 0 : Number(rawEntry.white_eggs_weight_kg),
       cracked_eggs_weight_kg: rawEntry.cracked_eggs_weight_kg === null ? 0 : Number(rawEntry.cracked_eggs_weight_kg),
       notes: rawEntry.notes || null,
-      // Filter valid feed consumption entries
+      // Filter valid feed consumption entries: feed_code must be present, quantity_kg must not be null (can be 0)
       feed_consumption: (rawEntry.feed_consumption || []).filter((feed: FeedConsumption) => 
-        feed.feed_code && feed.quantity_kg !== null && feed.quantity_kg > 0
+        feed.feed_code && feed.quantity_kg !== null
       )
     };
 
@@ -368,6 +371,10 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
     this.batch_feed_consumption.clear({ emitEvent: false });
     data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToBatchForm(feed, { emitEvent: false }));
+    // Ensure at least one feed row is present if it was empty
+    if (this.batch_feed_consumption.length === 0) {
+      this.addFeedToBatchForm(undefined, { emitEvent: false });
+    }
 
     this.calculateFlockAge(data.flock_id, data.date.split('T')[0]);
     this.notificationService.showInfo(`Memuat data untuk ${data.flockName} pada ${formattedData.date} untuk diedit.`);
