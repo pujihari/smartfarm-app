@@ -6,7 +6,7 @@ import { ChartOptions, ChartConfiguration } from 'chart.js';
 import { ReportService, ReportData, ProductionStandard } from '../../services/report.service';
 import { FarmService } from '../../services/farm.service';
 import { Farm } from '../../models/farm.model';
-import { Observable } from 'rxjs';
+import { Observable, lastValueFrom } from 'rxjs'; // Import lastValueFrom
 import * as XLSX from 'xlsx'; // Import xlsx library
 import { NotificationService } from '../../services/notification.service'; // Import NotificationService
 
@@ -100,13 +100,17 @@ export class ReportsComponent implements OnInit {
     });
   }
 
-  downloadReportAsExcel(): void {
+  async downloadReportAsExcel(): Promise<void> { // Make it async
     if (!this.reportData) {
       this.notificationService.showWarning('Tidak ada data laporan untuk diunduh.');
       return;
     }
 
     const wb = XLSX.utils.book_new();
+
+    // Fetch current values of farms and standards observables
+    const farms = await lastValueFrom(this.farms$);
+    const standards = await lastValueFrom(this.standards$);
 
     // Sheet 1: Ringkasan KPI
     const kpiData = [
@@ -130,7 +134,7 @@ export class ReportsComponent implements OnInit {
     if (standardMinDataset) hdTrendHeaders.push('HD% Standar (Min)');
     if (standardMaxDataset) hdTrendHeaders.push('HD% Standar (Max)');
 
-    const hdTrendData: (string | number | null)[][] = [hdTrendHeaders]; // Fixed: Explicitly type hdTrendData
+    const hdTrendData: (string | number | null)[][] = [hdTrendHeaders];
     for (let i = 0; i < chartLabels.length; i++) {
       const row: (string | number | null)[] = [chartLabels[i]];
       const actualValue = datasets.find(ds => ds.label === 'HD% Aktual')?.data[i];
@@ -152,8 +156,8 @@ export class ReportsComponent implements OnInit {
     // Add filter info to a separate sheet or at the top of the first sheet
     const filterInfo = [
       ['Filter Laporan'],
-      ['Farm:', this.reportForm.get('farmId')?.value ? (this.farms$ as any).value.find((f: Farm) => f.id === Number(this.reportForm.get('farmId')?.value))?.name || 'N/A' : 'Semua Farm'],
-      ['Standar:', this.reportForm.get('standardId')?.value ? (this.standards$ as any).value.find((s: ProductionStandard) => s.id === Number(this.reportForm.get('standardId')?.value))?.name || 'N/A' : 'Tidak ada'],
+      ['Farm:', this.reportForm.get('farmId')?.value ? farms.find((f: Farm) => f.id === Number(this.reportForm.get('farmId')?.value))?.name || 'N/A' : 'Semua Farm'],
+      ['Standar:', this.reportForm.get('standardId')?.value ? standards.find((s: ProductionStandard) => s.id === Number(this.reportForm.get('standardId')?.value))?.name || 'N/A' : 'Tidak ada'],
       ['Tanggal Mulai:', this.datePipe.transform(this.reportForm.get('startDate')?.value, 'dd MMMM yyyy')],
       ['Tanggal Selesai:', this.datePipe.transform(this.reportForm.get('endDate')?.value, 'dd MMMM yyyy')]
     ];
