@@ -116,22 +116,52 @@
 }
 
 @media (max-width: 768px) {
+  .page-container {
+    gap: 16px;
+  }
   .page-title {
     font-size: 1.5rem;
   }
-  .kpi-card {
+  .connection-status-card {
     padding: 12px;
+  }
+  .connection-status-card h3 {
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+  .connection-status-card p {
+    font-size: 0.9rem;
+  }
+  .kpi-grid {
+    grid-template-columns: 1fr; /* Mengubah layout grid menjadi satu kolom */
+    gap: 16px;
+  }
+  .kpi-card {
+    padding: 16px; /* Mengurangi padding card KPI */
   }
   .kpi-title {
     font-size: 0.9rem;
+    margin-bottom: 6px;
   }
   .kpi-value {
-    font-size: 1.8rem;
+    font-size: 1.8rem; /* Mengurangi ukuran font nilai KPI */
+    margin-bottom: 8px;
+  }
+  .kpi-note {
+    font-size: 0.8rem;
   }
   .chart-container {
-    padding: 16px;
+    padding: 16px; /* Mengurangi padding container chart */
+  }
+  .chart-container h2 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
   }
   .chart-wrapper {
-    height: 250px;
+    height: 250px; /* Mengurangi tinggi chart */
+  }
+  .placeholder-text, .loading-state {
+    height: 150px; /* Mengurangi tinggi placeholder */
+    font-size: 0.9rem;
   }
 }
