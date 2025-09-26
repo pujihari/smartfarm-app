@@ -49,6 +49,8 @@ export class AuthService {
     private profileService: ProfileService,
     private ngZone: NgZone // Inject NgZone
   ) {
+    const hasAuthToken = typeof window !== 'undefined' && window.location.hash.includes('access_token');
+
     supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       console.log('AuthService: Auth state changed:', event, session);
       this._currentUser.next(session?.user ?? null);
@@ -76,6 +78,14 @@ export class AuthService {
           }
         });
       }
+
+      // More robust initialization logic to prevent race conditions with magic links
+      if (event === 'INITIAL_SESSION' && hasAuthToken) {
+        // This is the initial null session, but we know a SIGNED_IN event is coming.
+        // So, we do NOT set isInitialized to true yet. We wait for the real session.
+        return;
+      }
+
       this._isInitialized.next(true);
     });
   }
