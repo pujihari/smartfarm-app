@@ -69,7 +69,7 @@
                 }
               </select>
               <input type="number" formControlName="quantity_kg" placeholder="Jumlah (kg) *" step="0.01">
-              <button type="button" class="remove-feed-btn" (click)="removeFeedFromBatchForm($index)" [disabled]="batch_feed_consumption.controls.length <= 1">Hapus</button>
+              <button type="button" class="remove-feed-btn" (click)="removeFeedFromBatchForm($index)" [disabled]="batch_feed_consumption.controls.length === 0">Hapus</button>
             </div>
           }
           <button type="button" class="add-feed-btn" (click)="addFeedToBatchForm()">+ Tambah Pakan</button>

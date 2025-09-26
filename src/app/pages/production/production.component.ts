@@ -105,7 +105,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.addFeedToBatchForm(undefined, { emitEvent: false });
+    // Removed: this.addFeedToBatchForm(undefined, { emitEvent: false });
+    // Feed consumption is now optional and added only when user clicks '+ Tambah Pakan'
 
     this.inventoryService.getFeedOptions().pipe(
       takeUntil(this.destroy$)
@@ -246,7 +247,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     while (this.batch_feed_consumption.length !== 0) {
       this.batch_feed_consumption.removeAt(0, { emitEvent: false });
     }
-    this.addFeedToBatchForm(undefined, { emitEvent: false });
+    // Removed: this.addFeedToBatchForm(undefined, { emitEvent: false }); // No default feed row
 
     this.isEditingExistingEntry = false;
   }
