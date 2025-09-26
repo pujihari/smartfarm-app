@@ -63,12 +63,12 @@
           @for (feed of batch_feed_consumption.controls; track $index) {
             <div class="feed-row" [formGroupName]="$index">
               <select formControlName="feed_code">
-                <option [ngValue]="''" disabled>Pilih Kode Pakan <span class="required-indicator">*</span></option>
+                <option [ngValue]="null">Pilih Kode Pakan</option>
                 @for (option of feedOptions; track option.item_code) {
                   <option [value]="option.item_code">{{ option.name }} ({{ option.item_code }})</option>
                 }
               </select>
-              <input type="number" formControlName="quantity_kg" placeholder="Jumlah (kg) *" step="0.01">
+              <input type="text" formControlName="quantity_kg" placeholder="Jumlah (kg)" step="0.01">
               <button type="button" class="remove-feed-btn" (click)="removeFeedFromBatchForm($index)" [disabled]="batch_feed_consumption.controls.length === 1">Hapus</button>
             </div>
           }
@@ -100,15 +100,15 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="batch_normal_eggs_weight_kg">Normal <span class="required-indicator">*</span></label>
-                  <input id="batch_normal_eggs_weight_kg" type="number" formControlName="normal_eggs_weight_kg" step="0.01">
+                  <input id="batch_normal_eggs_weight_kg" type="text" formControlName="normal_eggs_weight_kg" step="0.01">
                 </div>
                 <div class="form-group">
                   <label for="batch_white_eggs_weight_kg">Putih/Pucat <span class="required-indicator">*</span></label>
-                  <input id="batch_white_eggs_weight_kg" type="number" formControlName="white_eggs_weight_kg" step="0.01">
+                  <input id="batch_white_eggs_weight_kg" type="text" formControlName="white_eggs_weight_kg" step="0.01">
                 </div>
                 <div class="form-group">
                   <label for="batch_cracked_eggs_weight_kg">Retak <span class="required-indicator">*</span></label>
-                  <input id="batch_cracked_eggs_weight_kg" type="number" formControlName="cracked_eggs_weight_kg" step="0.01">
+                  <input id="batch_cracked_eggs_weight_kg" type="text" formControlName="cracked_eggs_weight_kg" step="0.01">
                 </div>
               </div>
             </fieldset>

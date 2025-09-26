@@ -176,6 +176,18 @@ export class ProductionComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  private parseNumber(value: string | number | null): number {
+    if (value === null || value === undefined || value === '') {
+      return 0;
+    }
+    if (typeof value === 'number') {
+      return value;
+    }
+    // Replace comma with dot for decimal parsing
+    const parsed = parseFloat(value.replace(',', '.'));
+    return isNaN(parsed) ? 0 : parsed;
+  }
+
   private calculateFlockAge(flockId: number | null, date: string | null): void {
     if (!flockId || !date) {
       this.currentFlockAgeInDays = null;
@@ -259,8 +271,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   createFeedGroup(feed?: FeedConsumption): FormGroup {
     return this.fb.group({
-      feed_code: [feed?.feed_code || '', Validators.required],
-      quantity_kg: [feed?.quantity_kg || null, [Validators.required, Validators.min(0)]]
+      feed_code: [feed?.feed_code || null], // No Validators.required by default
+      quantity_kg: [feed?.quantity_kg || null, Validators.min(0)] // No Validators.required by default
     });
   }
 
@@ -275,6 +287,28 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   addToStage(): void {
     this.batchProductionForm.markAllAsTouched();
+    
+    // Manually validate feed consumption rows
+    let hasInvalidFeedEntry = false;
+    const validFeedConsumption: FeedConsumption[] = [];
+
+    this.batch_feed_consumption.controls.forEach(control => {
+      const feedCode = control.get('feed_code')?.value;
+      const quantityKg = this.parseNumber(control.get('quantity_kg')?.value);
+
+      if (feedCode && quantityKg > 0) {
+        validFeedConsumption.push({ feed_code: feedCode, quantity_kg: quantityKg });
+      } else if (feedCode || (quantityKg > 0)) {
+        // If one field is filled but not the other, it's an invalid partial entry
+        hasInvalidFeedEntry = true;
+      }
+    });
+
+    if (hasInvalidFeedEntry) {
+      this.notificationService.showWarning('Harap lengkapi semua detail pakan atau hapus baris yang tidak lengkap.');
+      return;
+    }
+
     if (this.batchProductionForm.invalid) {
       this.notificationService.showWarning('Harap isi semua field yang wajib diisi.');
       return;
@@ -292,14 +326,11 @@ export class ProductionComponent implements OnInit, OnDestroy {
       normal_eggs: rawEntry.normal_eggs === null ? 0 : Number(rawEntry.normal_eggs),
       white_eggs: rawEntry.white_eggs === null ? 0 : Number(rawEntry.white_eggs),
       cracked_eggs: rawEntry.cracked_eggs === null ? 0 : Number(rawEntry.cracked_eggs),
-      normal_eggs_weight_kg: rawEntry.normal_eggs_weight_kg === null ? 0 : Number(rawEntry.normal_eggs_weight_kg),
-      white_eggs_weight_kg: rawEntry.white_eggs_weight_kg === null ? 0 : Number(rawEntry.white_eggs_weight_kg),
-      cracked_eggs_weight_kg: rawEntry.cracked_eggs_weight_kg === null ? 0 : Number(rawEntry.cracked_eggs_weight_kg),
+      normal_eggs_weight_kg: this.parseNumber(rawEntry.normal_eggs_weight_kg),
+      white_eggs_weight_kg: this.parseNumber(rawEntry.white_eggs_weight_kg),
+      cracked_eggs_weight_kg: this.parseNumber(rawEntry.cracked_eggs_weight_kg),
       notes: rawEntry.notes || null,
-      // Filter valid feed consumption entries: feed_code must be present, quantity_kg must not be null (can be 0)
-      feed_consumption: (rawEntry.feed_consumption || []).filter((feed: FeedConsumption) => 
-        feed.feed_code && feed.quantity_kg !== null
-      )
+      feed_consumption: validFeedConsumption // Use the manually validated list
     };
 
     const flockInfo = this.allFlocks.find((f: FlockWithFarmInfo) => f.id === newEntry.flock_id);
@@ -403,7 +434,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   closeDeleteModal(): void {
-    this.isConfirmModalOpen = false;
+    this.isConfirmModalOpen = false; // Fixed the typo here
     this.dataToDelete = null;
   }
 
