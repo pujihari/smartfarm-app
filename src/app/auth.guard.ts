@@ -12,9 +12,26 @@ export const authGuard: CanActivateFn = (route, state) => {
     switchMap(() => authService.currentUser$), // Kemudian, dapatkan nilai pengguna terbaru
     map(user => {
       if (user) {
-        return true; // Jika pengguna ada, izinkan akses
+        // Pengguna sudah login. Sekarang periksa apakah mereka adalah pengguna undangan yang perlu mengatur kata sandi.
+        const isInvitedUser = user.identities?.length === 0;
+        const isTryingToUpdatePassword = state.url === '/update-password';
+
+        if (isInvitedUser && !isTryingToUpdatePassword) {
+          // Jika mereka adalah pengguna undangan dan TIDAK berada di halaman update-password, arahkan mereka ke sana.
+          router.navigate(['/update-password']);
+          return false; // Blokir navigasi saat ini
+        }
+
+        if (!isInvitedUser && isTryingToUpdatePassword) {
+          // Jika pengguna biasa mencoba mengakses halaman update-password, arahkan mereka pergi.
+          router.navigate(['/dashboard']);
+          return false;
+        }
+
+        return true; // Izinkan akses
       } else {
-        router.navigate(['/login']); // Jika tidak, arahkan ke halaman login
+        // Pengguna tidak login, arahkan ke halaman login
+        router.navigate(['/login']);
         return false;
       }
     })

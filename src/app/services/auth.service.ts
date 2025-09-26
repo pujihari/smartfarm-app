@@ -58,17 +58,7 @@ export class AuthService {
         this.fetchProfile();
 
         this.ngZone.run(() => { // Wrap navigation in ngZone.run()
-          if (event === 'SIGNED_IN') {
-            if (session.user.identities?.length === 0) {
-              // This is a new user who was invited.
-              console.log('AuthService: Invited user detected. Navigating to /update-password.');
-              this.router.navigate(['/update-password']);
-            } else {
-              // This is a returning user signing in.
-              console.log('AuthService: Returning user signed in. Navigating to /dashboard.');
-              this.router.navigate(['/dashboard']);
-            }
-          } else if (event === 'USER_UPDATED') {
+          if (event === 'USER_UPDATED') {
             // This happens after the user sets their password on the update page.
             console.log('AuthService: User updated. Navigating to /dashboard.');
             this.router.navigate(['/dashboard']);
