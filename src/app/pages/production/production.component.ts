@@ -73,8 +73,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
       farm_filter: [null], // New form control for farm filter
       flock_id: [null, Validators.required],
       date: [new Date().toISOString().split('T')[0], Validators.required],
-      mortality_count: [0, [Validators.required, Validators.min(0)]],
-      culling_count: [0, [Validators.required, Validators.min(0)]],
+      mortality_count: [0, Validators.min(0)], // Removed Validators.required
+      culling_count: [0, Validators.min(0)], // Removed Validators.required
       normal_eggs: [0],
       white_eggs: [0],
       cracked_eggs: [0],
@@ -105,9 +105,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Removed: this.addFeedToBatchForm(undefined, { emitEvent: false });
-    // Feed consumption is now optional and added only when user clicks '+ Tambah Pakan'
-
     this.inventoryService.getFeedOptions().pipe(
       takeUntil(this.destroy$)
     ).subscribe({
@@ -210,7 +207,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
       const control = this.batchProductionForm.get(controlName);
       if (control) {
         if (show) {
-          control.setValidators([Validators.required, Validators.min(0)]);
+          control.setValidators([Validators.min(0)]); // Removed Validators.required
           if (control.value === null) {
             control.setValue(0, { emitEvent: false });
           }
@@ -247,8 +244,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
     while (this.batch_feed_consumption.length !== 0) {
       this.batch_feed_consumption.removeAt(0, { emitEvent: false });
     }
-    // Removed: this.addFeedToBatchForm(undefined, { emitEvent: false }); // No default feed row
-
     this.isEditingExistingEntry = false;
   }
 
@@ -258,8 +253,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   createFeedGroup(feed?: FeedConsumption): FormGroup {
     return this.fb.group({
-      feed_code: [feed?.feed_code || '', Validators.required],
-      quantity_kg: [feed?.quantity_kg || null, [Validators.required, Validators.min(0.1)]]
+      feed_code: [feed?.feed_code || ''], // Removed Validators.required
+      quantity_kg: [feed?.quantity_kg || null, Validators.min(0)] // Removed Validators.required, changed min to 0
     });
   }
 
@@ -273,25 +268,38 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   addToStage(): void {
-    this.batchProductionForm.markAllAsTouched();
-    if (this.batchProductionForm.invalid) {
-      this.notificationService.showWarning('Harap isi semua field yang wajib diisi.');
+    // Mark only required fields as touched to show validation for them
+    this.batchProductionForm.get('flock_id')?.markAsTouched();
+    this.batchProductionForm.get('date')?.markAsTouched();
+
+    if (this.batchProductionForm.get('flock_id')?.invalid || this.batchProductionForm.get('date')?.invalid) {
+      this.notificationService.showWarning('Harap pilih Flok dan Tanggal.');
       return;
     }
 
-    const newEntry = this.batchProductionForm.getRawValue();
-    newEntry.flock_id = Number(newEntry.flock_id);
+    const rawEntry = this.batchProductionForm.getRawValue();
+    
+    // Apply defaults for numeric fields if null/empty
+    const newEntry: Partial<ProductionData> = {
+      id: rawEntry.id,
+      flock_id: Number(rawEntry.flock_id),
+      date: rawEntry.date,
+      mortality_count: rawEntry.mortality_count === null ? 0 : Number(rawEntry.mortality_count),
+      culling_count: rawEntry.culling_count === null ? 0 : Number(rawEntry.culling_count),
+      normal_eggs: rawEntry.normal_eggs === null ? 0 : Number(rawEntry.normal_eggs),
+      white_eggs: rawEntry.white_eggs === null ? 0 : Number(rawEntry.white_eggs),
+      cracked_eggs: rawEntry.cracked_eggs === null ? 0 : Number(rawEntry.cracked_eggs),
+      normal_eggs_weight_kg: rawEntry.normal_eggs_weight_kg === null ? 0 : Number(rawEntry.normal_eggs_weight_kg),
+      white_eggs_weight_kg: rawEntry.white_eggs_weight_kg === null ? 0 : Number(rawEntry.white_eggs_weight_kg),
+      cracked_eggs_weight_kg: rawEntry.cracked_eggs_weight_kg === null ? 0 : Number(rawEntry.cracked_eggs_weight_kg),
+      notes: rawEntry.notes || null,
+      // Filter valid feed consumption entries
+      feed_consumption: (rawEntry.feed_consumption || []).filter((feed: FeedConsumption) => 
+        feed.feed_code && feed.quantity_kg !== null && feed.quantity_kg > 0
+      )
+    };
 
-    if (!this.showEggProductionFields) {
-      newEntry.normal_eggs = 0;
-      newEntry.white_eggs = 0;
-      newEntry.cracked_eggs = 0;
-      newEntry.normal_eggs_weight_kg = 0;
-      newEntry.white_eggs_weight_kg = 0;
-      newEntry.cracked_eggs_weight_kg = 0;
-    }
-
-  const flockInfo = this.allFlocks.find((f: FlockWithFarmInfo) => f.id === newEntry.flock_id);
+    const flockInfo = this.allFlocks.find((f: FlockWithFarmInfo) => f.id === newEntry.flock_id);
     
     const stagedItem: StagedProductionItem = {
       ...newEntry,
