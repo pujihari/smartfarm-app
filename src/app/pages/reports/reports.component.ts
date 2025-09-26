@@ -130,7 +130,7 @@ export class ReportsComponent implements OnInit {
     if (standardMinDataset) hdTrendHeaders.push('HD% Standar (Min)');
     if (standardMaxDataset) hdTrendHeaders.push('HD% Standar (Max)');
 
-    const hdTrendData = [hdTrendHeaders];
+    const hdTrendData: (string | number | null)[][] = [hdTrendHeaders]; // Fixed: Explicitly type hdTrendData
     for (let i = 0; i < chartLabels.length; i++) {
       const row: (string | number | null)[] = [chartLabels[i]];
       const actualValue = datasets.find(ds => ds.label === 'HD% Aktual')?.data[i];
