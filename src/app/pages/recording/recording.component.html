@@ -1,76 +1,75 @@
-<div class="container p-4">
-  <form (ngSubmit)="onSubmit()">
+<div class="recording-container">
+  <form class="recording-form" (ngSubmit)="onSubmit()">
     <!-- Pakan Section -->
-    <div class="mb-4">
-      <div class="flex items-center justify-between mb-2">
-        <h2 class="text-lg font-semibold">Pakan</h2>
-        <button type="button" (click)="addFeed()" class="text-blue-600 hover:text-blue-700">
+    <div class="form-section">
+      <div class="section-header">
+        <h2 class="section-title">Pakan</h2>
+        <button type="button" (click)="addFeed()" class="add-feed-btn">
           + Tambah Pakan
         </button>
       </div>
-      <div *ngFor="let feed of feeds; let i = index" class="flex gap-4 mb-2">
+      <div *ngFor="let feed of feeds; let i = index" class="feed-row">
         <input type="text" [(ngModel)]="feed.name" name="feedName{{i}}" 
-               class="flex-1 p-2 border rounded" placeholder="Nama Pakan">
+               class="form-input" placeholder="Nama Pakan">
         <input type="number" [(ngModel)]="feed.amount" name="feedAmount{{i}}" 
-               class="w-40 p-2 border rounded" placeholder="Jumlah (kg)">
+               class="form-input" placeholder="Jumlah (kg)">
       </div>
     </div>
 
     <!-- Egg Production Section (butir) -->
-    <div class="mb-4">
-      <h2 class="text-lg font-semibold mb-2">Produksi Telur (butir)</h2>
-      <div class="grid grid-cols-3 gap-4">
-        <div>
-          <label class="block mb-1">Normal</label>
+    <div class="form-section">
+      <h2 class="section-title">Produksi Telur (butir)</h2>
+      <div class="input-grid">
+        <div class="form-group">
+          <label class="form-label">Normal</label>
           <input type="number" [(ngModel)]="eggProduction.normal.count" name="normalCount"
-                 class="w-full p-2 border rounded" placeholder="0">
+                 class="form-input" placeholder="0">
         </div>
-        <div>
-          <label class="block mb-1">Putih/Pucat</label>
+        <div class="form-group">
+          <label class="form-label">Putih/Pucat</label>
           <input type="number" [(ngModel)]="eggProduction.broken.count" name="brokenCount"
-                 class="w-full p-2 border rounded" placeholder="0">
+                 class="form-input" placeholder="0">
         </div>
-        <div>
-          <label class="block mb-1">Retak</label>
+        <div class="form-group">
+          <label class="form-label">Retak</label>
           <input type="number" [(ngModel)]="eggProduction.cracked.count" name="crackedCount"
-                 class="w-full p-2 border rounded" placeholder="0">
+                 class="form-input" placeholder="0">
         </div>
       </div>
     </div>
 
     <!-- Egg Production Section (kilo) -->
-    <div class="mb-4">
-      <h2 class="text-lg font-semibold mb-2">Produksi Telur (kilo)</h2>
-      <div class="grid grid-cols-3 gap-4">
-        <div>
-          <label class="block mb-1">Normal</label>
+    <div class="form-section">
+      <h2 class="section-title">Produksi Telur (kilo)</h2>
+      <div class="input-grid">
+        <div class="form-group">
+          <label class="form-label">Normal</label>
           <input type="number" [(ngModel)]="eggProduction.normal.weight" name="normalWeight"
-                 class="w-full p-2 border rounded" placeholder="0">
+                 class="form-input" placeholder="0">
         </div>
-        <div>
-          <label class="block mb-1">Putih/Pucat</label>
+        <div class="form-group">
+          <label class="form-label">Putih/Pucat</label>
           <input type="number" [(ngModel)]="eggProduction.broken.weight" name="brokenWeight"
-                 class="w-full p-2 border rounded" placeholder="0">
+                 class="form-input" placeholder="0">
         </div>
-        <div>
-          <label class="block mb-1">Retak</label>
+        <div class="form-group">
+          <label class="form-label">Retak</label>
           <input type="number" [(ngModel)]="eggProduction.cracked.weight" name="crackedWeight"
-                 class="w-full p-2 border rounded" placeholder="0">
+                 class="form-input" placeholder="0">
         </div>
       </div>
     </div>
 
     <!-- Notes Section -->
-    <div class="mb-4">
-      <h2 class="text-lg font-semibold mb-2">Catatan (Opsional)</h2>
+    <div class="form-section">
+      <h2 class="section-title">Catatan (Opsional)</h2>
       <textarea [(ngModel)]="notes" name="notes" 
-                class="w-full p-2 border rounded" 
+                class="form-textarea" 
                 placeholder="Tambahkan catatan harian di sini..."></textarea>
     </div>
 
     <!-- Submit Button -->
-    <button type="submit" 
-            class="w-full bg-blue-500 text-white p-3 rounded hover:bg-blue-600">
+    <button type="submit" class="submit-btn">
       Tambah ke Daftar
     </button>
   </form>
