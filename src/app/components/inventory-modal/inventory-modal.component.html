@@ -1,10 +1,11 @@
 <div class="modal-overlay" (click)="onClose()">
-  <div class="modal-container" (click)="$event.stopPropagation()">
+  <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="inventory-modal-title" aria-describedby="inventory-modal-description">
     <div class="modal-header">
-      <h2>{{ item ? 'Edit Item Inventori' : 'Tambah Item Inventori' }}</h2>
-      <button class="close-button" (click)="onClose()">×</button>
+      <h2 id="inventory-modal-title">{{ item ? 'Edit Item Inventori' : 'Tambah Item Inventori' }}</h2>
+      <button class="close-button" (click)="onClose()" aria-label="Close modal">×</button>
     </div>
     <div class="modal-body">
+      <p id="inventory-modal-description" style="display: none;">Formulir untuk menambah atau mengedit item inventori.</p>
       <form [formGroup]="itemForm" (ngSubmit)="onSave()">
         <div class="form-group">
           <label for="item_type">Jenis Item</label>

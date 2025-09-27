@@ -1,11 +1,11 @@
 <div class="modal-overlay" (click)="onClose()">
-  <div class="modal-container" (click)="$event.stopPropagation()">
+  <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="member-modal-title" aria-describedby="member-modal-description">
     <div class="modal-header">
-      <h2>Undang Anggota Baru</h2>
-      <button class="close-button" (click)="onClose()">×</button>
+      <h2 id="member-modal-title">Undang Anggota Baru</h2>
+      <button class="close-button" (click)="onClose()" aria-label="Close modal">×</button>
     </div>
     <div class="modal-body">
-      <p class="modal-description">Anggota yang diundang akan menerima email untuk bergabung dengan organisasi Anda. Anda dapat menetapkan peran mereka di sini.</p>
+      <p id="member-modal-description" class="modal-description">Anggota yang diundang akan menerima email untuk bergabung dengan organisasi Anda. Anda dapat menetapkan peran mereka di sini.</p>
       <form [formGroup]="inviteForm" (ngSubmit)="onSave()">
         <div class="form-group">
           <label for="email">Email Anggota</label>

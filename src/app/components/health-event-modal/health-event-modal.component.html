@@ -1,10 +1,11 @@
 <div class="modal-overlay" (click)="onClose()">
-  <div class="modal-container" (click)="$event.stopPropagation()">
+  <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="health-event-modal-title" aria-describedby="health-event-modal-description">
     <div class="modal-header">
-      <h2>{{ event ? 'Edit Catatan Kesehatan' : 'Tambah Catatan Kesehatan' }}</h2>
-      <button class="close-button" (click)="onClose()">×</button>
+      <h2 id="health-event-modal-title">{{ event ? 'Edit Catatan Kesehatan' : 'Tambah Catatan Kesehatan' }}</h2>
+      <button class="close-button" (click)="onClose()" aria-label="Close modal">×</button>
     </div>
     <div class="modal-body">
+      <p id="health-event-modal-description" style="display: none;">Formulir untuk menambah atau mengedit catatan kejadian kesehatan.</p>
       <form [formGroup]="eventForm" (ngSubmit)="onSave()">
         <div class="form-group">
           <label for="flock_id">Flok</label>

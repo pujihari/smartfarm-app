@@ -1,15 +1,15 @@
 <div class="modal-overlay" (click)="onCancel()">
-  <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+  <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="confirmation-dialog-title" aria-describedby="confirmation-dialog-description">
     <div class="modal-header">
-      <h2 id="dialog-title">{{ title }}</h2>
+      <h2 id="confirmation-dialog-title">{{ title }}</h2>
       <button class="close-button" (click)="onCancel()" aria-label="Close modal">×</button>
     </div>
     <div class="modal-body">
-      <p id="dialog-description">{{ message }}</p>
+      <p id="confirmation-dialog-description">{{ message }}</p>
     </div>
     <div class="modal-footer">
       <button class="cancel-btn" (click)="onCancel()">Batal</button>
-      <button [class]="confirmButtonClass" (click)="onConfirm()" aria-describedby="dialog-description">{{ confirmButtonText }}</button>
+      <button [class]="confirmButtonClass" (click)="onConfirm()" aria-describedby="confirmation-dialog-description">{{ confirmButtonText }}</button>
     </div>
   </div>
 </div>
