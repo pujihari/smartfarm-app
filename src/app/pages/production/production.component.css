@@ -100,18 +100,37 @@
   margin-bottom: 12px;
 }
 
-.remove-feed-btn, .add-feed-btn {
+.remove-feed-btn {
   border: 1px solid #ddd;
   background-color: #f0f0f0;
   border-radius: 4px;
   padding: 8px 12px;
   cursor: pointer;
   transition: background-color 0.2s;
+  color: #dc3545;
 }
 
-.remove-feed-btn { color: #dc3545; }
-.add-feed-btn { color: #0A4D9D; font-weight: 500; }
 .remove-feed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Updated styles for .add-feed-btn */
+.add-feed-btn {
+  background: none;
+  border: none;
+  color: #0A4D9D;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0; /* Remove padding */
+  display: flex; /* Allow icon and text to be side-by-side */
+  align-items: center;
+  gap: 4px; /* Space between icon and text */
+  transition: color 0.2s;
+}
+
+.add-feed-btn:hover {
+  color: #083a75; /* Darker blue on hover */
+  background-color: transparent; /* Ensure no background on hover */
+}
 
 .add-to-stage-btn {
   width: 100%;
