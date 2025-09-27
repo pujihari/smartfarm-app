@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { from, Observable, throwError, combineLatest } from 'rxjs';
-import { map, catchError, switchMap, take } from 'rxjs/operators';
+import { map, catchError, switchMap, take, filter } from 'rxjs/operators';
 import { ProductionData } from '../models/production-data.model';
 import { supabase } from '../supabase.client';
 import { AuthService } from './auth.service'; // Import AuthService
@@ -17,6 +17,7 @@ export class ProductionService {
 
   getProductionDataWithDetails(): Observable<(ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, flockPopulation: number, totalDepletion: number })[]> {
     return this.authService.organizationId$.pipe(
+      filter(organizationId => !!organizationId), // Ensure organizationId is not null
       take(1),
       switchMap(organizationId => {
         if (!organizationId) {
@@ -80,6 +81,7 @@ export class ProductionService {
 
   getProductionDataByFlockId(flockId: number, startDate?: string, endDate?: string): Observable<(ProductionData & { totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, totalDepletion: number })[]> {
     return this.authService.organizationId$.pipe(
+      filter(organizationId => !!organizationId), // Ensure organizationId is not null
       take(1),
       switchMap(organizationId => {
         if (!organizationId) {
@@ -156,6 +158,7 @@ export class ProductionService {
   // New method to get a single day's production data for a specific flock
   getProductionDataForDay(flockId: number, date: string): Observable<(ProductionData & { mortality_count: number, culling_count: number }) | null> {
     return this.authService.organizationId$.pipe(
+      filter(organizationId => !!organizationId), // Ensure organizationId is not null
       take(1),
       switchMap(organizationId => {
         if (!organizationId) {

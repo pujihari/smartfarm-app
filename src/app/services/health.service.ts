@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { from, Observable, throwError } from 'rxjs';
-import { map, catchError, switchMap, take } from 'rxjs/operators';
+import { map, catchError, switchMap, take, filter } from 'rxjs/operators';
 import { HealthEvent } from '../models/health-event.model';
 import { supabase } from '../supabase.client';
 import { AuthService } from './auth.service';
@@ -49,6 +49,7 @@ export class HealthService {
 
   addHealthEvent(eventData: Omit<HealthEvent, 'id' | 'organization_id'>): Observable<any> {
     return this.authService.organizationId$.pipe(
+      filter(organizationId => !!organizationId), // Ensure organizationId is not null
       take(1),
       switchMap(organizationId => {
         if (!organizationId) {

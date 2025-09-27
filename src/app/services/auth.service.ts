@@ -1,4 +1,4 @@
-import { Injectable, NgZone } from '@angular/core'; // Import NgZone
+import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { from, Observable, BehaviorSubject, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
@@ -47,21 +47,24 @@ export class AuthService {
   constructor(
     private router: Router,
     private profileService: ProfileService,
-    private ngZone: NgZone // Inject NgZone
+    private ngZone: NgZone
   ) {
-    const hasAuthToken = typeof window !== 'undefined' && window.location.hash.includes('access_token');
-
     supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       console.log('AuthService: Auth state changed:', event, session);
       this._currentUser.next(session?.user ?? null);
       
       if (session?.user) {
-        this.fetchMemberDetails(session.user.id);
-        this.fetchProfile();
+        // Ensure member details are fetched and organizationId is set before marking as initialized
+        this.fetchMemberDetails(session.user.id).then(() => {
+          this.fetchProfile(); // Fetch profile after organization is known
+          this._isInitialized.next(true); // Mark as initialized only after member details are processed
+        }).catch(err => {
+          console.error('AuthService: Error during fetchMemberDetails in onAuthStateChange:', err);
+          this._isInitialized.next(true); // Still mark as initialized to unblock app, even if member details failed
+        });
 
-        this.ngZone.run(() => { // Wrap navigation in ngZone.run()
+        this.ngZone.run(() => {
           if (event === 'USER_UPDATED') {
-            // This happens after the user sets their password on the update page.
             console.log('AuthService: User updated. Navigating to /dashboard.');
             this.router.navigate(['/dashboard']);
           }
@@ -71,44 +74,46 @@ export class AuthService {
         this._memberRole.next(null);
         this._organizationId.next(null);
         this._profile.next(null);
-        this.ngZone.run(() => { // Wrap navigation in ngZone.run()
+        this.ngZone.run(() => {
           if (this.router.url !== '/login' && this.router.url !== '/register' && this.router.url !== '/update-password') {
             console.log('AuthService: Navigating to login page after SIGNED_OUT.');
             this.router.navigate(['/login']);
           }
         });
+        this._isInitialized.next(true); // Mark as initialized immediately if no user
       }
-
-      // More robust initialization logic to prevent race conditions with magic links
-      if (event === 'INITIAL_SESSION' && hasAuthToken) {
-        // This is the initial null session, but we know a SIGNED_IN event is coming.
-        // So, we do NOT set isInitialized to true yet. We wait for the real session.
-        return;
-      }
-
-      this._isInitialized.next(true);
     });
   }
 
-  private fetchMemberDetails(userId: string, retries = 3, delay = 1000): void {
-    supabase
-      .from('organization_members')
-      .select('role, organization_id')
-      .eq('user_id', userId)
-      .single()
-      .then(({ data, error }: { data: { role: MemberRole; organization_id: string } | null; error: any }) => {
-        if (error && error.code !== 'PGRST116') {
+  private fetchMemberDetails(userId: string, retries = 3, delay = 1000): Promise<void> {
+    return new Promise(async (resolve) => {
+      try {
+        const { data, error } = await supabase
+          .from('organization_members')
+          .select('role, organization_id')
+          .eq('user_id', userId)
+          .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
           console.error('AuthService: Error fetching member details:', error);
           this._memberRole.next(null);
           this._organizationId.next(null);
+          resolve(); // Resolve to unblock initialization
         } else if (!data && retries > 0) {
           console.warn(`AuthService: No organization member data found for user ${userId}. Retrying in ${delay}ms... (${retries} retries left)`);
-          setTimeout(() => this.fetchMemberDetails(userId, retries - 1, delay * 2), delay);
+          setTimeout(() => this.fetchMemberDetails(userId, retries - 1, delay * 2).then(resolve), delay);
         } else {
           this._memberRole.next((data?.role as MemberRole) || null);
           this._organizationId.next(data?.organization_id || null);
+          resolve();
         }
-      });
+      } catch (err: any) { // Explicitly type err here
+        console.error('AuthService: Unexpected error in fetchMemberDetails promise:', err);
+        this._memberRole.next(null);
+        this._organizationId.next(null);
+        resolve(); // Resolve to unblock initialization
+      }
+    });
   }
 
   private fetchProfile(): void {

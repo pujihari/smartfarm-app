@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { from, Observable, combineLatest, throwError, of } from 'rxjs';
-import { map, catchError, switchMap, take } from 'rxjs/operators';
+import { map, catchError, switchMap, take, filter } from 'rxjs/operators';
 import { Farm } from '../models/farm.model';
 import { supabase } from '../supabase.client';
 import { AuthService } from './auth.service';
@@ -16,6 +16,7 @@ export class FarmService {
 
   addFarm(farmData: { name: string, location: string }): Observable<any> {
     return this.authService.organizationId$.pipe(
+      filter(organizationId => !!organizationId), // Ensure organizationId is not null
       take(1),
       switchMap(organizationId => {
         if (!organizationId) {
