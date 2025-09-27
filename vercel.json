@@ -17,6 +17,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/manifest.webmanifest", "destination": "/manifest.webmanifest" }
+    { "source": "/manifest.webmanifest", "destination": "/manifest.webmanifest" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
