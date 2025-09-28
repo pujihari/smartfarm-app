@@ -158,6 +158,7 @@
 .staging-area h3 {
   font-size: 1.25rem;
   margin-bottom: 16px;
+  color: #333;
 }
 
 .staging-table {
@@ -265,6 +266,14 @@
 .required-indicator {
   color: #dc3545; /* Warna merah untuk tanda bintang */
   margin-left: 4px;
+}
+
+.calculated-total {
+  font-size: 1rem;
+  color: #333;
+  margin-top: 8px;
+  padding-left: 8px;
+  border-left: 3px solid #0A4D9D;
 }
 
 @media (max-width: 768px) {
@@ -404,5 +413,11 @@
     padding: 10px;
     font-size: 0.85rem;
     margin-bottom: 12px;
+  }
+
+  .calculated-total {
+    font-size: 0.9rem;
+    margin-top: 6px;
+    padding-left: 6px;
   }
 }

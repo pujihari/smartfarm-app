@@ -55,6 +55,9 @@
               <input id="daily_culling" type="number" formControlName="culling_count">
             </div>
           </div>
+          @if (totalDepletion$ | async; as totalDepletion) {
+            <p class="calculated-total">Total Deplesi: <strong>{{ totalDepletion }} ekor</strong></p>
+          }
         </fieldset>
 
         <fieldset formArrayName="feed_consumption">
@@ -75,6 +78,9 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Tambah Pakan
           </button>
+          @if (totalFeedConsumption$ | async; as totalFeedConsumption) {
+            <p class="calculated-total">Total Konsumsi Pakan: <strong>{{ totalFeedConsumption.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} kg</strong></p>
+          }
         </fieldset>
 
         @if (showEggProductionFields) {
@@ -95,6 +101,9 @@
                   <input id="daily_cracked_eggs" type="number" formControlName="cracked_eggs">
                 </div>
               </div>
+              @if (totalEggCount$ | async; as totalEggCount) {
+                <p class="calculated-total">Total Telur: <strong>{{ totalEggCount.toLocaleString('id-ID') }} butir</strong></p>
+              }
             </fieldset>
 
             <fieldset class="egg-quality-group">
@@ -113,6 +122,9 @@
                   <input id="daily_cracked_eggs_weight_kg" type="text" formControlName="cracked_eggs_weight_kg" step="0.01">
                 </div>
               </div>
+              @if (totalEggWeightKg$ | async; as totalEggWeightKg) {
+                <p class="calculated-total">Total Berat Telur: <strong>{{ totalEggWeightKg.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} kg</strong></p>
+              }
             </fieldset>
           </div>
         }

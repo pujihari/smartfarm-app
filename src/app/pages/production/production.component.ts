@@ -35,8 +35,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
   isConfirmModalOpen = false;
   dataToDelete: ProductionData | null = null;
 
-  dailyProductionForm: FormGroup; // Renamed from batchProductionForm
-  isSaving = false; // Renamed from isSavingBatch
+  dailyProductionForm: FormGroup;
+  isSaving = false;
   private allFlocks: FlockWithFarmInfo[] = [];
   feedOptions: FeedOption[] = [];
 
@@ -44,6 +44,12 @@ export class ProductionComponent implements OnInit, OnDestroy {
   showEggProductionFields = false;
   isEditingExistingEntry = false;
   productionType: 'grower' | 'layer' = 'layer';
+
+  // Observables for calculated totals
+  totalDepletion$: Observable<number>;
+  totalEggCount$: Observable<number>;
+  totalEggWeightKg$: Observable<number>;
+  totalFeedConsumption$: Observable<number>;
 
   constructor(
     private fb: FormBuilder,
@@ -61,7 +67,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     
     this.farms$ = this.farmService.getFarms();
 
-    this.dailyProductionForm = this.fb.group({ // Renamed
+    this.dailyProductionForm = this.fb.group({
       id: [null],
       farm_filter: [null],
       flock_id: [null, Validators.required],
@@ -95,6 +101,37 @@ export class ProductionComponent implements OnInit, OnDestroy {
         return allFlocks;
       })
     );
+
+    // Initialize observables for calculated totals
+    this.totalDepletion$ = combineLatest([
+      this.dailyProductionForm.get('mortality_count')!.valueChanges.pipe(startWith(this.dailyProductionForm.get('mortality_count')!.value)),
+      this.dailyProductionForm.get('culling_count')!.valueChanges.pipe(startWith(this.dailyProductionForm.get('culling_count')!.value))
+    ]).pipe(
+      map(([mortality, culling]) => this.parseNumber(mortality) + this.parseNumber(culling))
+    );
+
+    this.totalEggCount$ = combineLatest([
+      this.dailyProductionForm.get('normal_eggs')!.valueChanges.pipe(startWith(this.dailyProductionForm.get('normal_eggs')!.value)),
+      this.dailyProductionForm.get('white_eggs')!.valueChanges.pipe(startWith(this.dailyProductionForm.get('white_eggs')!.value)),
+      this.dailyProductionForm.get('cracked_eggs')!.valueChanges.pipe(startWith(this.dailyProductionForm.get('cracked_eggs')!.value))
+    ]).pipe(
+      map(([normal, white, cracked]) => this.parseNumber(normal) + this.parseNumber(white) + this.parseNumber(cracked))
+    );
+
+    this.totalEggWeightKg$ = combineLatest([
+      this.dailyProductionForm.get('normal_eggs_weight_kg')!.valueChanges.pipe(startWith(this.dailyProductionForm.get('normal_eggs_weight_kg')!.value)),
+      this.dailyProductionForm.get('white_eggs_weight_kg')!.valueChanges.pipe(startWith(this.dailyProductionForm.get('white_eggs_weight_kg')!.value)),
+      this.dailyProductionForm.get('cracked_eggs_weight_kg')!.valueChanges.pipe(startWith(this.dailyProductionForm.get('cracked_eggs_weight_kg')!.value))
+    ]).pipe(
+      map(([normal, white, cracked]) => this.parseNumber(normal) + this.parseNumber(white) + this.parseNumber(cracked))
+    );
+
+    this.totalFeedConsumption$ = this.dailyProductionForm.get('feed_consumption')!.valueChanges.pipe(
+      startWith(this.dailyProductionForm.get('feed_consumption')!.value),
+      map((feedItems: FeedConsumption[]) => {
+        return feedItems.reduce((sum, item) => sum + this.parseNumber(item.quantity_kg), 0);
+      })
+    );
   }
 
   ngOnInit(): void {
@@ -108,8 +145,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
       }
     });
 
-    if (this.daily_feed_consumption.length === 0) { // Renamed
-      this.addFeedToDailyForm(undefined, { emitEvent: false }); // Renamed
+    if (this.daily_feed_consumption.length === 0) {
+      this.addFeedToDailyForm(undefined, { emitEvent: false });
     }
 
     this.inventoryService.getFeedOptions().pipe(
@@ -137,14 +174,14 @@ export class ProductionComponent implements OnInit, OnDestroy {
       switchMap(([flockId, date]: [number | null, string | null]) => {
         this.suppressFormChanges = true;
         if (!flockId || !date) {
-          setTimeout(() => this.resetDailyFormForNewEntry(), 0); // Renamed
+          setTimeout(() => this.resetDailyFormForNewEntry(), 0);
           return of(null as (ProductionData & { mortality_count: number, culling_count: number }) | null);
         }
         this.calculateFlockAge(flockId, date);
         return this.productionService.getProductionDataForDay(Number(flockId), date).pipe(
           catchError((err: any) => {
             this.notificationService.showError(`Gagal memuat data produksi harian: ${err?.message ?? err}`);
-            setTimeout(() => this.resetDailyFormForNewEntry(), 0); // Renamed
+            setTimeout(() => this.resetDailyFormForNewEntry(), 0);
             return of(null as (ProductionData & { mortality_count: number, culling_count: number }) | null);
           })
         );
@@ -154,19 +191,19 @@ export class ProductionComponent implements OnInit, OnDestroy {
         if (data) {
           this.isEditingExistingEntry = true;
           const formattedData = { ...data, date: data.date.split('T')[0] };
-          this.dailyProductionForm.patchValue(formattedData, { emitEvent: false }); // Renamed
-          this.daily_feed_consumption.clear({ emitEvent: false }); // Renamed
-          data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToDailyForm(feed, { emitEvent: false })); // Renamed
-          this.dailyProductionForm.get('id')?.setValue(data.id, { emitEvent: false }); // Renamed
+          this.dailyProductionForm.patchValue(formattedData, { emitEvent: false });
+          this.daily_feed_consumption.clear({ emitEvent: false });
+          data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToDailyForm(feed, { emitEvent: false }));
+          this.dailyProductionForm.get('id')?.setValue(data.id, { emitEvent: false });
           this.updateEggFieldsVisibility(this.currentFlockAgeInDays !== null && this.currentFlockAgeInDays > 126);
         } else {
-          setTimeout(() => this.resetDailyFormForNewEntry(), 0); // Renamed
+          setTimeout(() => this.resetDailyFormForNewEntry(), 0);
         }
         this.suppressFormChanges = false;
       },
       error: (err: any) => {
         this.notificationService.showError(`Gagal memproses data: ${err?.message ?? err}`);
-        setTimeout(() => this.resetDailyFormForNewEntry(), 0); // Renamed
+        setTimeout(() => this.resetDailyFormForNewEntry(), 0);
         this.suppressFormChanges = false;
       }
     });
@@ -226,7 +263,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     ];
 
     eggControls.forEach((controlName: string) => {
-      const control = this.dailyProductionForm.get(controlName); // Renamed
+      const control = this.dailyProductionForm.get(controlName);
       if (control) {
         if (this.showEggProductionFields) {
           control.setValidators([Validators.required, Validators.min(0)]);
@@ -242,12 +279,12 @@ export class ProductionComponent implements OnInit, OnDestroy {
     });
   }
 
-  private resetDailyFormForNewEntry(): void { // Renamed
-    const currentFlockId = this.dailyProductionForm.get('flock_id')?.value; // Renamed
-    const currentDate = this.dailyProductionForm.get('date')?.value; // Renamed
-    const currentFarmFilter = this.dailyProductionForm.get('farm_filter')?.value; // Renamed
+  private resetDailyFormForNewEntry(): void {
+    const currentFlockId = this.dailyProductionForm.get('flock_id')?.value;
+    const currentDate = this.dailyProductionForm.get('date')?.value;
+    const currentFarmFilter = this.dailyProductionForm.get('farm_filter')?.value;
 
-    this.dailyProductionForm.patchValue({ // Renamed
+    this.dailyProductionForm.patchValue({
       id: null,
       farm_filter: currentFarmFilter,
       flock_id: currentFlockId,
@@ -263,15 +300,15 @@ export class ProductionComponent implements OnInit, OnDestroy {
       notes: ''
     }, { emitEvent: false });
 
-    while (this.daily_feed_consumption.length !== 0) { // Renamed
-      this.daily_feed_consumption.removeAt(0, { emitEvent: false }); // Renamed
+    while (this.daily_feed_consumption.length !== 0) {
+      this.daily_feed_consumption.removeAt(0, { emitEvent: false });
     }
-    this.addFeedToDailyForm(undefined, { emitEvent: false }); // Renamed
+    this.addFeedToDailyForm(undefined, { emitEvent: false });
     this.isEditingExistingEntry = false;
   }
 
-  get daily_feed_consumption(): FormArray { // Renamed
-    return this.dailyProductionForm.get('feed_consumption') as FormArray; // Renamed
+  get daily_feed_consumption(): FormArray {
+    return this.dailyProductionForm.get('feed_consumption') as FormArray;
   }
 
   createFeedGroup(feed?: FeedConsumption): FormGroup {
@@ -281,23 +318,22 @@ export class ProductionComponent implements OnInit, OnDestroy {
     });
   }
 
-  addFeedToDailyForm(feed?: FeedConsumption, options?: { emitEvent?: boolean }): void { // Renamed
+  addFeedToDailyForm(feed?: FeedConsumption, options?: { emitEvent?: boolean }): void {
     const pushOptions = options || { emitEvent: true }; 
-    this.daily_feed_consumption.push(this.createFeedGroup(feed), pushOptions); // Renamed
+    this.daily_feed_consumption.push(this.createFeedGroup(feed), pushOptions);
   }
 
-  removeFeedFromDailyForm(index: number): void { // Renamed
-    this.daily_feed_consumption.removeAt(index); // Renamed
+  removeFeedFromDailyForm(index: number): void {
+    this.daily_feed_consumption.removeAt(index);
   }
 
-  // Renamed from addToStage to saveDailyLog
   saveDailyLog(): void {
     this.dailyProductionForm.markAllAsTouched();
     
     let hasInvalidFeedEntry = false;
     const validFeedConsumption: FeedConsumption[] = [];
 
-    this.daily_feed_consumption.controls.forEach(control => { // Renamed
+    this.daily_feed_consumption.controls.forEach(control => {
       const feedCode = control.get('feed_code')?.value;
       const quantityKg = this.parseNumber(control.get('quantity_kg')?.value);
 
@@ -313,12 +349,12 @@ export class ProductionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.dailyProductionForm.invalid) { // Renamed
+    if (this.dailyProductionForm.invalid) {
       this.notificationService.showWarning('Harap isi semua field yang wajib diisi.');
       return;
     }
 
-    const rawEntry = this.dailyProductionForm.getRawValue(); // Renamed
+    const rawEntry = this.dailyProductionForm.getRawValue();
     
     const dataToSave: Partial<ProductionData> = {
       id: rawEntry.id,
@@ -347,7 +383,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
         this.notificationService.showSuccess('Data produksi berhasil disimpan.');
         this.isSaving = false;
         this.refresh$.next();
-        this.resetDailyFormForNewEntry(); // Renamed
+        this.resetDailyFormForNewEntry();
       },
       error: (err: any) => {
         this.isSaving = false;
@@ -363,13 +399,13 @@ export class ProductionComponent implements OnInit, OnDestroy {
       ...data,
       date: data.date.split('T')[0]
     };
-    this.dailyProductionForm.patchValue(formattedData, { emitEvent: false }); // Renamed
-    this.dailyProductionForm.get('id')?.setValue(data.id, { emitEvent: false }); // Renamed
+    this.dailyProductionForm.patchValue(formattedData, { emitEvent: false });
+    this.dailyProductionForm.get('id')?.setValue(data.id, { emitEvent: false });
 
-    this.daily_feed_consumption.clear({ emitEvent: false }); // Renamed
-    data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToDailyForm(feed, { emitEvent: false })); // Renamed
-    if (this.daily_feed_consumption.length === 0) { // Renamed
-      this.addFeedToDailyForm(undefined, { emitEvent: false }); // Renamed
+    this.daily_feed_consumption.clear({ emitEvent: false });
+    data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToDailyForm(feed, { emitEvent: false }));
+    if (this.daily_feed_consumption.length === 0) {
+      this.addFeedToDailyForm(undefined, { emitEvent: false });
     }
 
     this.calculateFlockAge(data.flock_id, data.date.split('T')[0]);
