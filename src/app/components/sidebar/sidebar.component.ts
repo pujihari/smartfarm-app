@@ -27,7 +27,14 @@ export class SidebarComponent {
   menuItems: MenuItem[] = [
     { path: '/dashboard', icon: '📊', name: 'Dashboard' },
     { path: '/health', icon: '❤️', name: 'Kesehatan' },
-    { path: '/production', icon: '📋', name: 'Recording' },
+    {
+      icon: '📋',
+      name: 'Recording',
+      children: [
+        { path: '/production/grower', icon: '🐣', name: 'Grower' },
+        { path: '/production/layer', icon: '🥚', name: 'Layer' },
+      ]
+    },
     { path: '/body-weight', icon: '⚖️', name: 'Timbang BB' },
     { path: '/growth-chart', icon: '🌱', name: 'Grafik Pertumbuhan' },
     { path: '/weekly-performance', icon: '📈', name: 'Performa Mingguan' },
@@ -38,7 +45,7 @@ export class SidebarComponent {
       name: 'Pengaturan',
       children: [
         { path: '/farms', icon: '🏞️', name: 'Manajemen Farm' },
-        { path: '/flocks', icon: '🐔', name: 'Manajemen Flok' }, // Updated path to the list component
+        { path: '/flocks', icon: '🐔', name: 'Manajemen Flok' },
         { path: '/members', icon: '👥', name: 'Manajemen Anggota', requiredRoles: ['owner', 'manager'] },
         { path: '/settings', icon: '⚙️', name: 'Pengaturan Organisasi', requiredRoles: ['owner'] },
       ]

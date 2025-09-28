@@ -21,7 +21,6 @@ export const routes: Routes = [
         path: 'dashboard', 
         loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent) 
       },
-      // Rute 'recording' dihapus karena komponennya tidak lagi digunakan
       { 
         path: 'farms', 
         loadComponent: () => import('./pages/farms/farms.component').then(m => m.FarmsComponent) 
@@ -43,7 +42,7 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/health/health.component').then(m => m.HealthComponent) 
       },
       { 
-        path: 'production', 
+        path: 'production/:type', // Added ':type' parameter
         loadComponent: () => import('./pages/production/production.component').then(m => m.ProductionComponent) 
       },
       { 

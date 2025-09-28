@@ -134,7 +134,7 @@
 
 .add-to-stage-btn {
   width: 100%;
-  background-color: #28a745;
+  background-color: #28a745; /* Changed to green */
   color: white;
   border: none;
   border-radius: 6px;
@@ -143,6 +143,9 @@
   font-weight: 500;
   cursor: pointer;
   margin-top: 16px;
+}
+.add-to-stage-btn:hover {
+  background-color: #218838; /* Darker green on hover */
 }
 .add-to-stage-btn:disabled { background-color: #a3d9b1; cursor: not-allowed; }
 

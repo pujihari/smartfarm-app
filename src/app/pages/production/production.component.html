@@ -1,6 +1,6 @@
 <div class="page-container">
   <div class="page-header">
-    <h1 class="page-title">Recording</h1>
+    <h1 class="page-title">Recording {{ productionType === 'grower' ? 'Grower' : 'Layer' }}</h1>
     <!-- Tombol '+ Tambah Data Tunggal' dihapus -->
   </div>
 
@@ -124,7 +124,7 @@
         </div>
 
         <button type="button" class="add-to-stage-btn" (click)="addToStage()" [disabled]="batchProductionForm.invalid">
-          {{ isEditingExistingEntry ? 'Perbarui Data Harian' : 'Tambah ke Daftar' }}
+          {{ isEditingExistingEntry ? 'Perbarui Data Harian' : 'Tambah Produksi' }}
         </button>
       </form>
 
@@ -197,7 +197,7 @@
               <td data-label="Aksi">
                 @if (authService.canWriteData$ | async) {
                   <div class="action-buttons">
-                    <button class="action-btn edit-btn" (click)="editDailyEntry(item)">Edit</button> <!-- Mengubah openEditModal menjadi editDailyEntry -->
+                    <button class="action-btn edit-btn" (click)="editDailyEntry(item)">Edit</button>
                     <button class="action-btn delete-btn" (click)="openDeleteModal(item)">Hapus</button>
                   </div>
                 }
@@ -213,8 +213,6 @@
     </table>
   </div>
 </div>
-
-<!-- Komponen app-production-modal dihapus -->
 
 @if (isConfirmModalOpen) {
   <app-confirmation-modal

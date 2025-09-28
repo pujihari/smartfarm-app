@@ -5,14 +5,15 @@ import { ProductionService } from '../../services/production.service';
 import { FlockService } from '../../services/flock.service';
 import { NotificationService } from '../../services/notification.service';
 import { Observable, BehaviorSubject, of, lastValueFrom, combineLatest, Subject } from 'rxjs';
-import { switchMap, map, startWith, debounceTime, distinctUntilChanged, takeUntil, filter, catchError, tap } from 'rxjs/operators'; // Import 'tap'
+import { switchMap, map, startWith, debounceTime, distinctUntilChanged, takeUntil, filter, catchError, tap } from 'rxjs/operators';
 import { ProductionData, FeedConsumption } from '../../models/production-data.model';
 import { Flock } from '../../models/flock.model';
 import { ConfirmationModalComponent } from '../../components/confirmation-modal/confirmation-modal.component';
 import { AuthService } from '../../services/auth.service';
 import { InventoryService, FeedOption } from '../../services/inventory.service';
-import { FarmService } from '../../services/farm.service'; // Import FarmService
-import { Farm } from '../../models/farm.model'; // Import Farm model
+import { FarmService } from '../../services/farm.service';
+import { Farm } from '../../models/farm.model';
+import { ActivatedRoute } from '@angular/router'; // Import ActivatedRoute
 
 type ProductionDataWithDetails = ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, flockPopulation: number, totalDepletion: number };
 type FlockWithFarmInfo = Flock & { farmName: string };
@@ -39,19 +40,20 @@ export class ProductionComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   productionData$: Observable<ProductionDataWithDetails[]>;
   flocks$: Observable<FlockWithFarmInfo[]>;
-  farms$: Observable<Farm[]>; // Declare farms$
+  farms$: Observable<Farm[]>;
   isConfirmModalOpen = false;
   dataToDelete: ProductionData | null = null;
 
   batchProductionForm: FormGroup;
   stagedProductionData: StagedProductionItem[] = [];
   isSavingBatch = false;
-  private allFlocks: FlockWithFarmInfo[] = []; // Explicitly type allFlocks
+  private allFlocks: FlockWithFarmInfo[] = [];
   feedOptions: FeedOption[] = [];
 
   currentFlockAgeInDays: number | null = null;
-  showEggProductionFields = false; // Default to false
+  showEggProductionFields = false;
   isEditingExistingEntry = false;
+  productionType: 'grower' | 'layer' = 'layer'; // New property to determine production type
 
   constructor(
     private fb: FormBuilder,
@@ -60,17 +62,18 @@ export class ProductionComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     public authService: AuthService,
     private inventoryService: InventoryService,
-    private farmService: FarmService // Inject FarmService
+    private farmService: FarmService,
+    private route: ActivatedRoute // Inject ActivatedRoute
   ) {
     this.productionData$ = this.refresh$.pipe(
       switchMap(() => this.productionService.getProductionDataWithDetails())
     );
     
-    this.farms$ = this.farmService.getFarms(); // Initialize farms$
+    this.farms$ = this.farmService.getFarms();
 
     this.batchProductionForm = this.fb.group({
       id: [null],
-      farm_filter: [null], // New form control for farm filter
+      farm_filter: [null],
       flock_id: [null, Validators.required],
       date: [new Date().toISOString().split('T')[0], Validators.required],
       mortality_count: [0, [Validators.required, Validators.min(0)]],
@@ -86,7 +89,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     });
 
     const allFlocks$ = this.flockService.getFlocksWithFarmInfo().pipe(
-      tap((flocks: FlockWithFarmInfo[]) => this.allFlocks = flocks) // Type 'flocks'
+      tap((flocks: FlockWithFarmInfo[]) => this.allFlocks = flocks)
     );
 
     const farmFilterChanges$ = this.batchProductionForm.get('farm_filter')!.valueChanges.pipe(startWith(null));
@@ -97,7 +100,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     ]).pipe(
       map(([allFlocks, selectedFarmId]) => {
         if (selectedFarmId) {
-          return allFlocks.filter((flock: FlockWithFarmInfo) => flock.farm_id === Number(selectedFarmId)); // Type 'flock'
+          return allFlocks.filter((flock: FlockWithFarmInfo) => flock.farm_id === Number(selectedFarmId));
         }
         return allFlocks;
       })
@@ -105,6 +108,20 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Determine production type from route parameter
+    this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      const type = params.get('type');
+      if (type === 'grower' || type === 'layer') {
+        this.productionType = type;
+        console.log(`Production type set to: ${this.productionType}`);
+        // Re-evaluate egg fields visibility based on new type
+        this.updateEggFieldsVisibility(this.currentFlockAgeInDays !== null && this.currentFlockAgeInDays > 126);
+      } else {
+        // Default to layer if type is not specified or invalid
+        this.productionType = 'layer';
+      }
+    });
+
     // Add a default feed row if the form array is empty
     if (this.batch_feed_consumption.length === 0) {
       this.addFeedToBatchForm(undefined, { emitEvent: false });
@@ -136,14 +153,14 @@ export class ProductionComponent implements OnInit, OnDestroy {
       switchMap(([flockId, date]: [number | null, string | null]) => {
         this.suppressFormChanges = true;
         if (!flockId || !date) {
-          setTimeout(() => this.resetBatchFormForNewEntry(), 0); // Ditunda
+          setTimeout(() => this.resetBatchFormForNewEntry(), 0);
           return of(null as (ProductionData & { mortality_count: number, culling_count: number }) | null);
         }
         this.calculateFlockAge(flockId, date);
         return this.productionService.getProductionDataForDay(Number(flockId), date).pipe(
           catchError((err: any) => {
             this.notificationService.showError(`Gagal memuat data produksi harian: ${err?.message ?? err}`);
-            setTimeout(() => this.resetBatchFormForNewEntry(), 0); // Ditunda
+            setTimeout(() => this.resetBatchFormForNewEntry(), 0);
             return of(null as (ProductionData & { mortality_count: number, culling_count: number }) | null);
           })
         );
@@ -157,15 +174,16 @@ export class ProductionComponent implements OnInit, OnDestroy {
           this.batch_feed_consumption.clear({ emitEvent: false });
           data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToBatchForm(feed, { emitEvent: false }));
           this.batchProductionForm.get('id')?.setValue(data.id, { emitEvent: false });
+          // Re-evaluate egg fields visibility after patching data
           this.updateEggFieldsVisibility(this.currentFlockAgeInDays !== null && this.currentFlockAgeInDays > 126);
         } else {
-          setTimeout(() => this.resetBatchFormForNewEntry(), 0); // Ditunda
+          setTimeout(() => this.resetBatchFormForNewEntry(), 0);
         }
         this.suppressFormChanges = false;
       },
       error: (err: any) => {
         this.notificationService.showError(`Gagal memproses data: ${err?.message ?? err}`);
-        setTimeout(() => this.resetBatchFormForNewEntry(), 0); // Ditunda
+        setTimeout(() => this.resetBatchFormForNewEntry(), 0);
         this.suppressFormChanges = false;
       }
     });
@@ -213,8 +231,13 @@ export class ProductionComponent implements OnInit, OnDestroy {
     this.updateEggFieldsVisibility(age > 126);
   }
 
-  private updateEggFieldsVisibility(show: boolean): void {
-    this.showEggProductionFields = show;
+  private updateEggFieldsVisibility(ageConditionMet: boolean): void {
+    if (this.productionType === 'grower') {
+      this.showEggProductionFields = false;
+    } else { // 'layer'
+      this.showEggProductionFields = ageConditionMet;
+    }
+    
     const eggControls = [
       'normal_eggs', 'white_eggs', 'cracked_eggs',
       'normal_eggs_weight_kg', 'white_eggs_weight_kg', 'cracked_eggs_weight_kg'
@@ -223,7 +246,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     eggControls.forEach((controlName: string) => {
       const control = this.batchProductionForm.get(controlName);
       if (control) {
-        if (show) {
+        if (this.showEggProductionFields) {
           control.setValidators([Validators.required, Validators.min(0)]);
           if (control.value === null) {
             control.setValue(0, { emitEvent: false });
@@ -240,11 +263,11 @@ export class ProductionComponent implements OnInit, OnDestroy {
   private resetBatchFormForNewEntry(): void {
     const currentFlockId = this.batchProductionForm.get('flock_id')?.value;
     const currentDate = this.batchProductionForm.get('date')?.value;
-    const currentFarmFilter = this.batchProductionForm.get('farm_filter')?.value; // Keep farm filter
+    const currentFarmFilter = this.batchProductionForm.get('farm_filter')?.value;
 
     this.batchProductionForm.patchValue({
       id: null,
-      farm_filter: currentFarmFilter, // Retain farm filter value
+      farm_filter: currentFarmFilter,
       flock_id: currentFlockId,
       date: currentDate,
       mortality_count: 0,
@@ -261,7 +284,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     while (this.batch_feed_consumption.length !== 0) {
       this.batch_feed_consumption.removeAt(0, { emitEvent: false });
     }
-    this.addFeedToBatchForm(undefined, { emitEvent: false }); // Add a default feed row
+    this.addFeedToBatchForm(undefined, { emitEvent: false });
     this.isEditingExistingEntry = false;
   }
 
@@ -271,8 +294,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   createFeedGroup(feed?: FeedConsumption): FormGroup {
     return this.fb.group({
-      feed_code: [feed?.feed_code || null], // No Validators.required by default
-      quantity_kg: [feed?.quantity_kg || null, Validators.min(0)] // No Validators.required by default
+      feed_code: [feed?.feed_code || null],
+      quantity_kg: [feed?.quantity_kg || null, Validators.min(0)]
     });
   }
 
@@ -288,7 +311,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
   addToStage(): void {
     this.batchProductionForm.markAllAsTouched();
     
-    // Manually validate feed consumption rows
     let hasInvalidFeedEntry = false;
     const validFeedConsumption: FeedConsumption[] = [];
 
@@ -299,7 +321,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
       if (feedCode && quantityKg > 0) {
         validFeedConsumption.push({ feed_code: feedCode, quantity_kg: quantityKg });
       } else if (feedCode || (quantityKg > 0)) {
-        // If one field is filled but not the other, it's an invalid partial entry
         hasInvalidFeedEntry = true;
       }
     });
@@ -316,7 +337,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
     const rawEntry = this.batchProductionForm.getRawValue();
     
-    // Apply defaults for numeric fields if null/empty
     const newEntry: Partial<ProductionData> = {
       id: rawEntry.id,
       flock_id: Number(rawEntry.flock_id),
@@ -330,7 +350,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
       white_eggs_weight_kg: this.parseNumber(rawEntry.white_eggs_weight_kg),
       cracked_eggs_weight_kg: this.parseNumber(rawEntry.cracked_eggs_weight_kg),
       notes: rawEntry.notes || null,
-      feed_consumption: validFeedConsumption // Use the manually validated list
+      feed_consumption: validFeedConsumption
     };
 
     const flockInfo = this.allFlocks.find((f: FlockWithFarmInfo) => f.id === newEntry.flock_id);
@@ -434,7 +454,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   closeDeleteModal(): void {
-    this.isConfirmModalOpen = false; // Fixed the typo here
+    this.isConfirmModalOpen = false;
     this.dataToDelete = null;
   }
 
