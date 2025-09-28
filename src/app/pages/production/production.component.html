@@ -84,49 +84,67 @@
         </fieldset>
 
         @if (showEggProductionFields) {
-          <div>
-            <fieldset class="egg-quality-group">
-              <legend>Produksi Telur (butir)</legend>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="daily_normal_eggs">Normal <span class="required-indicator">*</span></label>
-                  <input id="daily_normal_eggs" type="number" formControlName="normal_eggs">
+          <fieldset>
+            <legend>Produksi Telur</legend>
+            <div formArrayName="egg_production_entries">
+              @for (eggEntryGroup of eggProductionEntries.controls; track $index) {
+                <div [formGroupName]="$index" class="egg-production-row-group">
+                  <div class="egg-type-input-group">
+                    <label>Normal</label>
+                    <div class="input-pair">
+                      <input type="number" formControlName="normal_count" placeholder="Butir">
+                      <input type="text" formControlName="normal_weight" placeholder="Kilo" step="0.01">
+                    </div>
+                  </div>
+                  <div class="egg-type-input-group">
+                    <label>Putih</label>
+                    <div class="input-pair">
+                      <input type="number" formControlName="white_count" placeholder="Butir">
+                      <input type="text" formControlName="white_weight" placeholder="Kilo" step="0.01">
+                    </div>
+                  </div>
+                  <div class="egg-type-input-group">
+                    <label>Retak</label>
+                    <div class="input-pair">
+                      <input type="number" formControlName="cracked_count" placeholder="Butir">
+                      <input type="text" formControlName="cracked_weight" placeholder="Kilo" step="0.01">
+                    </div>
+                  </div>
+                  @if (eggProductionEntries.controls.length > 1) {
+                    <button type="button" class="remove-egg-row-btn" (click)="removeEggProductionRow($index)">Hapus Baris</button>
+                  }
                 </div>
-                <div class="form-group">
-                  <label for="daily_white_eggs">Putih/Pucat <span class="required-indicator">*</span></label>
-                  <input id="daily_white_eggs" type="number" formControlName="white_eggs">
-                </div>
-                <div class="form-group">
-                  <label for="daily_cracked_eggs">Retak <span class="required-indicator">*</span></label>
-                  <input id="daily_cracked_eggs" type="number" formControlName="cracked_eggs">
-                </div>
-              </div>
-              @if (totalEggCount$ | async; as totalEggCount) {
-                <p class="calculated-total">Total Telur: <strong>{{ totalEggCount.toLocaleString('id-ID') }} butir</strong></p>
               }
-            </fieldset>
+            </div>
+            <button type="button" class="add-egg-production-btn" (click)="addEggProductionRow()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Tambah Produksi
+            </button>
 
-            <fieldset class="egg-quality-group">
-              <legend>Produksi Telur (kilo)</legend>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="daily_normal_eggs_weight_kg">Normal <span class="required-indicator">*</span></label>
-                  <input id="daily_normal_eggs_weight_kg" type="text" formControlName="normal_eggs_weight_kg" step="0.01">
-                </div>
-                <div class="form-group">
-                  <label for="daily_white_eggs_weight_kg">Putih/Pucat <span class="required-indicator">*</span></label>
-                  <input id="daily_white_eggs_weight_kg" type="text" formControlName="white_eggs_weight_kg" step="0.01">
-                </div>
-                <div class="form-group">
-                  <label for="daily_cracked_eggs_weight_kg">Retak <span class="required-indicator">*</span></label>
-                  <input id="daily_cracked_eggs_weight_kg" type="text" formControlName="cracked_eggs_weight_kg" step="0.01">
+            <div class="total-egg-summary">
+              <div class="total-egg-type-summary">
+                <label>Total Normal</label>
+                <div class="output-pair">
+                  <span class="total-value">{{ totalNormalEggsCount$ | async }} Butir</span>
+                  <span class="total-value">{{ (totalNormalEggsWeightKg$ | async)?.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} Kilo</span>
                 </div>
               </div>
-              @if (totalEggWeightKg$ | async; as totalEggWeightKg) {
-                <p class="calculated-total">Total Berat Telur: <strong>{{ totalEggWeightKg.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} kg</strong></p>
-              }
-            </fieldset>
-          </div>
+              <div class="total-egg-type-summary">
+                <label>Total Putih</label>
+                <div class="output-pair">
+                  <span class="total-value">{{ totalWhiteEggsCount$ | async }} Butir</span>
+                  <span class="total-value">{{ (totalWhiteEggsWeightKg$ | async)?.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} Kilo</span>
+                </div>
+              </div>
+              <div class="total-egg-type-summary">
+                <label>Total Retak</label>
+                <div class="output-pair">
+                  <span class="total-value">{{ totalCrackedEggsCount$ | async }} Butir</span>
+                  <span class="total-value">{{ (totalCrackedEggsWeightKg$ | async)?.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} Kilo</span>
+                </div>
+              </div>
+            </div>
+          </fieldset>
         }
 
         <div class="form-group">

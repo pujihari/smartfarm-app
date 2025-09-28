@@ -132,6 +132,117 @@
   background-color: transparent; /* Ensure no background on hover */
 }
 
+/* Egg Production Styles */
+.egg-production-row-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr)) auto; /* 3 egg types + remove button */
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed #e0e0e0;
+}
+
+.egg-production-row-group:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.egg-type-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.egg-type-input-group label {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.input-pair {
+  display: flex;
+  gap: 8px;
+}
+
+.input-pair input {
+  flex: 1;
+  width: auto; /* Override default 100% width */
+}
+
+.remove-egg-row-btn {
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #dc3545;
+  white-space: nowrap;
+}
+
+.remove-egg-row-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.add-egg-production-btn {
+  background: none;
+  border: none;
+  color: #0A4D9D;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+  margin-top: 8px;
+}
+
+.add-egg-production-btn:hover {
+  color: #083a75;
+}
+
+.total-egg-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.total-egg-type-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.total-egg-type-summary label {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+.output-pair {
+  display: flex;
+  gap: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #0A4D9D;
+}
+
+.output-pair .total-value {
+  background-color: #e9f5ff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  flex: 1;
+  text-align: center;
+}
+
+
 .add-to-stage-btn {
   width: 100%;
   background-color: #28a745; /* Changed to green */
@@ -334,6 +445,52 @@
   .feed-row .remove-feed-btn {
     width: 100%;
   }
+
+  /* Egg Production Responsive Styles */
+  .egg-production-row-group {
+    grid-template-columns: 1fr; /* Stack egg type inputs vertically */
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+  }
+
+  .egg-type-input-group {
+    flex-direction: row; /* Keep label and input on same line */
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .egg-type-input-group label {
+    flex-shrink: 0;
+    margin-right: 12px;
+  }
+
+  .input-pair {
+    flex-grow: 1;
+  }
+
+  .remove-egg-row-btn {
+    width: 100%;
+  }
+
+  .total-egg-summary {
+    grid-template-columns: 1fr; /* Stack total summaries vertically */
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 12px;
+  }
+
+  .total-egg-type-summary {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .output-pair {
+    flex-grow: 1;
+    justify-content: flex-end;
+  }
+
 
   .add-to-stage-btn, .save-all-btn {
     padding: 10px 14px; /* Mengurangi padding tombol */
