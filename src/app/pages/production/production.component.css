@@ -1,3 +1,6 @@
+/* ==========================================================================
+   Global Page Styles
+   ========================================================================== */
 .page-container {
   display: flex;
   flex-direction: column;
@@ -18,6 +21,9 @@
   color: #333;
 }
 
+/* ==========================================================================
+   Add Button Styles
+   ========================================================================== */
 .add-button {
   background-color: #0A4D9D;
   color: white;
@@ -34,7 +40,9 @@
   background-color: #083a75;
 }
 
-/* Batch Input Styles */
+/* ==========================================================================
+   Batch Input Section Styles
+   ========================================================================== */
 .batch-input-container {
   background-color: #fff;
   padding: 24px;
@@ -60,7 +68,9 @@
   color: #333;
 }
 
-.batch-form input, .batch-form select, .batch-form textarea { /* Added textarea here */
+.batch-form input,
+.batch-form select,
+.batch-form textarea {
   width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
@@ -72,11 +82,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 16px;
-  margin-bottom: 16px; /* Added margin-bottom for form-row */
+  margin-bottom: 16px;
 }
 
 .batch-form .top-row {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjusted for 3 columns */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 .batch-form fieldset {
@@ -92,6 +102,33 @@
   color: #333;
 }
 
+.flock-age-info {
+  background-color: #e9f5ff;
+  border: 1px solid #b3d9ff;
+  color: #004085;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.required-indicator {
+  color: #dc3545;
+  margin-left: 4px;
+}
+
+.calculated-total {
+  font-size: 1rem;
+  color: #333;
+  margin-top: 8px;
+  padding-left: 8px;
+  border-left: 3px solid #0A4D9D;
+}
+
+/* ==========================================================================
+   Feed Consumption Styles
+   ========================================================================== */
 .feed-row {
   display: grid;
   grid-template-columns: 1fr 1fr auto;
@@ -110,9 +147,11 @@
   color: #dc3545;
 }
 
-.remove-feed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.remove-feed-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-/* Updated styles for .add-feed-btn */
 .add-feed-btn {
   background: none;
   border: none;
@@ -120,22 +159,24 @@
   font-weight: 500;
   cursor: pointer;
   font-size: 1rem;
-  padding: 0; /* Remove padding */
-  display: flex; /* Allow icon and text to be side-by-side */
+  padding: 0;
+  display: flex;
   align-items: center;
-  gap: 4px; /* Space between icon and text */
+  gap: 4px;
   transition: color 0.2s;
 }
 
 .add-feed-btn:hover {
-  color: #083a75; /* Darker blue on hover */
-  background-color: transparent; /* Ensure no background on hover */
+  color: #083a75;
+  background-color: transparent;
 }
 
-/* Egg Production Styles */
+/* ==========================================================================
+   Egg Production Styles
+   ========================================================================== */
 .egg-production-row-group {
   display: grid;
-  grid-template-columns: repeat(3, minmax(120px, 1fr)) auto; /* 3 egg types + remove button */
+  grid-template-columns: repeat(3, minmax(120px, 1fr)) auto;
   gap: 16px;
   align-items: flex-end;
   margin-bottom: 16px;
@@ -168,7 +209,7 @@
 
 .input-pair input {
   flex: 1;
-  width: auto; /* Override default 100% width */
+  width: auto;
 }
 
 .remove-egg-row-btn {
@@ -242,10 +283,12 @@
   text-align: center;
 }
 
-
+/* ==========================================================================
+   Save Button Styles
+   ========================================================================== */
 .add-to-stage-btn {
   width: 100%;
-  background-color: #28a745; /* Changed to green */
+  background-color: #28a745;
   color: white;
   border: none;
   border-radius: 6px;
@@ -254,54 +297,21 @@
   font-weight: 500;
   cursor: pointer;
   margin-top: 16px;
+  transition: background-color 0.2s;
 }
+
 .add-to-stage-btn:hover {
-  background-color: #218838; /* Darker green on hover */
-}
-.add-to-stage-btn:disabled { background-color: #a3d9b1; cursor: not-allowed; }
-
-.staging-area {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid #e0e0e0;
+  background-color: #218838;
 }
 
-.staging-area h3 {
-  font-size: 1.25rem;
-  margin-bottom: 16px;
-  color: #333;
+.add-to-stage-btn:disabled {
+  background-color: #a3d9b1;
+  cursor: not-allowed;
 }
 
-.staging-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 16px;
-}
-
-.staging-table th, .staging-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.staging-table th {
-  background-color: #f8f9fa;
-}
-
-.save-all-btn {
-  width: 100%;
-  background-color: #0A4D9D;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 12px 16px;
-  font-size: 1.1rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-.save-all-btn:disabled { background-color: #a0b8d0; cursor: not-allowed; }
-
-/* Main Table Styles */
+/* ==========================================================================
+   Main Production Table Styles
+   ========================================================================== */
 .table-container {
   background-color: #ffffff;
   border-radius: 8px;
@@ -318,7 +328,8 @@
   border-collapse: collapse;
 }
 
-.production-table th, .production-table td {
+.production-table th,
+.production-table td {
   padding: 16px;
   text-align: left;
   border-bottom: 1px solid #e0e0e0;
@@ -354,8 +365,13 @@
   transition: background-color 0.2s, border-color 0.2s;
 }
 
-.edit-btn { color: #F5A623; }
-.delete-btn { color: #dc3545; }
+.edit-btn {
+  color: #F5A623;
+}
+
+.delete-btn {
+  color: #dc3545;
+}
 
 .empty-state {
   text-align: center;
@@ -363,99 +379,81 @@
   color: #999;
 }
 
-.flock-age-info {
-  background-color: #e9f5ff;
-  border: 1px solid #b3d9ff;
-  color: #004085;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 16px;
-  text-align: center;
-  font-size: 0.95rem;
-}
-
-.required-indicator {
-  color: #dc3545; /* Warna merah untuk tanda bintang */
-  margin-left: 4px;
-}
-
-.calculated-total {
-  font-size: 1rem;
-  color: #333;
-  margin-top: 8px;
-  padding-left: 8px;
-  border-left: 3px solid #0A4D9D;
-}
-
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
 @media (max-width: 768px) {
   .page-container {
-    gap: 16px; /* Mengurangi jarak antar bagian */
+    gap: 16px;
   }
 
   .page-title {
-    font-size: 1.5rem; /* Mengurangi ukuran judul halaman */
+    font-size: 1.5rem;
   }
 
   .batch-input-container {
-    padding: 16px; /* Mengurangi padding card input */
+    padding: 16px;
   }
 
   .batch-input-container h2 {
-    font-size: 1.2rem; /* Mengurangi ukuran judul section */
+    font-size: 1.2rem;
     margin-bottom: 12px;
   }
 
   .batch-form .form-group {
-    margin-bottom: 12px; /* Mengurangi jarak antar form group */
+    margin-bottom: 12px;
   }
 
   .batch-form .form-group label {
-    font-size: 0.9rem; /* Mengurangi ukuran label */
+    font-size: 0.9rem;
     margin-bottom: 6px;
   }
 
-  .batch-form input, .batch-form select, .batch-form textarea {
-    padding: 8px; /* Mengurangi padding input */
-    font-size: 0.9rem; /* Mengurangi ukuran font input */
+  .batch-form input,
+  .batch-form select,
+  .batch-form textarea {
+    padding: 8px;
+    font-size: 0.9rem;
   }
 
   .batch-form .form-row {
-    grid-template-columns: 1fr; /* Mengubah layout grid menjadi satu kolom */
-    gap: 12px; /* Mengurangi jarak antar item di form-row */
+    grid-template-columns: 1fr;
+    gap: 12px;
     margin-bottom: 12px;
   }
+
   .batch-form .top-row {
-    grid-template-columns: 1fr; /* Mengubah layout grid menjadi satu kolom */
+    grid-template-columns: 1fr;
   }
 
   .batch-form fieldset {
-    padding: 12px; /* Mengurangi padding fieldset */
+    padding: 12px;
     margin-bottom: 12px;
   }
 
   .batch-form legend {
-    font-size: 1rem; /* Mengurangi ukuran font legend */
+    font-size: 1rem;
   }
 
   .feed-row {
-    grid-template-columns: 1fr; /* Mengubah layout grid pakan menjadi satu kolom */
-    gap: 8px; /* Mengurangi jarak antar item pakan */
+    grid-template-columns: 1fr;
+    gap: 8px;
     margin-bottom: 8px;
   }
+
   .feed-row .remove-feed-btn {
     width: 100%;
   }
 
-  /* Egg Production Responsive Styles */
   .egg-production-row-group {
-    grid-template-columns: 1fr; /* Stack egg type inputs vertically */
+    grid-template-columns: 1fr;
     gap: 12px;
     margin-bottom: 12px;
     padding-bottom: 12px;
   }
 
   .egg-type-input-group {
-    flex-direction: row; /* Keep label and input on same line */
+    flex-direction: row;
     justify-content: space-between;
     align-items: center;
   }
@@ -474,7 +472,7 @@
   }
 
   .total-egg-summary {
-    grid-template-columns: 1fr; /* Stack total summaries vertically */
+    grid-template-columns: 1fr;
     gap: 12px;
     margin-top: 16px;
     padding-top: 12px;
@@ -491,26 +489,10 @@
     justify-content: flex-end;
   }
 
-
-  .add-to-stage-btn, .save-all-btn {
-    padding: 10px 14px; /* Mengurangi padding tombol */
-    font-size: 1rem; /* Mengurangi ukuran font tombol */
+  .add-to-stage-btn {
+    padding: 10px 14px;
+    font-size: 1rem;
     margin-top: 12px;
-  }
-
-  .staging-area {
-    margin-top: 16px;
-    padding-top: 16px;
-  }
-
-  .staging-area h3 {
-    font-size: 1.1rem; /* Mengurangi ukuran judul staging area */
-    margin-bottom: 12px;
-  }
-
-  .staging-table th, .staging-table td {
-    padding: 10px; /* Mengurangi padding tabel staging */
-    font-size: 0.85rem;
   }
 
   .main-table {
@@ -527,7 +509,7 @@
 
   .production-table tr {
     display: block;
-    margin-bottom: 12px; /* Mengurangi jarak antar baris tabel */
+    margin-bottom: 12px;
     border-radius: 8px;
     background-color: #ffffff;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -539,7 +521,7 @@
     justify-content: space-between;
     align-items: center;
     text-align: right;
-    padding: 10px 12px; /* Mengurangi padding sel tabel */
+    padding: 10px 12px;
     border-bottom: 1px solid #f0f0f0;
     font-size: 0.9rem;
   }
@@ -562,7 +544,7 @@
   }
 
   .action-btn {
-    padding: 5px 10px; /* Mengurangi padding tombol aksi */
+    padding: 5px 10px;
     font-size: 0.85rem;
   }
 
