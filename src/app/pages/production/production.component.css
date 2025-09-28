@@ -176,8 +176,8 @@
    ========================================================================== */
 .egg-production-row-group {
   display: grid;
-  grid-template-columns: repeat(3, minmax(120px, 1fr)) auto;
-  gap: 16px;
+  grid-template-columns: repeat(3, 1fr) auto; /* Changed minmax to 1fr for better flexibility */
+  gap: 12px; /* Reduced gap */
   align-items: flex-end;
   margin-bottom: 16px;
   padding-bottom: 16px;
@@ -208,7 +208,7 @@
 }
 
 .input-pair input {
-  flex: 1;
+  flex: 0 0 calc(50% - 4px); /* Explicitly set width for 50/50 split with gap */
   width: auto;
 }
 
