@@ -17,7 +17,7 @@ export class FarmService {
   addFarm(farmData: { name: string, location: string }): Observable<any> {
     return this.authService.organizationId$.pipe(
       filter(organizationId => !!organizationId), // Ensure organizationId is not null
-      take(1),
+      take(1), // Keep take(1) for single-shot operations
       switchMap(organizationId => {
         if (!organizationId) {
           return throwError(() => new Error('ID Organisasi tidak ditemukan.'));
@@ -30,67 +30,77 @@ export class FarmService {
   }
   
   getFarms(): Observable<Farm[]> {
-    const farms$ = from(supabase.from('farms').select('*').order('name')).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        return response.data || [];
-      }),
-      catchError(err => this.handleError(err, 'getFarms'))
-    );
+    return this.authService.organizationId$.pipe( // Start with organizationId$
+      filter(organizationId => !!organizationId),
+      switchMap(organizationId => { // This organizationId is now correctly scoped
+        const farms$ = from(supabase.from('farms').select('*').eq('organization_id', organizationId).order('name')).pipe(
+          map(response => {
+            if (response.error) throw response.error;
+            return response.data || [];
+          }),
+          catchError(err => this.handleError(err, 'getFarms'))
+        );
 
-    const activeFlocks$ = from(supabase.from('flocks').select('farm_id, population').eq('status', 'Aktif')).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        return response.data || [];
-      }),
-      catchError(err => this.handleError(err, 'getFarms (activeFlocks)'))
-    );
+        const activeFlocks$ = from(supabase.from('flocks').select('farm_id, population').eq('organization_id', organizationId).eq('status', 'Aktif')).pipe( // Use the scoped organizationId
+          map(response => {
+            if (response.error) throw response.error;
+            return response.data || [];
+          }),
+          catchError(err => this.handleError(err, 'getFarms (activeFlocks)'))
+        );
 
-    return combineLatest([farms$, activeFlocks$]).pipe(
-      map(([farms, activeFlocks]) => {
-        return farms.map((farm: any) => {
-          const farmFlocks = activeFlocks.filter((flock: any) => flock.farm_id === farm.id);
-          const population = farmFlocks.reduce((sum: number, flock: any) => sum + flock.population, 0);
-          const activeFlocksCount = farmFlocks.length;
-          return {
-            ...farm,
-            activeFlocks: activeFlocksCount,
-            population: population,
-            status: activeFlocksCount > 0 ? 'Aktif' : 'Tidak Aktif'
-          } as Farm;
-        });
+        return combineLatest([farms$, activeFlocks$]).pipe(
+          map(([farms, activeFlocks]) => {
+            return farms.map((farm: any) => {
+              const farmFlocks = activeFlocks.filter((flock: any) => flock.farm_id === farm.id);
+              const population = farmFlocks.reduce((sum: number, flock: any) => sum + flock.population, 0);
+              const activeFlocksCount = farmFlocks.length;
+              return {
+                ...farm,
+                activeFlocks: activeFlocksCount,
+                population: population,
+                status: activeFlocksCount > 0 ? 'Aktif' : 'Tidak Aktif'
+              } as Farm;
+            });
+          })
+        );
       })
     );
   }
 
   getFarmById(id: number): Observable<Farm | undefined> {
-    const farm$ = from(supabase.from('farms').select('*').eq('id', id).single()).pipe(
-      map(response => {
-        if (response.error && response.error.code !== 'PGRST116') throw response.error;
-        return response.data;
-      }),
-      catchError(err => this.handleError(err, 'getFarmById'))
-    );
+    return this.authService.organizationId$.pipe( // Start with organizationId$
+      filter(organizationId => !!organizationId),
+      switchMap(organizationId => { // No take(1) here to allow refreshing
+        const farm$ = from(supabase.from('farms').select('*').eq('id', id).eq('organization_id', organizationId).single()).pipe(
+          map(response => {
+            if (response.error && response.error.code !== 'PGRST116') throw response.error;
+            return response.data;
+          }),
+          catchError(err => this.handleError(err, 'getFarmById'))
+        );
 
-    const activeFlocks$ = from(supabase.from('flocks').select('farm_id, population').eq('status', 'Aktif').eq('farm_id', id)).pipe(
-      map(response => {
-        if (response.error) throw response.error;
-        return response.data || [];
-      }),
-      catchError(err => this.handleError(err, 'getFarmById (activeFlocks)'))
-    );
+        const activeFlocks$ = from(supabase.from('flocks').select('farm_id, population').eq('status', 'Aktif').eq('farm_id', id).eq('organization_id', organizationId)).pipe(
+          map(response => {
+            if (response.error) throw response.error;
+            return response.data || [];
+          }),
+          catchError(err => this.handleError(err, 'getFarmById (activeFlocks)'))
+        );
 
-    return combineLatest([farm$, activeFlocks$]).pipe(
-      map(([farm, activeFlocks]) => {
-        if (!farm) return undefined;
-        const population = activeFlocks.reduce((sum: number, flock: any) => sum + flock.population, 0);
-        const activeFlocksCount = activeFlocks.length;
-        return {
-          ...farm,
-          activeFlocks: activeFlocksCount,
-          population: population,
-          status: activeFlocksCount > 0 ? 'Aktif' : 'Tidak Aktif'
-        } as Farm;
+        return combineLatest([farm$, activeFlocks$]).pipe(
+          map(([farm, activeFlocks]) => {
+            if (!farm) return undefined;
+            const population = activeFlocks.reduce((sum: number, flock: any) => sum + flock.population, 0);
+            const activeFlocksCount = activeFlocks.length;
+            return {
+              ...farm,
+              activeFlocks: activeFlocksCount,
+              population: population,
+              status: activeFlocksCount > 0 ? 'Aktif' : 'Tidak Aktif'
+            } as Farm;
+          })
+        );
       })
     );
   }
