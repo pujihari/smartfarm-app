@@ -13,19 +13,10 @@ import { AuthService } from '../../services/auth.service';
 import { InventoryService, FeedOption } from '../../services/inventory.service';
 import { FarmService } from '../../services/farm.service';
 import { Farm } from '../../models/farm.model';
-import { ActivatedRoute } from '@angular/router'; // Import ActivatedRoute
+import { ActivatedRoute } from '@angular/router';
 
 type ProductionDataWithDetails = ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, flockPopulation: number, totalDepletion: number };
 type FlockWithFarmInfo = Flock & { farmName: string };
-
-interface StagedProductionItem extends Partial<ProductionData> {
-  id?: number;
-  flockName: string;
-  farmName: string;
-  totalEggCount: number;
-  totalFeedConsumption: number;
-  totalDepletion: number;
-}
 
 @Component({
   selector: 'app-production',
@@ -44,16 +35,15 @@ export class ProductionComponent implements OnInit, OnDestroy {
   isConfirmModalOpen = false;
   dataToDelete: ProductionData | null = null;
 
-  batchProductionForm: FormGroup;
-  stagedProductionData: StagedProductionItem[] = [];
-  isSavingBatch = false;
+  dailyProductionForm: FormGroup; // Renamed from batchProductionForm
+  isSaving = false; // Renamed from isSavingBatch
   private allFlocks: FlockWithFarmInfo[] = [];
   feedOptions: FeedOption[] = [];
 
   currentFlockAgeInDays: number | null = null;
   showEggProductionFields = false;
   isEditingExistingEntry = false;
-  productionType: 'grower' | 'layer' = 'layer'; // New property to determine production type
+  productionType: 'grower' | 'layer' = 'layer';
 
   constructor(
     private fb: FormBuilder,
@@ -63,7 +53,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     public authService: AuthService,
     private inventoryService: InventoryService,
     private farmService: FarmService,
-    private route: ActivatedRoute // Inject ActivatedRoute
+    private route: ActivatedRoute
   ) {
     this.productionData$ = this.refresh$.pipe(
       switchMap(() => this.productionService.getProductionDataWithDetails())
@@ -71,7 +61,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     
     this.farms$ = this.farmService.getFarms();
 
-    this.batchProductionForm = this.fb.group({
+    this.dailyProductionForm = this.fb.group({ // Renamed
       id: [null],
       farm_filter: [null],
       flock_id: [null, Validators.required],
@@ -92,7 +82,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
       tap((flocks: FlockWithFarmInfo[]) => this.allFlocks = flocks)
     );
 
-    const farmFilterChanges$ = this.batchProductionForm.get('farm_filter')!.valueChanges.pipe(startWith(null));
+    const farmFilterChanges$ = this.dailyProductionForm.get('farm_filter')!.valueChanges.pipe(startWith(null));
 
     this.flocks$ = combineLatest([
       allFlocks$,
@@ -108,40 +98,34 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Determine production type from route parameter
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const type = params.get('type');
       if (type === 'grower' || type === 'layer') {
         this.productionType = type;
-        console.log(`Production type set to: ${this.productionType}`);
-        // Re-evaluate egg fields visibility based on new type
         this.updateEggFieldsVisibility(this.currentFlockAgeInDays !== null && this.currentFlockAgeInDays > 126);
       } else {
-        // Default to layer if type is not specified or invalid
         this.productionType = 'layer';
       }
     });
 
-    // Add a default feed row if the form array is empty
-    if (this.batch_feed_consumption.length === 0) {
-      this.addFeedToBatchForm(undefined, { emitEvent: false });
+    if (this.daily_feed_consumption.length === 0) { // Renamed
+      this.addFeedToDailyForm(undefined, { emitEvent: false }); // Renamed
     }
 
     this.inventoryService.getFeedOptions().pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: (options: FeedOption[]) => this.feedOptions = options,
-      error: (err: any) => console.error('Error loading feed options for batch form:', err)
+      error: (err: any) => console.error('Error loading feed options for daily form:', err)
     });
 
-    // Subscribe to farm_filter changes to reset flock_id
-    this.batchProductionForm.get('farm_filter')!.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.batchProductionForm.get('flock_id')!.reset(null, { emitEvent: false });
+    this.dailyProductionForm.get('farm_filter')!.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.dailyProductionForm.get('flock_id')!.reset(null, { emitEvent: false });
     });
 
     const formValueChanges$ = combineLatest([
-      this.batchProductionForm.get('flock_id')!.valueChanges.pipe(startWith(this.batchProductionForm.get('flock_id')!.value)),
-      this.batchProductionForm.get('date')!.valueChanges.pipe(startWith(this.batchProductionForm.get('date')!.value))
+      this.dailyProductionForm.get('flock_id')!.valueChanges.pipe(startWith(this.dailyProductionForm.get('flock_id')!.value)),
+      this.dailyProductionForm.get('date')!.valueChanges.pipe(startWith(this.dailyProductionForm.get('date')!.value))
     ]).pipe(
       debounceTime(100),
       distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
@@ -153,14 +137,14 @@ export class ProductionComponent implements OnInit, OnDestroy {
       switchMap(([flockId, date]: [number | null, string | null]) => {
         this.suppressFormChanges = true;
         if (!flockId || !date) {
-          setTimeout(() => this.resetBatchFormForNewEntry(), 0);
+          setTimeout(() => this.resetDailyFormForNewEntry(), 0); // Renamed
           return of(null as (ProductionData & { mortality_count: number, culling_count: number }) | null);
         }
         this.calculateFlockAge(flockId, date);
         return this.productionService.getProductionDataForDay(Number(flockId), date).pipe(
           catchError((err: any) => {
             this.notificationService.showError(`Gagal memuat data produksi harian: ${err?.message ?? err}`);
-            setTimeout(() => this.resetBatchFormForNewEntry(), 0);
+            setTimeout(() => this.resetDailyFormForNewEntry(), 0); // Renamed
             return of(null as (ProductionData & { mortality_count: number, culling_count: number }) | null);
           })
         );
@@ -170,20 +154,19 @@ export class ProductionComponent implements OnInit, OnDestroy {
         if (data) {
           this.isEditingExistingEntry = true;
           const formattedData = { ...data, date: data.date.split('T')[0] };
-          this.batchProductionForm.patchValue(formattedData, { emitEvent: false });
-          this.batch_feed_consumption.clear({ emitEvent: false });
-          data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToBatchForm(feed, { emitEvent: false }));
-          this.batchProductionForm.get('id')?.setValue(data.id, { emitEvent: false });
-          // Re-evaluate egg fields visibility after patching data
+          this.dailyProductionForm.patchValue(formattedData, { emitEvent: false }); // Renamed
+          this.daily_feed_consumption.clear({ emitEvent: false }); // Renamed
+          data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToDailyForm(feed, { emitEvent: false })); // Renamed
+          this.dailyProductionForm.get('id')?.setValue(data.id, { emitEvent: false }); // Renamed
           this.updateEggFieldsVisibility(this.currentFlockAgeInDays !== null && this.currentFlockAgeInDays > 126);
         } else {
-          setTimeout(() => this.resetBatchFormForNewEntry(), 0);
+          setTimeout(() => this.resetDailyFormForNewEntry(), 0); // Renamed
         }
         this.suppressFormChanges = false;
       },
       error: (err: any) => {
         this.notificationService.showError(`Gagal memproses data: ${err?.message ?? err}`);
-        setTimeout(() => this.resetBatchFormForNewEntry(), 0);
+        setTimeout(() => this.resetDailyFormForNewEntry(), 0); // Renamed
         this.suppressFormChanges = false;
       }
     });
@@ -201,7 +184,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
     if (typeof value === 'number') {
       return value;
     }
-    // Replace comma with dot for decimal parsing
     const parsed = parseFloat(value.replace(',', '.'));
     return isNaN(parsed) ? 0 : parsed;
   }
@@ -244,7 +226,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     ];
 
     eggControls.forEach((controlName: string) => {
-      const control = this.batchProductionForm.get(controlName);
+      const control = this.dailyProductionForm.get(controlName); // Renamed
       if (control) {
         if (this.showEggProductionFields) {
           control.setValidators([Validators.required, Validators.min(0)]);
@@ -260,12 +242,12 @@ export class ProductionComponent implements OnInit, OnDestroy {
     });
   }
 
-  private resetBatchFormForNewEntry(): void {
-    const currentFlockId = this.batchProductionForm.get('flock_id')?.value;
-    const currentDate = this.batchProductionForm.get('date')?.value;
-    const currentFarmFilter = this.batchProductionForm.get('farm_filter')?.value;
+  private resetDailyFormForNewEntry(): void { // Renamed
+    const currentFlockId = this.dailyProductionForm.get('flock_id')?.value; // Renamed
+    const currentDate = this.dailyProductionForm.get('date')?.value; // Renamed
+    const currentFarmFilter = this.dailyProductionForm.get('farm_filter')?.value; // Renamed
 
-    this.batchProductionForm.patchValue({
+    this.dailyProductionForm.patchValue({ // Renamed
       id: null,
       farm_filter: currentFarmFilter,
       flock_id: currentFlockId,
@@ -281,15 +263,15 @@ export class ProductionComponent implements OnInit, OnDestroy {
       notes: ''
     }, { emitEvent: false });
 
-    while (this.batch_feed_consumption.length !== 0) {
-      this.batch_feed_consumption.removeAt(0, { emitEvent: false });
+    while (this.daily_feed_consumption.length !== 0) { // Renamed
+      this.daily_feed_consumption.removeAt(0, { emitEvent: false }); // Renamed
     }
-    this.addFeedToBatchForm(undefined, { emitEvent: false });
+    this.addFeedToDailyForm(undefined, { emitEvent: false }); // Renamed
     this.isEditingExistingEntry = false;
   }
 
-  get batch_feed_consumption(): FormArray {
-    return this.batchProductionForm.get('feed_consumption') as FormArray;
+  get daily_feed_consumption(): FormArray { // Renamed
+    return this.dailyProductionForm.get('feed_consumption') as FormArray; // Renamed
   }
 
   createFeedGroup(feed?: FeedConsumption): FormGroup {
@@ -299,22 +281,23 @@ export class ProductionComponent implements OnInit, OnDestroy {
     });
   }
 
-  addFeedToBatchForm(feed?: FeedConsumption, options?: { emitEvent?: boolean }): void {
+  addFeedToDailyForm(feed?: FeedConsumption, options?: { emitEvent?: boolean }): void { // Renamed
     const pushOptions = options || { emitEvent: true }; 
-    this.batch_feed_consumption.push(this.createFeedGroup(feed), pushOptions);
+    this.daily_feed_consumption.push(this.createFeedGroup(feed), pushOptions); // Renamed
   }
 
-  removeFeedFromBatchForm(index: number): void {
-    this.batch_feed_consumption.removeAt(index);
+  removeFeedFromDailyForm(index: number): void { // Renamed
+    this.daily_feed_consumption.removeAt(index); // Renamed
   }
 
-  addToStage(): void {
-    this.batchProductionForm.markAllAsTouched();
+  // Renamed from addToStage to saveDailyLog
+  saveDailyLog(): void {
+    this.dailyProductionForm.markAllAsTouched();
     
     let hasInvalidFeedEntry = false;
     const validFeedConsumption: FeedConsumption[] = [];
 
-    this.batch_feed_consumption.controls.forEach(control => {
+    this.daily_feed_consumption.controls.forEach(control => { // Renamed
       const feedCode = control.get('feed_code')?.value;
       const quantityKg = this.parseNumber(control.get('quantity_kg')?.value);
 
@@ -330,14 +313,14 @@ export class ProductionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.batchProductionForm.invalid) {
+    if (this.dailyProductionForm.invalid) { // Renamed
       this.notificationService.showWarning('Harap isi semua field yang wajib diisi.');
       return;
     }
 
-    const rawEntry = this.batchProductionForm.getRawValue();
+    const rawEntry = this.dailyProductionForm.getRawValue(); // Renamed
     
-    const newEntry: Partial<ProductionData> = {
+    const dataToSave: Partial<ProductionData> = {
       id: rawEntry.id,
       flock_id: Number(rawEntry.flock_id),
       date: rawEntry.date,
@@ -353,61 +336,24 @@ export class ProductionComponent implements OnInit, OnDestroy {
       feed_consumption: validFeedConsumption
     };
 
-    const flockInfo = this.allFlocks.find((f: FlockWithFarmInfo) => f.id === newEntry.flock_id);
-    
-    const stagedItem: StagedProductionItem = {
-      ...newEntry,
-      flockName: flockInfo?.name || 'N/A',
-      farmName: flockInfo?.farmName || 'N/A',
-      totalEggCount: (newEntry.normal_eggs || 0) + (newEntry.white_eggs || 0) + (newEntry.cracked_eggs || 0),
-      totalFeedConsumption: (newEntry.feed_consumption || []).reduce((sum: number, feed: FeedConsumption) => sum + (feed.quantity_kg || 0), 0),
-      totalDepletion: (newEntry.mortality_count || 0) + (newEntry.culling_count || 0),
-    };
+    this.isSaving = true;
 
-    if (this.isEditingExistingEntry && stagedItem.id) {
-      this.saveData(stagedItem as ProductionData);
-    } else {
-      const existingIndexInStaging = this.stagedProductionData.findIndex(
-        (item: StagedProductionItem) => item.flock_id === stagedItem.flock_id && item.date === stagedItem.date
-      );
+    const saveObservable = dataToSave.id
+      ? this.productionService.updateProductionData(dataToSave)
+      : this.productionService.addDailyLog(dataToSave as Omit<ProductionData, 'id'>);
 
-      if (existingIndexInStaging > -1) {
-        this.stagedProductionData[existingIndexInStaging] = stagedItem;
-        this.notificationService.showInfo('Data untuk flok dan tanggal ini diperbarui di daftar.');
-      } else {
-        this.stagedProductionData.push(stagedItem);
-        this.notificationService.showSuccess('Data ditambahkan ke daftar.');
+    saveObservable.subscribe({
+      next: () => {
+        this.notificationService.showSuccess('Data produksi berhasil disimpan.');
+        this.isSaving = false;
+        this.refresh$.next();
+        this.resetDailyFormForNewEntry(); // Renamed
+      },
+      error: (err: any) => {
+        this.isSaving = false;
+        this.notificationService.showError(`Gagal menyimpan data produksi: ${err?.message ?? err}`);
       }
-    }
-
-    this.resetBatchFormForNewEntry();
-  }
-
-  removeFromStage(index: number): void {
-    this.stagedProductionData.splice(index, 1);
-    this.notificationService.showInfo('Data dihapus dari daftar.');
-  }
-
-  async saveStagedData(): Promise<void> {
-    if (this.stagedProductionData.length === 0) {
-      this.notificationService.showWarning('Tidak ada data di daftar untuk disimpan.');
-      return;
-    }
-    this.isSavingBatch = true;
-
-    for (const data of this.stagedProductionData) {
-      try {
-        await lastValueFrom(this.productionService.addDailyLog(data as Omit<ProductionData, 'id'>));
-      } catch (error: any) {
-        this.notificationService.showError(`Gagal menyimpan data untuk ${data.flockName} (${data.date}): ${error.message}`);
-      }
-    }
-
-    this.isSavingBatch = false;
-    this.stagedProductionData = [];
-    this.notificationService.showSuccess('Semua data dalam daftar berhasil diproses.');
-    this.refresh$.next();
-    this.resetBatchFormForNewEntry();
+    });
   }
 
   editDailyEntry(data: ProductionDataWithDetails): void {
@@ -417,35 +363,17 @@ export class ProductionComponent implements OnInit, OnDestroy {
       ...data,
       date: data.date.split('T')[0]
     };
-    this.batchProductionForm.patchValue(formattedData, { emitEvent: false });
-    this.batchProductionForm.get('id')?.setValue(data.id, { emitEvent: false });
+    this.dailyProductionForm.patchValue(formattedData, { emitEvent: false }); // Renamed
+    this.dailyProductionForm.get('id')?.setValue(data.id, { emitEvent: false }); // Renamed
 
-    this.batch_feed_consumption.clear({ emitEvent: false });
-    data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToBatchForm(feed, { emitEvent: false }));
-    // Ensure at least one feed row is present if it was empty
-    if (this.batch_feed_consumption.length === 0) {
-      this.addFeedToBatchForm(undefined, { emitEvent: false });
+    this.daily_feed_consumption.clear({ emitEvent: false }); // Renamed
+    data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToDailyForm(feed, { emitEvent: false })); // Renamed
+    if (this.daily_feed_consumption.length === 0) { // Renamed
+      this.addFeedToDailyForm(undefined, { emitEvent: false }); // Renamed
     }
 
     this.calculateFlockAge(data.flock_id, data.date.split('T')[0]);
     this.notificationService.showInfo(`Memuat data untuk ${data.flockName} pada ${formattedData.date} untuk diedit.`);
-  }
-
-  saveData(data: Partial<ProductionData>): void {
-    const saveObservable = data.id
-      ? this.productionService.updateProductionData(data)
-      : this.productionService.addDailyLog(data as Omit<ProductionData, 'id'>);
-
-    saveObservable.subscribe({
-      next: () => {
-        this.notificationService.showSuccess('Data produksi berhasil disimpan.');
-        this.refresh$.next();
-        this.resetBatchFormForNewEntry();
-      },
-      error: (err: any) => {
-        this.notificationService.showError(`Gagal menyimpan data produksi: ${err?.message ?? err}`);
-      }
-    });
   }
 
   openDeleteModal(data: ProductionData): void {
