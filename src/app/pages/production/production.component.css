@@ -216,8 +216,9 @@
 }
 
 .input-pair input {
-  flex: 0 0 calc(50% - 4px);
-  width: auto;
+  /* flex: 0 0 calc(50% - 4px); */ /* Original */
+  flex: 1; /* New: Make them flexible */
+  width: auto; /* Ensure it adapts */
 }
 
 .remove-egg-row-btn {
