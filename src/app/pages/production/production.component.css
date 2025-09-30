@@ -78,6 +78,13 @@
   font-size: 1rem;
 }
 
+/* Style for placeholder text */
+.batch-form input::placeholder,
+.batch-form textarea::placeholder {
+  color: #a0a0a0; /* Light grey for placeholder */
+  opacity: 1; /* Ensure it's not dimmed by default in some browsers */
+}
+
 .batch-form .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

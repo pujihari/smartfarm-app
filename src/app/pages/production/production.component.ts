@@ -26,7 +26,7 @@ type FlockWithFarmInfo = Flock & { farmName: string };
   styleUrl: './production.component.css'
 })
 export class ProductionComponent implements OnInit, OnDestroy {
-  private refresh$ = new BehaviorSubject<void>(undefined);
+  private refresh$ = new Subject<void>(); // Perbaikan di sini
   private suppressFormChanges = false;
   private destroy$ = new Subject<void>();
   productionData$: Observable<ProductionDataWithDetails[]>;
@@ -311,13 +311,11 @@ export class ProductionComponent implements OnInit, OnDestroy {
         const control = group.get(controlName);
         if (control) {
           if (this.showEggProductionFields) {
-            control.setValidators([Validators.required, Validators.min(0)]);
-            if (control.value === null) {
-              control.setValue(0, { emitEvent: false });
-            }
+            // Only apply Validators.min(0), allowing null/empty for placeholder
+            control.setValidators([Validators.min(0)]);
           } else {
             control.clearValidators();
-            control.setValue(0, { emitEvent: false });
+            control.setValue(null, { emitEvent: false }); // Set to null if not showing egg fields
           }
           control.updateValueAndValidity({ emitEvent: false });
         }
@@ -382,12 +380,12 @@ export class ProductionComponent implements OnInit, OnDestroy {
   // Method to create a FormGroup for an egg production row
   createEggProductionGroup(entry?: any): FormGroup {
     return this.fb.group({
-      normal_count: [entry?.normal_count || 0, [Validators.min(0)]],
-      normal_weight: [entry?.normal_weight || 0, [Validators.min(0)]],
-      white_count: [entry?.white_count || 0, [Validators.min(0)]],
-      white_weight: [entry?.white_weight || 0, [Validators.min(0)]],
-      cracked_count: [entry?.cracked_count || 0, [Validators.min(0)]],
-      cracked_weight: [entry?.cracked_weight || 0, [Validators.min(0)]],
+      normal_count: [entry?.normal_count ?? null, [Validators.min(0)]],
+      normal_weight: [entry?.normal_weight ?? null, [Validators.min(0)]],
+      white_count: [entry?.white_count ?? null, [Validators.min(0)]],
+      white_weight: [entry?.white_weight ?? null, [Validators.min(0)]],
+      cracked_count: [entry?.cracked_count ?? null, [Validators.min(0)]],
+      cracked_weight: [entry?.cracked_weight ?? null, [Validators.min(0)]],
     });
   }
 
