@@ -151,22 +151,46 @@ export class ProductionComponent implements OnInit, OnDestroy {
     );
 
     this.totalNormalEggsCount$ = eggProductionEntriesChanges$.pipe(
-      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.normal_count), 0))
+      map(entries => {
+        const total = entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.normal_count), 0);
+        console.log('totalNormalEggsCount$ calculated:', total); // Debug log
+        return total;
+      })
     );
     this.totalNormalEggsWeightKg$ = eggProductionEntriesChanges$.pipe(
-      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.normal_weight), 0))
+      map(entries => {
+        const total = entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.normal_weight), 0);
+        console.log('totalNormalEggsWeightKg$ calculated:', total); // Debug log
+        return total;
+      })
     );
     this.totalWhiteEggsCount$ = eggProductionEntriesChanges$.pipe(
-      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.white_count), 0))
+      map(entries => {
+        const total = entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.white_count), 0);
+        console.log('totalWhiteEggsCount$ calculated:', total); // Debug log
+        return total;
+      })
     );
     this.totalWhiteEggsWeightKg$ = eggProductionEntriesChanges$.pipe(
-      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.white_weight), 0))
+      map(entries => {
+        const total = entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.white_weight), 0);
+        console.log('totalWhiteEggsWeightKg$ calculated:', total); // Debug log
+        return total;
+      })
     );
     this.totalCrackedEggsCount$ = eggProductionEntriesChanges$.pipe(
-      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.cracked_count), 0))
+      map(entries => {
+        const total = entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.cracked_count), 0);
+        console.log('totalCrackedEggsCount$ calculated:', total); // Debug log
+        return total;
+      })
     );
     this.totalCrackedEggsWeightKg$ = eggProductionEntriesChanges$.pipe(
-      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.cracked_weight), 0))
+      map(entries => {
+        const total = entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.cracked_weight), 0);
+        console.log('totalCrackedEggsWeightKg$ calculated:', total); // Debug log
+        return total;
+      })
     );
 
     // Inisialisasi totalEggCount$ dan totalEggWeightKg$ dengan menggabungkan total granular
@@ -518,22 +542,36 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
 
-    const saveObservable = dataToSave.id
-      ? this.productionService.updateProductionData(dataToSave)
-      : this.productionService.addDailyLog(dataToSave as Omit<ProductionData, 'id'>);
-
-    saveObservable.subscribe({
-      next: () => {
-        this.notificationService.showSuccess('Data produksi berhasil disimpan.');
-        this.isSaving = false;
-        this.refresh$.next();
-        this.resetDailyFormForNewEntry();
-      },
-      error: (err: any) => {
-        this.isSaving = false;
-        this.notificationService.showError(`Gagal menyimpan data produksi: ${err?.message ?? err}`);
-      }
-    });
+    if (dataToSave.id) {
+      // Call update for existing entry
+      this.productionService.updateProductionData(dataToSave).subscribe({
+        next: () => {
+          this.notificationService.showSuccess('Data produksi berhasil diperbarui.');
+          this.isSaving = false;
+          this.refresh$.next();
+          this.resetDailyFormForNewEntry();
+        },
+        error: (err: any) => {
+          this.isSaving = false;
+          this.notificationService.showError(`Gagal memperbarui data produksi: ${err?.message ?? err}`);
+        }
+      });
+    } else {
+      // Call add for new entry, explicitly omitting 'id'
+      const { id, ...dataForAdd } = dataToSave; // Destructure to omit 'id'
+      this.productionService.addDailyLog(dataForAdd as Omit<ProductionData, 'id'>).subscribe({
+        next: () => {
+          this.notificationService.showSuccess('Data produksi berhasil disimpan.');
+          this.isSaving = false;
+          this.refresh$.next();
+          this.resetDailyFormForNewEntry();
+        },
+        error: (err: any) => {
+          this.isSaving = false;
+          this.notificationService.showError(`Gagal menyimpan data produksi: ${err?.message ?? err}`);
+        }
+      });
+    }
   }
 
   editDailyEntry(data: ProductionDataWithDetails): void {
