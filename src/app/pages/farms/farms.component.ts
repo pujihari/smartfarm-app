@@ -57,8 +57,8 @@ export class FarmsComponent implements OnInit {
   saveFarm(farmData: Partial<Farm>): void {
     const saveObservable = farmData.id
       ? this.farmService.updateFarm(farmData)
-      : this.farmService.addFarm(farmData as { name: string, location: string });
-
+      : this.farmService.addFarm(farmData as { name: string, location: string, type: 'Grower' | 'Layer' }); // Fixed: Added 'type'
+    
     saveObservable.subscribe({
       next: () => {
         this.notificationService.showSuccess('Data farm berhasil disimpan.');

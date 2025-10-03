@@ -16,11 +16,13 @@ export class FarmModalComponent implements OnInit {
   @Output() save = new EventEmitter<Partial<Farm>>();
 
   farmForm: FormGroup;
+  farmTypes: ('Grower' | 'Layer')[] = ['Grower', 'Layer']; // Added farm types
 
   constructor(private fb: FormBuilder) {
     this.farmForm = this.fb.group({
       name: ['', Validators.required],
-      location: ['', Validators.required]
+      location: ['', Validators.required],
+      type: [null, Validators.required] // Added type control
     });
   }
 

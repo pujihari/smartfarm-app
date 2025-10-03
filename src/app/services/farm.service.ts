@@ -14,7 +14,7 @@ export class FarmService {
     return throwError(() => new Error(error.message || `Server error in ${context}`));
   }
 
-  addFarm(farmData: { name: string, location: string }): Observable<any> {
+  addFarm(farmData: { name: string, location: string, type: 'Grower' | 'Layer' }): Observable<any> {
     return this.authService.organizationId$.pipe(
       filter(organizationId => !!organizationId), // Ensure organizationId is not null
       take(1), // Keep take(1) for single-shot operations
@@ -29,11 +29,16 @@ export class FarmService {
     );
   }
   
-  getFarms(): Observable<Farm[]> {
-    return this.authService.organizationId$.pipe( // Start with organizationId$
+  getFarms(typeFilter?: 'Grower' | 'Layer'): Observable<Farm[]> { // Added typeFilter parameter
+    return this.authService.organizationId$.pipe(
       filter(organizationId => !!organizationId),
-      switchMap(organizationId => { // This organizationId is now correctly scoped
-        const farms$ = from(supabase.from('farms').select('*').eq('organization_id', organizationId).order('name')).pipe(
+      switchMap(organizationId => {
+        let query = supabase.from('farms').select('*').eq('organization_id', organizationId).order('name');
+        if (typeFilter) {
+          query = query.eq('type', typeFilter); // Apply type filter
+        }
+
+        const farms$ = from(query).pipe(
           map(response => {
             if (response.error) throw response.error;
             return response.data || [];
@@ -41,7 +46,7 @@ export class FarmService {
           catchError(err => this.handleError(err, 'getFarms'))
         );
 
-        const activeFlocks$ = from(supabase.from('flocks').select('farm_id, population').eq('organization_id', organizationId).eq('status', 'Aktif')).pipe( // Use the scoped organizationId
+        const activeFlocks$ = from(supabase.from('flocks').select('farm_id, population').eq('organization_id', organizationId).eq('status', 'Aktif')).pipe(
           map(response => {
             if (response.error) throw response.error;
             return response.data || [];
@@ -69,9 +74,9 @@ export class FarmService {
   }
 
   getFarmById(id: number): Observable<Farm | undefined> {
-    return this.authService.organizationId$.pipe( // Start with organizationId$
+    return this.authService.organizationId$.pipe(
       filter(organizationId => !!organizationId),
-      switchMap(organizationId => { // No take(1) here to allow refreshing
+      switchMap(organizationId => {
         const farm$ = from(supabase.from('farms').select('*').eq('id', id).eq('organization_id', organizationId).single()).pipe(
           map(response => {
             if (response.error && response.error.code !== 'PGRST116') throw response.error;
@@ -106,8 +111,8 @@ export class FarmService {
   }
 
   updateFarm(farmData: Partial<Farm>): Observable<any> {
-    const { id, name, location } = farmData;
-    return from(supabase.from('farms').update({ name, location }).eq('id', id!)).pipe(catchError(err => this.handleError(err, 'updateFarm')));
+    const { id, name, location, type } = farmData; // Include type in update
+    return from(supabase.from('farms').update({ name, location, type }).eq('id', id!)).pipe(catchError(err => this.handleError(err, 'updateFarm')));
   }
 
   deleteFarm(farmId: number): Observable<any> {

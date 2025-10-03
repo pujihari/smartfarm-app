@@ -15,6 +15,15 @@
           <label for="location">Lokasi</label>
           <input id="location" type="text" formControlName="location" placeholder="Contoh: Subang, Jawa Barat">
         </div>
+        <div class="form-group">
+          <label for="type">Tipe Farm</label>
+          <select id="type" formControlName="type">
+            <option [ngValue]="null" disabled>Pilih Tipe Farm</option>
+            @for (type of farmTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+        </div>
       </form>
     </div>
     <div class="modal-footer">

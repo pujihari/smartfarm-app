@@ -16,7 +16,8 @@ import { Farm } from '../../models/farm.model';
 import { ActivatedRoute } from '@angular/router';
 
 type ProductionDataWithDetails = ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, flockPopulation: number, totalDepletion: number };
-type FlockWithFarmInfo = Flock & { farmName: string };
+type FlockWithFarmInfo = Flock & { farmName: string, farmType: 'Grower' | 'Layer' }; // Updated type
+type FarmWithDetails = Farm & { activeFlocks: number, population: number, status: 'Aktif' | 'Tidak Aktif' }; // Ensure Farm type is correct
 
 @Component({
   selector: 'app-production',
@@ -26,18 +27,22 @@ type FlockWithFarmInfo = Flock & { farmName: string };
   styleUrl: './production.component.css'
 })
 export class ProductionComponent implements OnInit, OnDestroy {
-  private refresh$ = new Subject<void>(); // Perbaikan di sini
+  private refresh$ = new Subject<void>();
   private suppressFormChanges = false;
   private destroy$ = new Subject<void>();
   productionData$: Observable<ProductionDataWithDetails[]>;
-  flocks$: Observable<FlockWithFarmInfo[]>;
-  farms$: Observable<Farm[]>;
+  
+  filteredFarms$: Observable<FarmWithDetails[]>; // New observable for filtered farms
+  filteredFlocks$: Observable<FlockWithFarmInfo[]>; // New observable for filtered flocks
+  
+  private allFarms: FarmWithDetails[] = []; // Cache all farms
+  private allFlocks: FlockWithFarmInfo[] = []; // Cache all flocks
+
   isConfirmModalOpen = false;
   dataToDelete: ProductionData | null = null;
 
   dailyProductionForm: FormGroup;
   isSaving = false;
-  private allFlocks: FlockWithFarmInfo[] = [];
   feedOptions: FeedOption[] = [];
 
   currentFlockAgeInDays: number | null = null;
@@ -47,8 +52,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   // Observables for calculated totals
   totalDepletion$: Observable<number>;
-  totalEggCount$: Observable<number>; // Dideklarasikan di sini
-  totalEggWeightKg$: Observable<number>; // Dideklarasikan di sini
+  totalEggCount$: Observable<number>;
+  totalEggWeightKg$: Observable<number>;
   totalFeedConsumption$: Observable<number>;
 
   // New observables for total egg counts and weights from dynamic rows
@@ -73,8 +78,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
       switchMap(() => this.productionService.getProductionDataWithDetails())
     );
     
-    this.farms$ = this.farmService.getFarms();
-
     this.dailyProductionForm = this.fb.group({
       id: [null],
       farm_filter: [null],
@@ -82,29 +85,49 @@ export class ProductionComponent implements OnInit, OnDestroy {
       date: [new Date().toISOString().split('T')[0], Validators.required],
       mortality_count: [0, [Validators.required, Validators.min(0)]],
       culling_count: [0, [Validators.required, Validators.min(0)]],
-      // Removed individual egg fields, replaced with FormArray
       feed_consumption: this.fb.array([]),
-      egg_production_entries: this.fb.array([this.createEggProductionGroup()]), // New FormArray for egg entries
+      egg_production_entries: this.fb.array([this.createEggProductionGroup()]),
       notes: ['']
     });
 
+    // --- Filtering Farms and Flocks based on productionType ---
+    const currentProductionType$ = this.route.paramMap.pipe(
+      map(params => (params.get('type') === 'grower' ? 'Grower' : 'Layer') as 'Grower' | 'Layer'),
+      startWith(this.productionType === 'grower' ? 'Grower' : 'Layer'), // Initial value
+      distinctUntilChanged(),
+      tap(type => this.productionType = type.toLowerCase() as 'grower' | 'layer')
+    );
+
+    const allFarms$ = this.farmService.getFarms().pipe(
+      tap(farms => this.allFarms = farms)
+    );
+
+    this.filteredFarms$ = combineLatest([allFarms$, currentProductionType$]).pipe(
+      map(([allFarms, typeFilter]) => {
+        return allFarms.filter(farm => farm.type === typeFilter);
+      })
+    );
+
     const allFlocks$ = this.flockService.getFlocksWithFarmInfo().pipe(
-      tap((flocks: FlockWithFarmInfo[]) => this.allFlocks = flocks)
+      tap(flocks => this.allFlocks = flocks)
     );
 
     const farmFilterChanges$ = this.dailyProductionForm.get('farm_filter')!.valueChanges.pipe(startWith(null));
 
-    this.flocks$ = combineLatest([
+    this.filteredFlocks$ = combineLatest([
       allFlocks$,
-      farmFilterChanges$
+      farmFilterChanges$,
+      currentProductionType$
     ]).pipe(
-      map(([allFlocks, selectedFarmId]) => {
+      map(([allFlocks, selectedFarmId, typeFilter]) => {
+        let filtered = allFlocks.filter(flock => flock.farmType === typeFilter);
         if (selectedFarmId) {
-          return allFlocks.filter((flock: FlockWithFarmInfo) => flock.farm_id === Number(selectedFarmId));
+          filtered = filtered.filter(flock => flock.farm_id === Number(selectedFarmId));
         }
-        return allFlocks;
+        return filtered;
       })
     );
+    // --- End Filtering Farms and Flocks ---
 
     // Initialize observables for calculated totals (existing depletion and feed)
     this.totalDepletion$ = combineLatest([
@@ -168,6 +191,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
       const type = params.get('type');
       if (type === 'grower' || type === 'layer') {
         this.productionType = type;
+        // Recalculate visibility based on new productionType and current age
         this.updateEggFieldsVisibility(this.currentFlockAgeInDays !== null && this.currentFlockAgeInDays > 126);
       } else {
         this.productionType = 'layer';

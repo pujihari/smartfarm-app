@@ -4,6 +4,7 @@ import { map, catchError, switchMap, take, filter } from 'rxjs/operators';
 import { Flock } from '../models/flock.model';
 import { supabase } from '../supabase.client';
 import { AuthService } from './auth.service';
+import { Farm } from '../models/farm.model'; // Import Farm model
 
 @Injectable({ providedIn: 'root' })
 export class FlockService {
@@ -24,9 +25,15 @@ export class FlockService {
     );
   }
 
-  getFlocksWithFarmInfo(): Observable<(Flock & { farmName: string })[]> {
+  getFlocksWithFarmInfo(farmTypeFilter?: 'Grower' | 'Layer'): Observable<(Flock & { farmName: string, farmType: 'Grower' | 'Layer' })[]> {
     console.log('Fetching flocks with farm info...');
-    return from(supabase.from('flocks').select('*, farms ( name )')).pipe(
+    let query = supabase.from('flocks').select('*, farms!inner(name, type)'); // Select farm type
+    
+    if (farmTypeFilter) {
+      query = query.eq('farms.type', farmTypeFilter); // Filter by farm type
+    }
+
+    return from(query).pipe(
       map(response => {
         if (response.error) {
           console.error('Supabase error in getFlocksWithFarmInfo:', response.error);
@@ -35,8 +42,9 @@ export class FlockService {
         console.log('Flocks data received:', response.data);
         return (response.data || []).map((flock: any) => ({
           ...flock,
-          farmName: (flock.farms as any)?.name || 'N/A'
-        })) as (Flock & { farmName: string })[];
+          farmName: (flock.farms as any)?.name || 'N/A',
+          farmType: (flock.farms as any)?.type || 'Layer' // Default to 'Layer' if not set
+        })) as (Flock & { farmName: string, farmType: 'Grower' | 'Layer' })[];
       }),
       catchError(err => {
         console.error('Caught error in getFlocksWithFarmInfo pipe:', err);
@@ -45,15 +53,16 @@ export class FlockService {
     );
   }
 
-  getFlockById(id: number): Observable<Flock & { farmName: string } | undefined> {
-    return from(supabase.from('flocks').select('*, farms ( name )').eq('id', id).single()).pipe(
+  getFlockById(id: number): Observable<Flock & { farmName: string, farmType: 'Grower' | 'Layer' } | undefined> {
+    return from(supabase.from('flocks').select('*, farms!inner(name, type)').eq('id', id).single()).pipe(
       map(response => {
         if (response.error && response.error.code !== 'PGRST116') throw response.error;
         if (!response.data) return undefined;
         return {
           ...response.data,
-          farmName: (response.data.farms as any)?.name || 'N/A'
-        } as Flock & { farmName: string };
+          farmName: (response.data.farms as any)?.name || 'N/A',
+          farmType: (response.data.farms as any)?.type || 'Layer'
+        } as Flock & { farmName: string, farmType: 'Grower' | 'Layer' };
       }),
       catchError(err => this.handleError(err, 'getFlockById'))
     );

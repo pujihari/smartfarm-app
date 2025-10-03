@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Observable, combineLatest, of, BehaviorSubject } from 'rxjs';
@@ -18,7 +18,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartOptions, TooltipItem } from 'chart.js';
 
 interface FlockDetailData {
-  flock: (Flock & { farmName: string });
+  flock: (Flock & { farmName: string, farmType: 'Grower' | 'Layer' }); // Updated type
   currentAgeDays: number;
   kpis: {
     currentPopulation: number;
@@ -82,7 +82,7 @@ export class FlockDetailComponent implements OnInit {
     if (!this.flockId) return;
 
     const flock$ = this.flockService.getFlockById(this.flockId).pipe(
-      filter((flock): flock is Flock & { farmName: string } => !!flock),
+      filter((flock): flock is Flock & { farmName: string, farmType: 'Grower' | 'Layer' } => !!flock), // Fixed: Updated type predicate
       catchError(err => {
         this.notificationService.showError(`Gagal memuat detail flok: ${err.message}`);
         return of(undefined);
