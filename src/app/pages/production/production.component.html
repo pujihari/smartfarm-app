@@ -92,22 +92,22 @@
                   <div class="egg-type-input-group">
                     <label>Normal</label>
                     <div class="input-pair">
-                      <input type="number" formControlName="normal_count" placeholder="Butir" (input)="onEggInputChange($event, 'normal_count', $index)">
-                      <input type="number" formControlName="normal_weight" placeholder="Kilo" step="0.01">
+                      <input type="text" formControlName="normal_count" placeholder="Butir" (input)="onEggInputChange($event, 'normal_count', $index)">
+                      <input type="text" formControlName="normal_weight" placeholder="Kilo" step="0.01">
                     </div>
                   </div>
                   <div class="egg-type-input-group">
                     <label>Putih</label>
                     <div class="input-pair">
-                      <input type="number" formControlName="white_count" placeholder="Butir">
-                      <input type="number" formControlName="white_weight" placeholder="Kilo" step="0.01">
+                      <input type="text" formControlName="white_count" placeholder="Butir">
+                      <input type="text" formControlName="white_weight" placeholder="Kilo" step="0.01">
                     </div>
                   </div>
                   <div class="egg-type-input-group">
                     <label>Retak</label>
                     <div class="input-pair">
-                      <input type="number" formControlName="cracked_count" placeholder="Butir">
-                      <input type="number" formControlName="cracked_weight" placeholder="Kilo" step="0.01">
+                      <input type="text" formControlName="cracked_count" placeholder="Butir">
+                      <input type="text" formControlName="cracked_weight" placeholder="Kilo" step="0.01">
                     </div>
                   </div>
                   @if (eggProductionEntries.controls.length > 1) {

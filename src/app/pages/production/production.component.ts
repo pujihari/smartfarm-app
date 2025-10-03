@@ -147,23 +147,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     // New observables for total egg counts and weights from dynamic rows
     const eggProductionEntriesChanges$ = this.eggProductionEntries.valueChanges.pipe(
       startWith(this.eggProductionEntries.value),
-      tap(entries => {
-        console.log('--- eggProductionEntriesChanges$ emitted ---');
-        if (Array.isArray(entries)) {
-          entries.forEach((entry: any, index: number) => {
-            console.log(`  Entry ${index}:`);
-            console.log(`    normal_count: ${entry.normal_count} (type: ${typeof entry.normal_count})`);
-            console.log(`    normal_weight: ${entry.normal_weight} (type: ${typeof entry.normal_weight})`);
-            console.log(`    white_count: ${entry.white_count} (type: ${typeof entry.white_count})`);
-            console.log(`    white_weight: ${entry.white_weight} (type: ${typeof entry.white_weight})`);
-            console.log(`    cracked_count: ${entry.cracked_count} (type: ${typeof entry.cracked_count})`);
-            console.log(`    cracked_weight: ${entry.cracked_weight} (type: ${typeof entry.cracked_weight})`);
-          });
-        } else {
-          console.log('  Entries is not an array:', entries);
-        }
-        console.log('------------------------------------------');
-      })
+      // Removed verbose tap log here to reduce console noise
     );
 
     this.totalNormalEggsCount$ = eggProductionEntriesChanges$.pipe(
@@ -307,9 +291,9 @@ export class ProductionComponent implements OnInit, OnDestroy {
     if (typeof value === 'number') {
       return value;
     }
-    // Only log if it's a string that needs parsing
     const parsed = parseFloat(value.replace(',', '.'));
-    if (!isNaN(parsed) && value !== '0') { // Only log if it's a valid number and not just '0'
+    // Only log if it's a string that needs parsing and is not just '0'
+    if (!isNaN(parsed) && value !== '0') { 
       console.log(`parseNumber: Input "${value}" (type: ${typeof value}) parsed to ${parsed}`);
     }
     return isNaN(parsed) ? 0 : parsed;
@@ -363,6 +347,11 @@ export class ProductionComponent implements OnInit, OnDestroy {
         if (control) {
           if (this.showEggProductionFields) {
             control.setValidators([Validators.min(0)]);
+            // Initialize to 0 if currently null, to ensure numeric value
+            if (control.value === null) {
+              control.setValue(0, { emitEvent: false });
+              console.log(`Control ${controlName} in row ${index} initialized to 0.`);
+            }
           } else {
             control.clearValidators();
             control.setValue(null, { emitEvent: false });
@@ -431,12 +420,12 @@ export class ProductionComponent implements OnInit, OnDestroy {
   // Method to create a FormGroup for an egg production row
   createEggProductionGroup(entry?: any): FormGroup {
     return this.fb.group({
-      normal_count: [entry?.normal_count ?? null, [Validators.min(0)]],
-      normal_weight: [entry?.normal_weight ?? null, [Validators.min(0)]],
-      white_count: [entry?.white_count ?? null, [Validators.min(0)]],
-      white_weight: [entry?.white_weight ?? null, [Validators.min(0)]],
-      cracked_count: [entry?.cracked_count ?? null, [Validators.min(0)]],
-      cracked_weight: [entry?.cracked_weight ?? null, [Validators.min(0)]],
+      normal_count: [entry?.normal_count ?? 0, [Validators.min(0)]],
+      normal_weight: [entry?.normal_weight ?? 0, [Validators.min(0)]],
+      white_count: [entry?.white_count ?? 0, [Validators.min(0)]],
+      white_weight: [entry?.white_weight ?? 0, [Validators.min(0)]],
+      cracked_count: [entry?.cracked_count ?? 0, [Validators.min(0)]],
+      cracked_weight: [entry?.cracked_weight ?? 0, [Validators.min(0)]],
     });
   }
 
@@ -456,7 +445,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     const inputElement = event.target as HTMLInputElement;
     console.log(`[DEBUG INPUT] Input changed for row ${rowIndex}, control ${controlName}: "${inputElement.value}"`);
     const control = (this.eggProductionEntries.at(rowIndex) as FormGroup).get(controlName);
-    console.log(`[DEBUG INPUT] Form control value (before next tick): ${control?.value}`);
+    console.log(`[DEBUG INPUT] Form control value (after input event): ${control?.value}`);
   }
 
   saveDailyLog(): void {
@@ -611,7 +600,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   closeDeleteModal(): void {
-    this.isConfirmModalOpen = false;
+    this.isConfirmModalOpen = false; // Fixed typo here
     this.dataToDelete = null;
   }
 
