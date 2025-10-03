@@ -92,7 +92,7 @@
                   <div class="egg-type-input-group">
                     <label>Normal</label>
                     <div class="input-pair">
-                      <input type="number" formControlName="normal_count" placeholder="Butir">
+                      <input type="number" formControlName="normal_count" placeholder="Butir" (input)="onEggInputChange($event, 'normal_count', $index)">
                       <input type="number" formControlName="normal_weight" placeholder="Kilo" step="0.01">
                     </div>
                   </div>

@@ -147,50 +147,42 @@ export class ProductionComponent implements OnInit, OnDestroy {
     // New observables for total egg counts and weights from dynamic rows
     const eggProductionEntriesChanges$ = this.eggProductionEntries.valueChanges.pipe(
       startWith(this.eggProductionEntries.value),
-      tap(entries => console.log('eggProductionEntriesChanges$ emitted:', entries)) // Debug log
+      tap(entries => {
+        console.log('--- eggProductionEntriesChanges$ emitted ---');
+        if (Array.isArray(entries)) {
+          entries.forEach((entry: any, index: number) => {
+            console.log(`  Entry ${index}:`);
+            console.log(`    normal_count: ${entry.normal_count} (type: ${typeof entry.normal_count})`);
+            console.log(`    normal_weight: ${entry.normal_weight} (type: ${typeof entry.normal_weight})`);
+            console.log(`    white_count: ${entry.white_count} (type: ${typeof entry.white_count})`);
+            console.log(`    white_weight: ${entry.white_weight} (type: ${typeof entry.white_weight})`);
+            console.log(`    cracked_count: ${entry.cracked_count} (type: ${typeof entry.cracked_count})`);
+            console.log(`    cracked_weight: ${entry.cracked_weight} (type: ${typeof entry.cracked_weight})`);
+          });
+        } else {
+          console.log('  Entries is not an array:', entries);
+        }
+        console.log('------------------------------------------');
+      })
     );
 
     this.totalNormalEggsCount$ = eggProductionEntriesChanges$.pipe(
-      map(entries => {
-        const total = entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.normal_count), 0);
-        console.log('totalNormalEggsCount$ calculated:', total); // Debug log
-        return total;
-      })
+      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.normal_count), 0))
     );
     this.totalNormalEggsWeightKg$ = eggProductionEntriesChanges$.pipe(
-      map(entries => {
-        const total = entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.normal_weight), 0);
-        console.log('totalNormalEggsWeightKg$ calculated:', total); // Debug log
-        return total;
-      })
+      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.normal_weight), 0))
     );
     this.totalWhiteEggsCount$ = eggProductionEntriesChanges$.pipe(
-      map(entries => {
-        const total = entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.white_count), 0);
-        console.log('totalWhiteEggsCount$ calculated:', total); // Debug log
-        return total;
-      })
+      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.white_count), 0))
     );
     this.totalWhiteEggsWeightKg$ = eggProductionEntriesChanges$.pipe(
-      map(entries => {
-        const total = entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.white_weight), 0);
-        console.log('totalWhiteEggsWeightKg$ calculated:', total); // Debug log
-        return total;
-      })
+      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.white_weight), 0))
     );
     this.totalCrackedEggsCount$ = eggProductionEntriesChanges$.pipe(
-      map(entries => {
-        const total = entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.cracked_count), 0);
-        console.log('totalCrackedEggsCount$ calculated:', total); // Debug log
-        return total;
-      })
+      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.cracked_count), 0))
     );
     this.totalCrackedEggsWeightKg$ = eggProductionEntriesChanges$.pipe(
-      map(entries => {
-        const total = entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.cracked_weight), 0);
-        console.log('totalCrackedEggsWeightKg$ calculated:', total); // Debug log
-        return total;
-      })
+      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.cracked_weight), 0))
     );
 
     // Inisialisasi totalEggCount$ dan totalEggWeightKg$ dengan menggabungkan total granular
@@ -309,17 +301,17 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   private parseNumber(value: string | number | null): number {
-    console.log('parseNumber input:', value, 'type:', typeof value); // Debug log
     if (value === null || value === undefined || value === '') {
-      console.log('parseNumber output: 0 (null/undefined/empty)');
       return 0;
     }
     if (typeof value === 'number') {
-      console.log('parseNumber output:', value, '(number type)');
       return value;
     }
+    // Only log if it's a string that needs parsing
     const parsed = parseFloat(value.replace(',', '.'));
-    console.log('parseNumber output:', parsed, '(parsed from string)');
+    if (!isNaN(parsed) && value !== '0') { // Only log if it's a valid number and not just '0'
+      console.log(`parseNumber: Input "${value}" (type: ${typeof value}) parsed to ${parsed}`);
+    }
     return isNaN(parsed) ? 0 : parsed;
   }
 
@@ -376,7 +368,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
             control.setValue(null, { emitEvent: false });
           }
           control.updateValueAndValidity({ emitEvent: false });
-          console.log(`Control ${controlName} in row ${index} updated. Value: ${control.value}, Valid: ${control.valid}`);
+          // console.log(`Control ${controlName} in row ${index} updated. Value: ${control.value}, Valid: ${control.valid}`); // Removed verbose log
         }
       });
     });
@@ -457,6 +449,14 @@ export class ProductionComponent implements OnInit, OnDestroy {
   // Method to remove an egg production row
   removeEggProductionRow(index: number): void {
     this.eggProductionEntries.removeAt(index);
+  }
+
+  // New event handler for egg input changes
+  onEggInputChange(event: Event, controlName: string, rowIndex: number): void {
+    const inputElement = event.target as HTMLInputElement;
+    console.log(`[DEBUG INPUT] Input changed for row ${rowIndex}, control ${controlName}: "${inputElement.value}"`);
+    const control = (this.eggProductionEntries.at(rowIndex) as FormGroup).get(controlName);
+    console.log(`[DEBUG INPUT] Form control value (before next tick): ${control?.value}`);
   }
 
   saveDailyLog(): void {
