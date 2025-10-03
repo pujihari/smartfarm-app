@@ -221,7 +221,7 @@ export class ProductionService {
       p_culling_count: data.culling_count || 0,
       p_notes: data.notes || null // Include notes
     };
-    console.log('RPC params in ProductionService:', params); // Debugging log
+    // console.log('RPC params in ProductionService:', params); // Debugging log
     return from(supabase.rpc('add_daily_log', params)).pipe(catchError(err => this.handleError(err, 'addDailyLog')));
   }
 
@@ -239,7 +239,7 @@ export class ProductionService {
       p_feed_consumption: data.feed_consumption,
       p_notes: data.notes || null // Include notes
     };
-    console.log('RPC params for updateProductionData:', params); // Debugging log
+    // console.log('RPC params for updateProductionData:', params); // Debugging log
     return from(supabase.rpc('update_production_data_with_feed', params)).pipe(catchError(err => this.handleError(err, 'updateProductionData')));
   }
 

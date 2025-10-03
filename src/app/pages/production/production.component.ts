@@ -503,7 +503,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
       feed_consumption: validFeedConsumption
     };
 
-    console.log('Data to save in ProductionComponent:', dataToSave); // Debugging log
+    // console.log('Data to save in ProductionComponent:', dataToSave); // Debugging log
 
     this.isSaving = true;
 
