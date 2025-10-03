@@ -70,7 +70,7 @@
                   <option [value]="option.item_code">{{ option.name }} ({{ option.item_code }})</option>
                 }
               </select>
-              <input type="text" formControlName="quantity_kg" placeholder="Jumlah (kg)" step="0.01">
+              <input type="number" formControlName="quantity_kg" placeholder="Jumlah (kg)" step="0.01">
               <button type="button" class="remove-feed-btn" (click)="removeFeedFromDailyForm($index)" [disabled]="daily_feed_consumption.controls.length === 1">Hapus</button>
             </div>
           }
@@ -93,21 +93,21 @@
                     <label>Normal</label>
                     <div class="input-pair">
                       <input type="number" formControlName="normal_count" placeholder="Butir">
-                      <input type="text" formControlName="normal_weight" placeholder="Kilo" step="0.01">
+                      <input type="number" formControlName="normal_weight" placeholder="Kilo" step="0.01">
                     </div>
                   </div>
                   <div class="egg-type-input-group">
                     <label>Putih</label>
                     <div class="input-pair">
                       <input type="number" formControlName="white_count" placeholder="Butir">
-                      <input type="text" formControlName="white_weight" placeholder="Kilo" step="0.01">
+                      <input type="number" formControlName="white_weight" placeholder="Kilo" step="0.01">
                     </div>
                   </div>
                   <div class="egg-type-input-group">
                     <label>Retak</label>
                     <div class="input-pair">
                       <input type="number" formControlName="cracked_count" placeholder="Butir">
-                      <input type="text" formControlName="cracked_weight" placeholder="Kilo" step="0.01">
+                      <input type="number" formControlName="cracked_weight" placeholder="Kilo" step="0.01">
                     </div>
                   </div>
                   @if (eggProductionEntries.controls.length > 1) {

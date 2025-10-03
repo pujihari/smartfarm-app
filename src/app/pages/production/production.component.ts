@@ -290,7 +290,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     if (typeof value === 'number') {
       return value;
     }
-    const parsed = parseFloat(value.replace(',', '.'));
+    const parsed = parseFloat(value.replace(',', '.')); // This is important for locale-specific decimal separators
     return isNaN(parsed) ? 0 : parsed;
   }
 
@@ -502,6 +502,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
       notes: rawEntry.notes || null,
       feed_consumption: validFeedConsumption
     };
+
+    console.log('Data to save in ProductionComponent:', dataToSave); // Debugging log
 
     this.isSaving = true;
 
