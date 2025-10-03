@@ -184,7 +184,7 @@
 .egg-production-row-group {
   display: grid;
   /* Adjusted: 3 egg types with flexible width, and remove button takes minimum content width */
-  grid-template-columns: repeat(3, minmax(80px, 1fr)) min-content;
+  grid-template-columns: repeat(3, minmax(150px, 1fr)) min-content; /* Changed from 80px to 150px */
   gap: 12px;
   align-items: flex-end;
   margin-bottom: 16px;
@@ -216,7 +216,6 @@
 }
 
 .input-pair input {
-  /* flex: 0 0 calc(50% - 4px); */ /* Original */
   flex: 1; /* New: Make them flexible */
   width: auto; /* Ensure it adapts */
 }
