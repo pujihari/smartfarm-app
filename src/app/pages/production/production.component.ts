@@ -146,7 +146,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
     // New observables for total egg counts and weights from dynamic rows
     const eggProductionEntriesChanges$ = this.eggProductionEntries.valueChanges.pipe(
-      startWith(this.eggProductionEntries.value)
+      startWith(this.eggProductionEntries.value),
+      tap(entries => console.log('eggProductionEntriesChanges$ emitted:', entries)) // Debug log
     );
 
     this.totalNormalEggsCount$ = eggProductionEntriesChanges$.pipe(
@@ -284,20 +285,26 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   private parseNumber(value: string | number | null): number {
+    console.log('parseNumber input:', value, 'type:', typeof value); // Debug log
     if (value === null || value === undefined || value === '') {
+      console.log('parseNumber output: 0 (null/undefined/empty)');
       return 0;
     }
     if (typeof value === 'number') {
+      console.log('parseNumber output:', value, '(number type)');
       return value;
     }
-    const parsed = parseFloat(value.replace(',', '.')); // This is important for locale-specific decimal separators
+    const parsed = parseFloat(value.replace(',', '.'));
+    console.log('parseNumber output:', parsed, '(parsed from string)');
     return isNaN(parsed) ? 0 : parsed;
   }
 
   private calculateFlockAge(flockId: number | null, date: string | null): void {
+    console.log('calculateFlockAge called with flockId:', flockId, 'date:', date);
     if (!flockId || !date) {
       this.currentFlockAgeInDays = null;
       this.updateEggFieldsVisibility(false);
+      console.log('Flock ID or date missing, age set to null, egg fields visibility false.');
       return;
     }
 
@@ -305,6 +312,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     if (!selectedFlock) {
       this.currentFlockAgeInDays = null;
       this.updateEggFieldsVisibility(false);
+      console.log('Selected flock not found, age set to null, egg fields visibility false.');
       return;
     }
 
@@ -315,19 +323,22 @@ export class ProductionComponent implements OnInit, OnDestroy {
     
     const age = dayDiff + selectedFlock.entry_age_days;
     this.currentFlockAgeInDays = age;
+    console.log('Calculated flock age:', age, 'days');
 
     this.updateEggFieldsVisibility(age > 126);
   }
 
   private updateEggFieldsVisibility(ageConditionMet: boolean): void {
+    console.log('updateEggFieldsVisibility called with ageConditionMet:', ageConditionMet);
     if (this.productionType === 'grower') {
       this.showEggProductionFields = false;
+      console.log('Production type is grower, showEggProductionFields set to false.');
     } else { // 'layer'
       this.showEggProductionFields = ageConditionMet;
+      console.log('Production type is layer, showEggProductionFields set to:', this.showEggProductionFields);
     }
     
-    // Apply validators to all controls within each egg production entry
-    this.eggProductionEntries.controls.forEach(group => {
+    this.eggProductionEntries.controls.forEach((group, index) => {
       const eggControls = [
         'normal_count', 'normal_weight', 'white_count', 'white_weight', 'cracked_count', 'cracked_weight'
       ];
@@ -335,13 +346,13 @@ export class ProductionComponent implements OnInit, OnDestroy {
         const control = group.get(controlName);
         if (control) {
           if (this.showEggProductionFields) {
-            // Only apply Validators.min(0), allowing null/empty for placeholder
             control.setValidators([Validators.min(0)]);
           } else {
             control.clearValidators();
-            control.setValue(null, { emitEvent: false }); // Set to null if not showing egg fields
+            control.setValue(null, { emitEvent: false });
           }
           control.updateValueAndValidity({ emitEvent: false });
+          console.log(`Control ${controlName} in row ${index} updated. Value: ${control.value}, Valid: ${control.valid}`);
         }
       });
     });
