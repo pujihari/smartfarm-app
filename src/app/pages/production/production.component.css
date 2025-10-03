@@ -184,7 +184,7 @@
 .egg-production-row-group {
   display: grid;
   /* Adjusted: 3 egg types with flexible width, and remove button takes minimum content width */
-  grid-template-columns: repeat(3, minmax(150px, 1fr)) min-content; /* Changed from 80px to 150px */
+  grid-template-columns: repeat(3, minmax(170px, 1fr)) min-content; /* Changed from 150px to 170px */
   gap: 12px;
   align-items: flex-end;
   margin-bottom: 16px;
