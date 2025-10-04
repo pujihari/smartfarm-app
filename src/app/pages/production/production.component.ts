@@ -347,7 +347,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
         if (control) {
           if (this.showEggProductionFields) {
             control.setValidators([Validators.min(0)]);
-            // Removed redundant setValue(0) here, as createEggProductionGroup already initializes with 0
           } else {
             control.clearValidators();
             control.setValue(null, { emitEvent: false });
@@ -440,10 +439,12 @@ export class ProductionComponent implements OnInit, OnDestroy {
   onEggInputChange(event: Event, controlName: string, rowIndex: number): void {
     const inputElement = event.target as HTMLInputElement;
     const value = inputElement.value;
+    const parsedValue = this.parseNumber(value); // Parse the value to a number
     console.log(`[DEBUG INPUT] Input changed for row ${rowIndex}, control ${controlName}: "${value}"`);
+    console.log(`[DEBUG INPUT] Parsed value: ${parsedValue} (type: ${typeof parsedValue})`);
     const control = (this.eggProductionEntries.at(rowIndex) as FormGroup).get(controlName);
     if (control) {
-      control.setValue(value, { emitEvent: true }); // Explicitly set the value and emit event
+      control.setValue(parsedValue, { emitEvent: true }); // Set the parsed numeric value
       console.log(`[DEBUG INPUT] Form control value (after explicit setValue): ${control.value}`);
     }
   }
