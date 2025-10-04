@@ -12,7 +12,18 @@ export class ProductionService {
 
   private handleError(error: any, context: string) {
     console.error(`Supabase error in ${context}:`, error);
-    return throwError(() => new Error(error.message || `Server error in ${context}`));
+    // Attempt to extract a more user-friendly message from the error object
+    let errorMessage = error.message || `Server error in ${context}`;
+    if (error.details) {
+      errorMessage += ` Details: ${error.details}`;
+    }
+    if (error.hint) {
+      errorMessage += ` Hint: ${error.hint}`;
+    }
+    if (error.code) {
+      errorMessage += ` Code: ${error.code}`;
+    }
+    return throwError(() => new Error(errorMessage));
   }
 
   getProductionDataWithDetails(): Observable<(ProductionData & { flockName: string, farmName: string, totalEggCount: number, totalFeedConsumption: number, totalEggWeightKg: number, flockPopulation: number, totalDepletion: number })[]> {
