@@ -13,7 +13,7 @@
             <label for="daily_farm_filter">Filter Farm (Opsional)</label>
             <select id="daily_farm_filter" formControlName="farm_filter">
               <option [ngValue]="null">Tampilkan Semua Farm</option>
-              @if (filteredFarms$ | async; as farms) { <!-- Changed to filteredFarms$ -->
+              @if (filteredFarms$ | async; as farms) {
                 @for (farm of farms; track farm.id) {
                   <option [value]="farm.id">{{ farm.name }}</option>
                 }
@@ -22,18 +22,24 @@
           </div>
           <div class="form-group">
             <label for="daily_flock_id">Flok <span class="required-indicator">*</span></label>
-            <select id="daily_flock_id" formControlName="flock_id">
+            <select id="daily_flock_id" formControlName="flock_id" [class.is-invalid]="dailyProductionForm.get('flock_id')?.invalid && dailyProductionForm.get('flock_id')?.touched">
               <option [ngValue]="null" disabled>Pilih Flok</option>
-              @if (filteredFlocks$ | async; as flocks) { <!-- Changed to filteredFlocks$ -->
+              @if (filteredFlocks$ | async; as flocks) {
                 @for (flock of flocks; track flock.id) {
                   <option [value]="flock.id">{{ flock.name }} ({{ flock.farmName }})</option>
                 }
               }
             </select>
+            @if (dailyProductionForm.get('flock_id')?.invalid && dailyProductionForm.get('flock_id')?.touched) {
+              <div class="invalid-feedback">Flok wajib diisi.</div>
+            }
           </div>
           <div class="form-group">
             <label for="daily_date">Tanggal <span class="required-indicator">*</span></label>
-            <input id="daily_date" type="date" formControlName="date">
+            <input id="daily_date" type="date" formControlName="date" [class.is-invalid]="dailyProductionForm.get('date')?.invalid && dailyProductionForm.get('date')?.touched">
+            @if (dailyProductionForm.get('date')?.invalid && dailyProductionForm.get('date')?.touched) {
+              <div class="invalid-feedback">Tanggal wajib diisi.</div>
+            }
           </div>
         </div>
         
@@ -48,11 +54,17 @@
           <div class="form-row">
             <div class="form-group">
               <label for="daily_mortality">Kematian <span class="required-indicator">*</span></label>
-              <input id="daily_mortality" type="number" formControlName="mortality_count">
+              <input id="daily_mortality" type="number" formControlName="mortality_count" [class.is-invalid]="dailyProductionForm.get('mortality_count')?.invalid && dailyProductionForm.get('mortality_count')?.touched">
+              @if (dailyProductionForm.get('mortality_count')?.invalid && dailyProductionForm.get('mortality_count')?.touched) {
+                <div class="invalid-feedback">Jumlah kematian wajib diisi dan minimal 0.</div>
+              }
             </div>
             <div class="form-group">
               <label for="daily_culling">Culling <span class="required-indicator">*</span></label>
-              <input id="daily_culling" type="number" formControlName="culling_count">
+              <input id="daily_culling" type="number" formControlName="culling_count" [class.is-invalid]="dailyProductionForm.get('culling_count')?.invalid && dailyProductionForm.get('culling_count')?.touched">
+              @if (dailyProductionForm.get('culling_count')?.invalid && dailyProductionForm.get('culling_count')?.touched) {
+                <div class="invalid-feedback">Jumlah culling wajib diisi dan minimal 0.</div>
+              }
             </div>
           </div>
           @if (totalDepletion$ | async; as totalDepletion) {
@@ -64,15 +76,21 @@
           <legend>Konsumsi Pakan</legend>
           @for (feed of daily_feed_consumption.controls; track $index) {
             <div class="feed-row" [formGroupName]="$index">
-              <select formControlName="feed_code">
+              <select formControlName="feed_code" [class.is-invalid]="feed.get('feed_code')?.invalid && feed.get('feed_code')?.touched">
                 <option [ngValue]="null">Pilih Kode Pakan</option>
                 @for (option of feedOptions; track option.item_code) {
                   <option [value]="option.item_code">{{ option.name }} ({{ option.item_code }})</option>
                 }
               </select>
-              <input type="number" formControlName="quantity_kg" placeholder="Jumlah (kg)" step="0.01">
+              <input type="text" formControlName="quantity_kg" placeholder="Jumlah (kg)" (input)="onFeedQuantityChange($event, $index)" [class.is-invalid]="feed.get('quantity_kg')?.invalid && feed.get('quantity_kg')?.touched">
               <button type="button" class="remove-feed-btn" (click)="removeFeedFromDailyForm($index)" [disabled]="daily_feed_consumption.controls.length === 1">Hapus</button>
             </div>
+            @if (feed.get('feed_code')?.invalid && feed.get('feed_code')?.touched) {
+              <div class="invalid-feedback">Kode pakan wajib diisi.</div>
+            }
+            @if (feed.get('quantity_kg')?.invalid && feed.get('quantity_kg')?.touched) {
+              <div class="invalid-feedback">Jumlah pakan wajib diisi dan minimal 0.</div>
+            }
           }
           <button type="button" class="add-feed-btn" (click)="addFeedToDailyForm()">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -92,23 +110,41 @@
                   <div class="egg-type-input-group">
                     <label>Normal</label>
                     <div class="input-pair">
-                      <input type="text" formControlName="normal_count" placeholder="Butir" (input)="onEggInputChange($event, 'normal_count', $index)">
-                      <input type="text" formControlName="normal_weight" placeholder="Kilo" (input)="onEggInputChange($event, 'normal_weight', $index)">
+                      <input type="text" formControlName="normal_count" placeholder="Butir" (input)="onEggInputChange($event, 'normal_count', $index)" [class.is-invalid]="eggEntryGroup.get('normal_count')?.invalid && eggEntryGroup.get('normal_count')?.touched">
+                      <input type="text" formControlName="normal_weight" placeholder="Kilo" (input)="onEggInputChange($event, 'normal_weight', $index)" [class.is-invalid]="eggEntryGroup.get('normal_weight')?.invalid && eggEntryGroup.get('normal_weight')?.touched">
                     </div>
+                    @if (eggEntryGroup.get('normal_count')?.invalid && eggEntryGroup.get('normal_count')?.touched) {
+                      <div class="invalid-feedback">Butir normal minimal 0.</div>
+                    }
+                    @if (eggEntryGroup.get('normal_weight')?.invalid && eggEntryGroup.get('normal_weight')?.touched) {
+                      <div class="invalid-feedback">Kilo normal minimal 0.</div>
+                    }
                   </div>
                   <div class="egg-type-input-group">
                     <label>Putih</label>
                     <div class="input-pair">
-                      <input type="text" formControlName="white_count" placeholder="Butir" (input)="onEggInputChange($event, 'white_count', $index)">
-                      <input type="text" formControlName="white_weight" placeholder="Kilo" (input)="onEggInputChange($event, 'white_weight', $index)">
+                      <input type="text" formControlName="white_count" placeholder="Butir" (input)="onEggInputChange($event, 'white_count', $index)" [class.is-invalid]="eggEntryGroup.get('white_count')?.invalid && eggEntryGroup.get('white_count')?.touched">
+                      <input type="text" formControlName="white_weight" placeholder="Kilo" (input)="onEggInputChange($event, 'white_weight', $index)" [class.is-invalid]="eggEntryGroup.get('white_weight')?.invalid && eggEntryGroup.get('white_weight')?.touched">
                     </div>
+                    @if (eggEntryGroup.get('white_count')?.invalid && eggEntryGroup.get('white_count')?.touched) {
+                      <div class="invalid-feedback">Butir putih minimal 0.</div>
+                    }
+                    @if (eggEntryGroup.get('white_weight')?.invalid && eggEntryGroup.get('white_weight')?.touched) {
+                      <div class="invalid-feedback">Kilo putih minimal 0.</div>
+                    }
                   </div>
                   <div class="egg-type-input-group">
                     <label>Retak</label>
                     <div class="input-pair">
-                      <input type="text" formControlName="cracked_count" placeholder="Butir" (input)="onEggInputChange($event, 'cracked_count', $index)">
-                      <input type="text" formControlName="cracked_weight" placeholder="Kilo" (input)="onEggInputChange($event, 'cracked_weight', $index)">
+                      <input type="text" formControlName="cracked_count" placeholder="Butir" (input)="onEggInputChange($event, 'cracked_count', $index)" [class.is-invalid]="eggEntryGroup.get('cracked_count')?.invalid && eggEntryGroup.get('cracked_count')?.touched">
+                      <input type="text" formControlName="cracked_weight" placeholder="Kilo" (input)="onEggInputChange($event, 'cracked_weight', $index)" [class.is-invalid]="eggEntryGroup.get('cracked_weight')?.invalid && eggEntryGroup.get('cracked_weight')?.touched">
                     </div>
+                    @if (eggEntryGroup.get('cracked_count')?.invalid && eggEntryGroup.get('cracked_count')?.touched) {
+                      <div class="invalid-feedback">Butir retak minimal 0.</div>
+                    }
+                    @if (eggEntryGroup.get('cracked_weight')?.invalid && eggEntryGroup.get('cracked_weight')?.touched) {
+                      <div class="invalid-feedback">Kilo retak minimal 0.</div>
+                    }
                   </div>
                   @if (eggProductionEntries.controls.length > 1) {
                     <button type="button" class="remove-egg-row-btn" (click)="removeEggProductionRow($index)">Hapus Baris</button>

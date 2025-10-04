@@ -321,6 +321,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     if (typeof value === 'number') {
       return value;
     }
+    // Replace comma with dot for decimal parsing
     const parsed = parseFloat(value.replace(',', '.'));
     return isNaN(parsed) ? 0 : parsed;
   }
@@ -375,7 +376,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
             control.setValidators([Validators.min(0)]);
           } else {
             control.clearValidators();
-            control.setValue(null, { emitEvent: false });
+            control.setValue(0, { emitEvent: false }); // Set to 0 when hidden
           }
           control.updateValueAndValidity({ emitEvent: false });
         }
@@ -418,8 +419,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   createFeedGroup(feed?: FeedConsumption): FormGroup {
     return this.fb.group({
-      feed_code: [feed?.feed_code || null],
-      quantity_kg: [feed?.quantity_kg || null, Validators.min(0)]
+      feed_code: [feed?.feed_code || null, Validators.required], // Added Validators.required
+      quantity_kg: [feed?.quantity_kg || 0, [Validators.required, Validators.min(0)]] // Added Validators.required
     });
   }
 
@@ -430,6 +431,16 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   removeFeedFromDailyForm(index: number): void {
     this.daily_feed_consumption.removeAt(index);
+  }
+
+  onFeedQuantityChange(event: Event, index: number): void {
+    const inputElement = event.target as HTMLInputElement;
+    const value = inputElement.value;
+    const parsedValue = this.parseNumber(value);
+    const control = (this.daily_feed_consumption.at(index) as FormGroup).get('quantity_kg');
+    if (control) {
+      control.setValue(parsedValue, { emitEvent: true });
+    }
   }
 
   // Getter for egg production entries FormArray
@@ -443,9 +454,9 @@ export class ProductionComponent implements OnInit, OnDestroy {
       normal_count: [entry?.normal_count ?? 0, [Validators.min(0)]],
       normal_weight: [entry?.normal_weight ?? 0, [Validators.min(0)]],
       white_count: [entry?.white_count ?? 0, [Validators.min(0)]],
-      white_weight: [entry?.white_weight ?? 0, [Validators.min(0)]],
       cracked_count: [entry?.cracked_count ?? 0, [Validators.min(0)]],
       cracked_weight: [entry?.cracked_weight ?? 0, [Validators.min(0)]],
+      white_weight: [entry?.white_weight ?? 0, [Validators.min(0)]],
     });
   }
 
@@ -477,6 +488,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
   saveDailyLog(): void {
     this.dailyProductionForm.markAllAsTouched();
     
+    // Validate feed consumption entries
     let hasInvalidFeedEntry = false;
     const validFeedConsumption: FeedConsumption[] = [];
 
@@ -484,9 +496,9 @@ export class ProductionComponent implements OnInit, OnDestroy {
       const feedCode = control.get('feed_code')?.value;
       const quantityKg = this.parseNumber(control.get('quantity_kg')?.value);
 
-      if (feedCode && quantityKg > 0) {
+      if (feedCode && quantityKg >= 0) { // Quantity can be 0
         validFeedConsumption.push({ feed_code: feedCode, quantity_kg: quantityKg });
-      } else if (feedCode || (quantityKg > 0)) {
+      } else if (feedCode || (quantityKg > 0)) { // If either is present but not both valid
         hasInvalidFeedEntry = true;
       }
     });
@@ -512,7 +524,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     }
 
     if (this.dailyProductionForm.invalid) {
-      this.notificationService.showWarning('Harap isi semua field yang wajib diisi.');
+      this.notificationService.showWarning('Harap isi semua field yang wajib diisi dengan benar.');
       return;
     }
 
