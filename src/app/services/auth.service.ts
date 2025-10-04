@@ -54,20 +54,43 @@ export class AuthService {
       this._currentUser.next(session?.user ?? null);
       
       if (session?.user) {
-        // Ensure member details are fetched and organizationId is set before marking as initialized
+        // Pastikan detail anggota diambil dan organizationId diatur sebelum menandai sebagai diinisialisasi
         this.fetchMemberDetails(session.user.id).then(() => {
-          this.fetchProfile(); // Fetch profile after organization is known
-          this._isInitialized.next(true); // Mark as initialized only after member details are processed
+          this.fetchProfile(); // Ambil profil setelah organisasi diketahui
+          this._isInitialized.next(true); // Tandai sebagai diinisialisasi hanya setelah detail anggota diproses
+
+          this.ngZone.run(() => {
+            const user = session.user;
+            const isInvitedUser = user.identities?.length === 0;
+            
+            if (isInvitedUser) {
+              // Pengguna yang diundang harus pergi ke update-password
+              if (this.router.url !== '/update-password') {
+                console.log('AuthService: Invited user. Navigating to /update-password.');
+                this.router.navigate(['/update-password']);
+              }
+            } else {
+              // Pengguna yang login biasa harus pergi ke dashboard
+              if (this.router.url === '/login' || this.router.url === '/register' || this.router.url === '/update-password') {
+                console.log('AuthService: Regular user signed in. Navigating to /dashboard.');
+                this.router.navigate(['/dashboard']);
+              }
+            }
+          });
+
         }).catch(err => {
           console.error('AuthService: Error during fetchMemberDetails in onAuthStateChange:', err);
-          this._isInitialized.next(true); // Still mark as initialized to unblock app, even if member details failed
-        });
-
-        this.ngZone.run(() => {
-          if (event === 'USER_UPDATED') {
-            console.log('AuthService: User updated. Navigating to /dashboard.');
-            this.router.navigate(['/dashboard']);
-          }
+          this._isInitialized.next(true); // Tetap tandai sebagai diinisialisasi untuk membuka blokir aplikasi, meskipun detail anggota gagal
+          this.ngZone.run(() => {
+            // Jika ada kesalahan saat mengambil detail anggota, dan pengguna sudah login,
+            // itu mungkin berarti mereka login tetapi bukan bagian dari organisasi.
+            // Dalam kasus ini, mereka mungkin harus diarahkan ke halaman untuk membuat/bergabung dengan organisasi,
+            // atau ke dashboard dengan peringatan. Untuk saat ini, kita akan default ke dashboard.
+            if (this.router.url === '/login' || this.router.url === '/register' || this.router.url === '/update-password') {
+                console.log('AuthService: Error fetching member details, navigating to /dashboard as fallback.');
+                this.router.navigate(['/dashboard']);
+            }
+          });
         });
 
       } else {
@@ -80,7 +103,7 @@ export class AuthService {
             this.router.navigate(['/login']);
           }
         });
-        this._isInitialized.next(true); // Mark as initialized immediately if no user
+        this._isInitialized.next(true); // Tandai sebagai diinisialisasi segera jika tidak ada pengguna
       }
     });
   }
