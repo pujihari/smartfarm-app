@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms'; // Import AbstractControl
 import { ProductionService } from '../../services/production.service';
 import { FlockService } from '../../services/flock.service';
 import { NotificationService } from '../../services/notification.service';
@@ -305,6 +305,14 @@ export class ProductionComponent implements OnInit, OnDestroy {
         this.suppressFormChanges = false;
       }
     });
+
+    // Add logging for form validity
+    this.dailyProductionForm.statusChanges.pipe(takeUntil(this.destroy$)).subscribe(status => {
+      console.log('Daily Production Form Status:', status);
+      if (status === 'INVALID') {
+        this.logFormValidationErrors(this.dailyProductionForm);
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -523,6 +531,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
     if (this.dailyProductionForm.invalid) {
       this.notificationService.showWarning('Harap isi semua field yang wajib diisi dengan benar.');
+      this.logFormValidationErrors(this.dailyProductionForm); // Log errors if form is invalid
       return;
     }
 
@@ -656,5 +665,19 @@ export class ProductionComponent implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  // New method to log validation errors
+  private logFormValidationErrors(form: FormGroup | FormArray): void {
+    Object.keys(form.controls).forEach(key => {
+      const control = form.get(key);
+      if (control instanceof FormGroup || control instanceof FormArray) {
+        this.logFormValidationErrors(control); // Recursively log for nested groups/arrays
+      } else if (control instanceof AbstractControl) {
+        if (control.invalid) {
+          console.log(`Control: ${key}, Value: ${control.value}, Errors:`, control.errors);
+        }
+      }
+    });
   }
 }
