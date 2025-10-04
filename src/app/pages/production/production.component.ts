@@ -568,6 +568,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
         },
         error: (err: any) => {
           this.isSaving = false;
+          console.error('Error updating production data:', err); // Added detailed error log
           this.notificationService.showError(`Gagal memperbarui data produksi: ${err?.message ?? err}`);
         }
       });
@@ -583,6 +584,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
         },
         error: (err: any) => {
           this.isSaving = false;
+          console.error('Error saving new production data:', err); // Added detailed error log
           this.notificationService.showError(`Gagal menyimpan data produksi: ${err?.message ?? err}`);
         }
       });
