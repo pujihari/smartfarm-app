@@ -347,11 +347,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
         if (control) {
           if (this.showEggProductionFields) {
             control.setValidators([Validators.min(0)]);
-            // Initialize to 0 if currently null, to ensure numeric value
-            if (control.value === null) {
-              control.setValue(0, { emitEvent: false });
-              console.log(`Control ${controlName} in row ${index} initialized to 0.`);
-            }
+            // Removed redundant setValue(0) here, as createEggProductionGroup already initializes with 0
           } else {
             control.clearValidators();
             control.setValue(null, { emitEvent: false });
@@ -443,9 +439,13 @@ export class ProductionComponent implements OnInit, OnDestroy {
   // New event handler for egg input changes
   onEggInputChange(event: Event, controlName: string, rowIndex: number): void {
     const inputElement = event.target as HTMLInputElement;
-    console.log(`[DEBUG INPUT] Input changed for row ${rowIndex}, control ${controlName}: "${inputElement.value}"`);
+    const value = inputElement.value;
+    console.log(`[DEBUG INPUT] Input changed for row ${rowIndex}, control ${controlName}: "${value}"`);
     const control = (this.eggProductionEntries.at(rowIndex) as FormGroup).get(controlName);
-    console.log(`[DEBUG INPUT] Form control value (after input event): ${control?.value}`);
+    if (control) {
+      control.setValue(value, { emitEvent: true }); // Explicitly set the value and emit event
+      console.log(`[DEBUG INPUT] Form control value (after explicit setValue): ${control.value}`);
+    }
   }
 
   saveDailyLog(): void {
@@ -600,7 +600,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
   }
 
   closeDeleteModal(): void {
-    this.isConfirmModalOpen = false; // Fixed typo here
+    this.isConfirmModalOpen = false;
     this.dataToDelete = null;
   }
 
