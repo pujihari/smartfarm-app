@@ -147,26 +147,56 @@ export class ProductionComponent implements OnInit, OnDestroy {
     // New observables for total egg counts and weights from dynamic rows
     const eggProductionEntriesChanges$ = this.eggProductionEntries.valueChanges.pipe(
       startWith(this.eggProductionEntries.value),
-      // Removed verbose tap log here to reduce console noise
+      tap(entries => console.log('eggProductionEntriesChanges$: entries emitted', entries)) // Debug log
     );
 
     this.totalNormalEggsCount$ = eggProductionEntriesChanges$.pipe(
-      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.normal_count), 0))
+      map(entries => {
+        console.log('totalNormalEggsCount$: entries received', entries); // Debug log
+        const sum = entries.reduce((s: number, entry: any) => s + this.parseNumber(entry.normal_count), 0);
+        console.log('totalNormalEggsCount$: sum', sum); // Debug log
+        return sum;
+      })
     );
     this.totalNormalEggsWeightKg$ = eggProductionEntriesChanges$.pipe(
-      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.normal_weight), 0))
+      map(entries => {
+        console.log('totalNormalEggsWeightKg$: entries received', entries); // Debug log
+        const sum = entries.reduce((s: number, entry: any) => s + this.parseNumber(entry.normal_weight), 0);
+        console.log('totalNormalEggsWeightKg$: sum', sum); // Debug log
+        return sum;
+      })
     );
     this.totalWhiteEggsCount$ = eggProductionEntriesChanges$.pipe(
-      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.white_count), 0))
+      map(entries => {
+        console.log('totalWhiteEggsCount$: entries received', entries); // Debug log
+        const sum = entries.reduce((s: number, entry: any) => s + this.parseNumber(entry.white_count), 0);
+        console.log('totalWhiteEggsCount$: sum', sum); // Debug log
+        return sum;
+      })
     );
     this.totalWhiteEggsWeightKg$ = eggProductionEntriesChanges$.pipe(
-      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.white_weight), 0))
+      map(entries => {
+        console.log('totalWhiteEggsWeightKg$: entries received', entries); // Debug log
+        const sum = entries.reduce((s: number, entry: any) => s + this.parseNumber(entry.white_weight), 0);
+        console.log('totalWhiteEggsWeightKg$: sum', sum); // Debug log
+        return sum;
+      })
     );
     this.totalCrackedEggsCount$ = eggProductionEntriesChanges$.pipe(
-      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.cracked_count), 0))
+      map(entries => {
+        console.log('totalCrackedEggsCount$: entries received', entries); // Debug log
+        const sum = entries.reduce((s: number, entry: any) => s + this.parseNumber(entry.cracked_count), 0);
+        console.log('totalCrackedEggsCount$: sum', sum); // Debug log
+        return sum;
+      })
     );
     this.totalCrackedEggsWeightKg$ = eggProductionEntriesChanges$.pipe(
-      map(entries => entries.reduce((sum: number, entry: any) => sum + this.parseNumber(entry.cracked_weight), 0))
+      map(entries => {
+        console.log('totalCrackedEggsWeightKg$: entries received', entries); // Debug log
+        const sum = entries.reduce((s: number, entry: any) => s + this.parseNumber(entry.cracked_weight), 0);
+        console.log('totalCrackedEggsWeightKg$: sum', sum); // Debug log
+        return sum;
+      })
     );
 
     // Inisialisasi totalEggCount$ dan totalEggWeightKg$ dengan menggabungkan total granular
@@ -292,10 +322,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
       return value;
     }
     const parsed = parseFloat(value.replace(',', '.'));
-    // Only log if it's a string that needs parsing and is not just '0'
-    if (!isNaN(parsed) && value !== '0') { 
-      console.log(`parseNumber: Input "${value}" (type: ${typeof value}) parsed to ${parsed}`);
-    }
     return isNaN(parsed) ? 0 : parsed;
   }
 
@@ -352,7 +378,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
             control.setValue(null, { emitEvent: false });
           }
           control.updateValueAndValidity({ emitEvent: false });
-          // console.log(`Control ${controlName} in row ${index} updated. Value: ${control.value}, Valid: ${control.valid}`); // Removed verbose log
         }
       });
     });
