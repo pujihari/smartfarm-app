@@ -494,6 +494,15 @@ export class ProductionComponent implements OnInit, OnDestroy {
   saveDailyLog(): void {
     this.dailyProductionForm.markAllAsTouched();
     
+    // --- START OF NEW LOGGING ---
+    console.log('--- Attempting to save Daily Log ---');
+    console.log('Form is valid:', this.dailyProductionForm.valid);
+    if (this.dailyProductionForm.invalid) {
+      console.log('Detailed Form Validation Errors at Save Attempt:');
+      this.logFormValidationErrors(this.dailyProductionForm);
+    }
+    // --- END OF NEW LOGGING ---
+
     // Validate feed consumption entries
     let hasInvalidFeedEntry = false;
     const validFeedConsumption: FeedConsumption[] = [];
@@ -531,7 +540,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
     if (this.dailyProductionForm.invalid) {
       this.notificationService.showWarning('Harap isi semua field yang wajib diisi dengan benar.');
-      this.logFormValidationErrors(this.dailyProductionForm); // Log errors if form is invalid
+      // The logFormValidationErrors is already called above if form is invalid
       return;
     }
 
