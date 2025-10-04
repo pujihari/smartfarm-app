@@ -280,8 +280,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
           this.isEditingExistingEntry = true;
           const formattedData = { ...data, date: data.date.split('T')[0] };
           this.dailyProductionForm.patchValue(formattedData, { emitEvent: false });
-          this.daily_feed_consumption.clear({ emitEvent: false });
-          data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToDailyForm(feed, { emitEvent: false }));
           this.dailyProductionForm.get('id')?.setValue(data.id, { emitEvent: false });
 
           // Populate egg production entries with aggregated data into a single row
@@ -565,7 +563,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
       feed_consumption: validFeedConsumption
     };
 
-    // console.log('Data to save in ProductionComponent:', dataToSave); // Debugging log
+    console.log('Data to save in ProductionComponent:', dataToSave); // Debugging log
 
     this.isSaving = true;
 
