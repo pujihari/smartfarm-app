@@ -35,14 +35,20 @@ export class ProductionService {
           return throwError(() => new Error('ID Organisasi tidak ditemukan.'));
         }
 
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const startDateString = thirtyDaysAgo.toISOString().split('T')[0]; // Format to YYYY-MM-DD
+
         const productionQuery = supabase.from('production_data')
           .select('*, feed_consumption(*), flocks!inner(id, name, population, farms!inner(name))')
           .eq('organization_id', organizationId) // Filter by organization_id
+          .gte('date', startDateString) // Add date filter for last 30 days
           .order('date', { ascending: false });
 
         const mortalityQuery = supabase.from('mortality_data')
           .select('flock_id, date, mortality_count, culling_count')
-          .eq('organization_id', organizationId); // Filter by organization_id
+          .eq('organization_id', organizationId) // Filter by organization_id
+          .gte('date', startDateString); // Add date filter for last 30 days
 
         return combineLatest([
           from(productionQuery),
