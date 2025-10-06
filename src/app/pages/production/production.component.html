@@ -7,7 +7,7 @@
   @if (authService.canWriteData$ | async) {
     <div class="batch-input-container">
       <h2>Input Data Harian Flok</h2>
-      <form [formGroup]="dailyProductionForm" class="batch-form">
+  <form [formGroup]="dailyProductionForm" class="batch-form" (ngSubmit)="onSubmit()">
         <div class="form-row top-row">
           <div class="form-group">
             <label for="daily_farm_filter">Filter Farm (Opsional)</label>
@@ -188,7 +188,14 @@
           <textarea id="daily_notes" formControlName="notes" rows="3" placeholder="Tambahkan catatan harian di sini..."></textarea>
         </div>
 
-        <button type="button" class="add-to-stage-btn" (click)="saveDailyLog()" [disabled]="dailyProductionForm.invalid || isSaving">
+        <!-- Debug panel: shows why form might be invalid -->
+        <div class="debug-panel" style="background:#fff7c2;padding:10px;border:1px solid #f0e68c;margin-bottom:12px;">
+          <strong>Debug: Form status</strong>
+          <div>Status: {{ formDebug?.status }} — Valid: {{ formDebug?.valid }}</div>
+          <div>Invalid controls: {{ formDebug?.invalidControls?.length ? (formDebug.invalidControls.join(', ')) : '-' }}</div>
+        </div>
+
+        <button type="submit" class="add-to-stage-btn" [disabled]="dailyProductionForm.invalid || isSaving">
           {{ isSaving ? 'Menyimpan...' : (isEditingExistingEntry ? 'Perbarui Data Harian' : 'Simpan Data Harian') }}
         </button>
       </form>

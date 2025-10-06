@@ -425,8 +425,10 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   createFeedGroup(feed?: FeedConsumption): FormGroup {
     return this.fb.group({
-      feed_code: [feed?.feed_code || null, Validators.required], // Added Validators.required
-      quantity_kg: [feed?.quantity_kg || 0, [Validators.required, Validators.min(0)]] // Added Validators.required
+      // feed_code is intentionally NOT required here so an empty default row
+      // doesn't make the whole form invalid; we validate rows on save.
+      feed_code: [feed?.feed_code || null],
+      quantity_kg: [feed?.quantity_kg || 0, [Validators.required, Validators.min(0)]]
     });
   }
 
@@ -491,17 +493,71 @@ export class ProductionComponent implements OnInit, OnDestroy {
     }
   }
 
+  // New submit handler that logs form state then delegates to saveDailyLog
+  onSubmit(): void {
+    console.log('onSubmit called. Form valid:', this.dailyProductionForm.valid);
+    console.log('onSubmit form value:', this.dailyProductionForm.getRawValue());
+    // Delegate to existing save method
+    this.saveDailyLog();
+  }
+
+  // Getter used by template for debugging: shows form status and which controls are invalid
+  get formDebug() {
+    if (!this.dailyProductionForm) {
+      return null;
+    }
+    const controls = this.dailyProductionForm.controls as { [key: string]: AbstractControl };
+    const invalidControls = Object.keys(controls).filter(k => controls[k].invalid);
+    return {
+      status: this.dailyProductionForm.status,
+      valid: this.dailyProductionForm.valid,
+      invalidControls,
+      errors: this.dailyProductionForm.errors
+    };
+  }
+
   saveDailyLog(): void {
     this.dailyProductionForm.markAllAsTouched();
-    
-    // --- START OF NEW LOGGING ---
-    console.log('--- Attempting to save Daily Log ---');
-    console.log('Form is valid:', this.dailyProductionForm.valid);
-    if (this.dailyProductionForm.invalid) {
-      console.log('Detailed Form Validation Errors at Save Attempt:');
-      this.logFormValidationErrors(this.dailyProductionForm);
+
+    // --- DEBUG: Detailed form dump (early return to inspect state) ---
+    console.log('--- DEBUG: Save Daily Log Attempt ---');
+    console.log('Daily Production Form Status:', this.dailyProductionForm.status);
+    console.log('Daily Production Form Value:', this.dailyProductionForm.value);
+    console.log('Daily Production Form Errors:', this.dailyProductionForm.errors);
+
+    // Logika untuk FormArray feed_consumption (nama field sebenarnya di form)
+    if (this.dailyProductionForm.get('feed_consumption') instanceof FormArray) {
+      const daily_feed_consumption_array = this.dailyProductionForm.get('feed_consumption') as FormArray;
+      daily_feed_consumption_array.controls.forEach((control, index) => {
+        console.log(`Feed Consumption Row ${index} Status:`, control.status);
+        console.log(`Feed Consumption Row ${index} Value:`, control.value);
+        console.log(`Feed Consumption Row ${index} Errors:`, control.errors);
+        console.log(`Feed Code Control Errors in Row ${index}:`, control.get('feed_code')?.errors);
+        console.log(`Quantity Kg Control Errors in Row ${index}:`, control.get('quantity_kg')?.errors);
+      });
+    } else {
+      console.log('feed_consumption is not a FormArray or not found.');
     }
-    // --- END OF NEW LOGGING ---
+
+    // Logika untuk FormArray egg_production_entries
+    if (this.dailyProductionForm.get('egg_production_entries') instanceof FormArray) {
+      const egg_production_entries_array = this.dailyProductionForm.get('egg_production_entries') as FormArray;
+      egg_production_entries_array.controls.forEach((control, index) => {
+        console.log(`Egg Production Row ${index} Status:`, control.status);
+        console.log(`Egg Production Row ${index} Value:`, control.value);
+        console.log(`Egg Production Row ${index} Errors:`, control.errors);
+        console.log(`normal_count Errors in Row ${index}:`, control.get('normal_count')?.errors);
+        console.log(`normal_weight Errors in Row ${index}:`, control.get('normal_weight')?.errors);
+        console.log(`white_count Errors in Row ${index}:`, control.get('white_count')?.errors);
+        console.log(`white_weight Errors in Row ${index}:`, control.get('white_weight')?.errors);
+        console.log(`cracked_count Errors in Row ${index}:`, control.get('cracked_count')?.errors);
+        console.log(`cracked_weight Errors in Row ${index}:`, control.get('cracked_weight')?.errors);
+      });
+    } else {
+      console.log('egg_production_entries is not a FormArray or not found.');
+    }
+
+    return; // Stop here so we only print debug info
 
     // Validate feed consumption entries
     let hasInvalidFeedEntry = false;
