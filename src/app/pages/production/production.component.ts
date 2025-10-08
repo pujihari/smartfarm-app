@@ -309,6 +309,19 @@ export class ProductionComponent implements OnInit, OnDestroy {
     return isNaN(parsed) ? 0 : parsed;
   }
 
+  // New methods for handling mortality and culling input changes
+  onMortalityInputChange(event: Event): void {
+    const inputElement = event.target as HTMLInputElement;
+    const value = this.parseNumber(inputElement.value);
+    this.dailyProductionForm.get('mortality_count')?.setValue(value, { emitEvent: true });
+  }
+
+  onCullingInputChange(event: Event): void {
+    const inputElement = event.target as HTMLInputElement;
+    const value = this.parseNumber(inputElement.value);
+    this.dailyProductionForm.get('culling_count')?.setValue(value, { emitEvent: true });
+  }
+
   private calculateFlockAge(flockId: number | null, date: string | null): void {
     console.log('calculateFlockAge called with flockId:', flockId, 'date:', date);
     if (!flockId || !date) {
@@ -442,8 +455,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
     return group;
   }
 
-  // Removed addFeedToDailyForm and removeFeedFromDailyForm methods
-
   onFeedQuantityChange(event: Event, index: number): void {
     const inputElement = event.target as HTMLInputElement;
     const value = inputElement.value;
@@ -470,8 +481,6 @@ export class ProductionComponent implements OnInit, OnDestroy {
       white_weight: [entry?.white_weight ?? 0, [Validators.min(0)]],
     });
   }
-
-  // Removed addEggProductionRow and removeEggProductionRow methods
 
   // New event handler for egg input changes
   onEggInputChange(event: Event, controlName: string, rowIndex: number): void {
