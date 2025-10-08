@@ -425,9 +425,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   createFeedGroup(feed?: FeedConsumption): FormGroup {
     return this.fb.group({
-      // feed_code is intentionally NOT required here so an empty default row
-      // doesn't make the whole form invalid; we validate rows on save.
-      feed_code: [feed?.feed_code || null],
+      feed_code: [feed?.feed_code || null, Validators.required], // Make feed_code required
       quantity_kg: [feed?.quantity_kg || 0, [Validators.required, Validators.min(0)]]
     });
   }
@@ -439,6 +437,10 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   removeFeedFromDailyForm(index: number): void {
     this.daily_feed_consumption.removeAt(index);
+    // If all feed rows are removed, add one empty row to prevent form invalidity
+    if (this.daily_feed_consumption.length === 0) {
+      this.addFeedToDailyForm();
+    }
   }
 
   onFeedQuantityChange(event: Event, index: number): void {
@@ -477,6 +479,10 @@ export class ProductionComponent implements OnInit, OnDestroy {
   // Method to remove an egg production row
   removeEggProductionRow(index: number): void {
     this.eggProductionEntries.removeAt(index);
+    // If all egg rows are removed, add one empty row to prevent form invalidity
+    if (this.eggProductionEntries.length === 0) {
+      this.addEggProductionRow();
+    }
   }
 
   // New event handler for egg input changes
@@ -557,7 +563,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
       console.log('egg_production_entries is not a FormArray or not found.');
     }
 
-    return; // Stop here so we only print debug info
+    // return; // <--- BARIS INI SUDAH DIHAPUS/DIKOMENTARI
 
     // Validate feed consumption entries
     let hasInvalidFeedEntry = false;
@@ -567,9 +573,14 @@ export class ProductionComponent implements OnInit, OnDestroy {
       const feedCode = control.get('feed_code')?.value;
       const quantityKg = this.parseNumber(control.get('quantity_kg')?.value);
 
-      if (feedCode && quantityKg >= 0) { // Quantity can be 0
+      // Only include valid entries. If feedCode is null but quantity is 0, it's considered valid (empty row).
+      // If feedCode is present, quantity_kg must be valid.
+      if (feedCode && quantityKg >= 0) {
         validFeedConsumption.push({ feed_code: feedCode, quantity_kg: quantityKg });
-      } else if (feedCode || (quantityKg > 0)) { // If either is present but not both valid
+      } else if (feedCode === null && quantityKg === 0) {
+        // This is an empty row, do not add to validFeedConsumption
+      } else {
+        // This is an invalid entry (e.g., feedCode but no quantity, or vice versa)
         hasInvalidFeedEntry = true;
       }
     });
