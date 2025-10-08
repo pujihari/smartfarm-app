@@ -85,8 +85,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
       date: [new Date().toISOString().split('T')[0], Validators.required],
       mortality_count: [0, [Validators.required, Validators.min(0)]],
       culling_count: [0, [Validators.required, Validators.min(0)]],
-      feed_consumption: this.fb.array([]),
-      egg_production_entries: this.fb.array([this.createEggProductionGroup()]),
+      feed_consumption: this.fb.array([this.createFeedGroup()]), // Initialize with one feed group
+      egg_production_entries: this.fb.array([this.createEggProductionGroup()]), // Initialize with one egg group
       notes: ['']
     });
 
@@ -140,7 +140,9 @@ export class ProductionComponent implements OnInit, OnDestroy {
     this.totalFeedConsumption$ = this.dailyProductionForm.get('feed_consumption')!.valueChanges.pipe(
       startWith(this.dailyProductionForm.get('feed_consumption')!.value),
       map((feedItems: FeedConsumption[]) => {
-        return feedItems.reduce((sum, item) => sum + this.parseNumber(item.quantity_kg), 0);
+        // Since there's only one feed item, directly access it
+        const item = feedItems[0];
+        return item ? this.parseNumber(item.quantity_kg) : 0;
       })
     );
 
@@ -199,13 +201,13 @@ export class ProductionComponent implements OnInit, OnDestroy {
       }
     });
 
-    if (this.daily_feed_consumption.length === 0) {
-      this.addFeedToDailyForm(undefined, { emitEvent: false });
-    }
-    // Ensure at least one egg production row is present initially
-    if (this.eggProductionEntries.length === 0) {
-      this.addEggProductionRow(undefined, { emitEvent: false });
-    }
+    // Removed conditional addFeedToDailyForm and addEggProductionRow as they are now always initialized with one
+    // if (this.daily_feed_consumption.length === 0) {
+    //   this.addFeedToDailyForm(undefined, { emitEvent: false });
+    // }
+    // if (this.eggProductionEntries.length === 0) {
+    //   this.addEggProductionRow(undefined, { emitEvent: false });
+    // }
 
     this.inventoryService.getFeedOptions().pipe(
       takeUntil(this.destroy$)
@@ -253,14 +255,19 @@ export class ProductionComponent implements OnInit, OnDestroy {
           this.dailyProductionForm.get('id')?.setValue(data.id, { emitEvent: false });
 
           // Populate egg production entries with aggregated data into a single row
-          this.eggProductionEntries.clear({ emitEvent: false });
-          this.addEggProductionRow({
+          this.eggProductionEntries.at(0).patchValue({ // Patch the first (and only) control
             normal_count: data.normal_eggs,
             normal_weight: data.normal_eggs_weight_kg,
             white_count: data.white_eggs,
             white_weight: data.white_eggs_weight_kg,
             cracked_count: data.cracked_eggs,
             cracked_weight: data.cracked_eggs_weight_kg,
+          }, { emitEvent: false });
+
+          // Clear and add feed consumption (still dynamic, but only one row for now)
+          this.daily_feed_consumption.at(0).patchValue({
+            feed_code: data.feed_consumption && data.feed_consumption.length > 0 ? data.feed_consumption[0].feed_code : null,
+            quantity_kg: data.feed_consumption && data.feed_consumption.length > 0 ? data.feed_consumption[0].quantity_kg : 0
           }, { emitEvent: false });
 
           this.updateEggFieldsVisibility(this.currentFlockAgeInDays !== null && this.currentFlockAgeInDays > 126);
@@ -290,7 +297,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  public parseNumber(value: string | number | null): number { // Changed to public
+  public parseNumber(value: string | number | null): number {
     if (value === null || value === undefined || value === '') {
       return 0;
     }
@@ -375,16 +382,13 @@ export class ProductionComponent implements OnInit, OnDestroy {
       notes: ''
     }, { emitEvent: false });
 
-    while (this.daily_feed_consumption.length !== 0) {
-      this.daily_feed_consumption.removeAt(0, { emitEvent: false });
-    }
-    this.addFeedToDailyForm(undefined, { emitEvent: false });
+    // Ensure only one feed row
+    this.daily_feed_consumption.clear({ emitEvent: false });
+    this.daily_feed_consumption.push(this.createFeedGroup(), { emitEvent: false });
 
-    // Reset egg production entries
-    while (this.eggProductionEntries.length !== 0) {
-      this.eggProductionEntries.removeAt(0, { emitEvent: false });
-    }
-    this.addEggProductionRow(undefined, { emitEvent: false }); // Add one default row
+    // Ensure only one egg production row
+    this.eggProductionEntries.clear({ emitEvent: false });
+    this.eggProductionEntries.push(this.createEggProductionGroup(), { emitEvent: false });
 
     this.isEditingExistingEntry = false;
   }
@@ -438,18 +442,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     return group;
   }
 
-  addFeedToDailyForm(feed?: FeedConsumption, options?: { emitEvent?: boolean }): void {
-    const pushOptions = options || { emitEvent: true }; 
-    this.daily_feed_consumption.push(this.createFeedGroup(feed), pushOptions);
-  }
-
-  removeFeedFromDailyForm(index: number): void {
-    this.daily_feed_consumption.removeAt(index);
-    // If all feed rows are removed, add one empty row to prevent form invalidity
-    if (this.daily_feed_consumption.length === 0) {
-      this.addFeedToDailyForm();
-    }
-  }
+  // Removed addFeedToDailyForm and removeFeedFromDailyForm methods
 
   onFeedQuantityChange(event: Event, index: number): void {
     const inputElement = event.target as HTMLInputElement;
@@ -478,20 +471,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Method to add an egg production row
-  addEggProductionRow(entry?: any, options?: { emitEvent?: boolean }): void {
-    const pushOptions = options || { emitEvent: true };
-    this.eggProductionEntries.push(this.createEggProductionGroup(entry), pushOptions);
-  }
-
-  // Method to remove an egg production row
-  removeEggProductionRow(index: number): void {
-    this.eggProductionEntries.removeAt(index);
-    // If all egg rows are removed, add one empty row to prevent form invalidity
-    if (this.eggProductionEntries.length === 0) {
-      this.addEggProductionRow();
-    }
-  }
+  // Removed addEggProductionRow and removeEggProductionRow methods
 
   // New event handler for egg input changes
   onEggInputChange(event: Event, controlName: string, rowIndex: number): void {
@@ -575,19 +555,17 @@ export class ProductionComponent implements OnInit, OnDestroy {
     let hasInvalidFeedEntry = false;
     const validFeedConsumption: FeedConsumption[] = [];
 
-    this.daily_feed_consumption.controls.forEach(control => {
-      // Check the group's validity based on the custom validator
-      if (control.invalid) {
-        hasInvalidFeedEntry = true;
-      } else {
-        const feedCode = control.get('feed_code')?.value;
-        const quantityKg = this.parseNumber(control.get('quantity_kg')?.value);
-        // Only add to validFeedConsumption if both feedCode and quantityKg are present and valid
-        if (feedCode && quantityKg > 0) {
-          validFeedConsumption.push({ feed_code: feedCode, quantity_kg: quantityKg });
-        }
+    // Only process the first (and only) feed control
+    const feedControl = this.daily_feed_consumption.at(0);
+    if (feedControl.invalid) {
+      hasInvalidFeedEntry = true;
+    } else {
+      const feedCode = feedControl.get('feed_code')?.value;
+      const quantityKg = this.parseNumber(feedControl.get('quantity_kg')?.value);
+      if (feedCode && quantityKg > 0) {
+        validFeedConsumption.push({ feed_code: feedCode, quantity_kg: quantityKg });
       }
-    });
+    }
 
     if (hasInvalidFeedEntry) {
       this.notificationService.showWarning('Harap lengkapi semua detail pakan atau hapus baris yang tidak lengkap.');
@@ -597,11 +575,10 @@ export class ProductionComponent implements OnInit, OnDestroy {
     // Validate egg production entries
     let hasInvalidEggEntry = false;
     if (this.showEggProductionFields) {
-      this.eggProductionEntries.controls.forEach(group => {
-        if (group.invalid) {
-          hasInvalidEggEntry = true;
-        }
-      });
+      const eggEntryGroup = this.eggProductionEntries.at(0); // Only process the first (and only) egg group
+      if (eggEntryGroup.invalid) {
+        hasInvalidEggEntry = true;
+      }
     }
 
     if (hasInvalidEggEntry) {
@@ -617,7 +594,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
     const rawEntry = this.dailyProductionForm.getRawValue();
     
-    // Aggregate egg production data from FormArray
+    // Aggregate egg production data from the single FormArray entry
     let aggregatedNormalEggs = 0;
     let aggregatedNormalEggsWeightKg = 0;
     let aggregatedWhiteEggs = 0;
@@ -626,14 +603,13 @@ export class ProductionComponent implements OnInit, OnDestroy {
     let aggregatedCrackedEggsWeightKg = 0;
 
     if (this.showEggProductionFields) {
-      rawEntry.egg_production_entries.forEach((entry: any) => {
-        aggregatedNormalEggs += this.parseNumber(entry.normal_count);
-        aggregatedNormalEggsWeightKg += this.parseNumber(entry.normal_weight);
-        aggregatedWhiteEggs += this.parseNumber(entry.white_count);
-        aggregatedWhiteEggsWeightKg += this.parseNumber(entry.white_weight);
-        aggregatedCrackedEggs += this.parseNumber(entry.cracked_count);
-        aggregatedCrackedEggsWeightKg += this.parseNumber(entry.cracked_weight);
-      });
+      const singleEggEntry = rawEntry.egg_production_entries[0]; // Access the first (and only) entry
+      aggregatedNormalEggs += this.parseNumber(singleEggEntry.normal_count);
+      aggregatedNormalEggsWeightKg += this.parseNumber(singleEggEntry.normal_weight);
+      aggregatedWhiteEggs += this.parseNumber(singleEggEntry.white_count);
+      aggregatedWhiteEggsWeightKg += this.parseNumber(singleEggEntry.white_weight);
+      aggregatedCrackedEggs += this.parseNumber(singleEggEntry.cracked_count);
+      aggregatedCrackedEggsWeightKg += this.parseNumber(singleEggEntry.cracked_weight);
     }
 
     const dataToSave: Partial<ProductionData> = {
@@ -700,15 +676,14 @@ export class ProductionComponent implements OnInit, OnDestroy {
     this.dailyProductionForm.patchValue(formattedData, { emitEvent: false });
     this.dailyProductionForm.get('id')?.setValue(data.id, { emitEvent: false });
 
-    this.daily_feed_consumption.clear({ emitEvent: false });
-    data.feed_consumption.forEach((feed: FeedConsumption) => this.addFeedToDailyForm(feed, { emitEvent: false }));
-    if (this.daily_feed_consumption.length === 0) {
-      this.addFeedToDailyForm(undefined, { emitEvent: false });
-    }
+    // Populate feed consumption (only one row)
+    this.daily_feed_consumption.at(0).patchValue({
+      feed_code: data.feed_consumption && data.feed_consumption.length > 0 ? data.feed_consumption[0].feed_code : null,
+      quantity_kg: data.feed_consumption && data.feed_consumption.length > 0 ? data.feed_consumption[0].quantity_kg : 0
+    }, { emitEvent: false });
 
     // Populate egg production entries with aggregated data into a single row
-    this.eggProductionEntries.clear({ emitEvent: false });
-    this.addEggProductionRow({
+    this.eggProductionEntries.at(0).patchValue({
       normal_count: data.normal_eggs,
       normal_weight: data.normal_eggs_weight_kg,
       white_count: data.white_eggs,
