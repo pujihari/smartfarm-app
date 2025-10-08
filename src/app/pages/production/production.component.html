@@ -162,21 +162,21 @@
                 <label>Total Normal</label>
                 <div class="output-pair">
                   <span class="total-value">{{ totalNormalEggsCount$ | async }} Butir</span>
-                  <span class="total-value">{{ (totalNormalEggsWeightKg$ | async)?.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} Kilo</span>
+                  <span class="total-value">{{ totalNormalEggsWeightKg$ | async }} Kilo</span>
                 </div>
               </div>
               <div class="total-egg-type-summary">
                 <label>Total Putih</label>
                 <div class="output-pair">
                   <span class="total-value">{{ totalWhiteEggsCount$ | async }} Butir</span>
-                  <span class="total-value">{{ (totalWhiteEggsWeightKg$ | async)?.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} Kilo</span>
+                  <span class="total-value">{{ totalWhiteEggsWeightKg$ | async }} Kilo</span>
                 </div>
               </div>
               <div class="total-egg-type-summary">
                 <label>Total Retak</label>
                 <div class="output-pair">
                   <span class="total-value">{{ totalCrackedEggsCount$ | async }} Butir</span>
-                  <span class="total-value">{{ (totalCrackedEggsWeightKg$ | async)?.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} Kilo</span>
+                  <span class="total-value">{{ totalCrackedEggsWeightKg$ | async }} Kilo</span>
                 </div>
               </div>
             </div>
