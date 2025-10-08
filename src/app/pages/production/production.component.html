@@ -76,20 +76,22 @@
           <legend>Konsumsi Pakan</legend>
           @for (feed of daily_feed_consumption.controls; track $index) {
             <div class="feed-row" [formGroupName]="$index">
-              <select formControlName="feed_code" [class.is-invalid]="feed.get('feed_code')?.invalid && feed.get('feed_code')?.touched">
+              <select formControlName="feed_code" [class.is-invalid]="feed.invalid && feed.touched && feed.errors?.['missingFeedCode']">
                 <option [ngValue]="null">Pilih Kode Pakan</option>
                 @for (option of feedOptions; track option.item_code) {
                   <option [value]="option.item_code">{{ option.name }} ({{ option.item_code }})</option>
                 }
               </select>
-              <input type="text" formControlName="quantity_kg" placeholder="Jumlah (kg)" (input)="onFeedQuantityChange($event, $index)" [class.is-invalid]="feed.get('quantity_kg')?.invalid && feed.get('quantity_kg')?.touched">
+              <input type="text" formControlName="quantity_kg" placeholder="Jumlah (kg)" (input)="onFeedQuantityChange($event, $index)" [class.is-invalid]="feed.invalid && feed.touched && feed.errors?.['invalidFeedQuantity']">
               <button type="button" class="remove-feed-btn" (click)="removeFeedFromDailyForm($index)" [disabled]="daily_feed_consumption.controls.length === 1">Hapus</button>
             </div>
-            @if (feed.get('feed_code')?.invalid && feed.get('feed_code')?.touched) {
-              <div class="invalid-feedback">Kode pakan wajib diisi.</div>
-            }
-            @if (feed.get('quantity_kg')?.invalid && feed.get('quantity_kg')?.touched) {
-              <div class="invalid-feedback">Jumlah pakan wajib diisi dan minimal 0.</div>
+            @if (feed.invalid && feed.touched) {
+              @if (feed.errors?.['missingFeedCode']) {
+                <div class="invalid-feedback">Kode pakan wajib diisi jika jumlah pakan diisi.</div>
+              }
+              @if (feed.errors?.['invalidFeedQuantity']) {
+                <div class="invalid-feedback">Jumlah pakan wajib diisi dan minimal 0 jika kode pakan diisi.</div>
+              }
             }
           }
           <button type="button" class="add-feed-btn" (click)="addFeedToDailyForm()">

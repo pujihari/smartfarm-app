@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms'; // Import AbstractControl
+import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms'; // Import AbstractControl, ValidationErrors, ValidatorFn
 import { ProductionService } from '../../services/production.service';
 import { FlockService } from '../../services/flock.service';
 import { NotificationService } from '../../services/notification.service';
@@ -393,11 +393,49 @@ export class ProductionComponent implements OnInit, OnDestroy {
     return this.dailyProductionForm.get('feed_consumption') as FormArray;
   }
 
+  // Custom validator for a single feed item FormGroup
+  private feedItemValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const feedCodeControl = control.get('feed_code');
+      const quantityKgControl = control.get('quantity_kg');
+
+      const feedCode = feedCodeControl?.value;
+      const quantityKg = this.parseNumber(quantityKgControl?.value);
+
+      // If both are empty/zero, it's valid (optional empty row)
+      if (!feedCode && quantityKg === 0) {
+        return null;
+      }
+
+      // If feedCode is present, quantityKg must be > 0
+      if (feedCode && quantityKg <= 0) {
+        return { invalidFeedQuantity: true };
+      }
+
+      // If quantityKg is > 0, feedCode must be present
+      if (!feedCode && quantityKg > 0) {
+        return { missingFeedCode: true };
+      }
+
+      // If both are present and quantity > 0, it's valid
+      if (feedCode && quantityKg > 0) {
+        return null;
+      }
+
+      // Fallback for any other unexpected state (should ideally be covered)
+      return null;
+    };
+  }
+
   createFeedGroup(feed?: FeedConsumption): FormGroup {
-    return this.fb.group({
-      feed_code: [feed?.feed_code || null, Validators.required], // Make feed_code required
-      quantity_kg: [feed?.quantity_kg || 0, [Validators.required, Validators.min(0)]]
+    const group = this.fb.group({
+      feed_code: [feed?.feed_code || null], // No longer Validators.required here
+      quantity_kg: [feed?.quantity_kg || 0, [Validators.min(0)]] // No longer Validators.required here
     });
+
+    // Add custom validator to the group
+    group.setValidators(this.feedItemValidator());
+    return group;
   }
 
   addFeedToDailyForm(feed?: FeedConsumption, options?: { emitEvent?: boolean }): void {
@@ -538,18 +576,16 @@ export class ProductionComponent implements OnInit, OnDestroy {
     const validFeedConsumption: FeedConsumption[] = [];
 
     this.daily_feed_consumption.controls.forEach(control => {
-      const feedCode = control.get('feed_code')?.value;
-      const quantityKg = this.parseNumber(control.get('quantity_kg')?.value);
-
-      // Only include valid entries. If feedCode is null but quantity is 0, it's considered valid (empty row).
-      // If feedCode is present, quantity_kg must be valid.
-      if (feedCode && quantityKg >= 0) {
-        validFeedConsumption.push({ feed_code: feedCode, quantity_kg: quantityKg });
-      } else if (feedCode === null && quantityKg === 0) {
-        // This is an empty row, do not add to validFeedConsumption
-      } else {
-        // This is an invalid entry (e.g., feedCode but no quantity, or vice versa)
+      // Check the group's validity based on the custom validator
+      if (control.invalid) {
         hasInvalidFeedEntry = true;
+      } else {
+        const feedCode = control.get('feed_code')?.value;
+        const quantityKg = this.parseNumber(control.get('quantity_kg')?.value);
+        // Only add to validFeedConsumption if both feedCode and quantityKg are present and valid
+        if (feedCode && quantityKg > 0) {
+          validFeedConsumption.push({ feed_code: feedCode, quantity_kg: quantityKg });
+        }
       }
     });
 
