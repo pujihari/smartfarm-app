@@ -189,11 +189,13 @@
         </div>
 
         <!-- Debug panel: shows why form might be invalid -->
-        <div class="debug-panel" style="background:#fff7c2;padding:10px;border:1px solid #f0e68c;margin-bottom:12px;">
-          <strong>Debug: Form status</strong>
-          <div>Status: {{ formDebug?.status }} — Valid: {{ formDebug?.valid }}</div>
-          <div>Invalid controls: {{ formDebug?.invalidControls?.length ? (formDebug.invalidControls.join(', ')) : '-' }}</div>
-        </div>
+        @if (formDebug) {
+          <div class="debug-panel" style="background:#fff7c2;padding:10px;border:1px solid #f0e68c;margin-bottom:12px;">
+            <strong>Debug: Form status</strong>
+            <div>Status: {{ formDebug.status }} — Valid: {{ formDebug.valid }}</div>
+            <div>Invalid controls: {{ formDebug.invalidControls?.length ? (formDebug.invalidControls.join(', ')) : '-' }}</div>
+          </div>
+        }
 
         <button type="submit" class="add-to-stage-btn" [disabled]="dailyProductionForm.invalid || isSaving">
           {{ isSaving ? 'Menyimpan...' : (isEditingExistingEntry ? 'Perbarui Data Harian' : 'Simpan Data Harian') }}
