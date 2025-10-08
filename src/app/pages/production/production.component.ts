@@ -290,7 +290,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private parseNumber(value: string | number | null): number {
+  public parseNumber(value: string | number | null): number { // Changed to public
     if (value === null || value === undefined || value === '') {
       return 0;
     }
