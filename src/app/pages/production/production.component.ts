@@ -429,8 +429,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   createFeedGroup(feed?: FeedConsumption): FormGroup {
     const group = this.fb.group({
-      feed_code: [feed?.feed_code || null], // No longer Validators.required here
-      quantity_kg: [feed?.quantity_kg || 0, [Validators.min(0)]] // No longer Validators.required here
+      feed_code: [feed?.feed_code || '', Validators.nullValidator], // Use empty string and nullValidator
+      quantity_kg: [feed?.quantity_kg || 0, [Validators.min(0), Validators.nullValidator]] // Use 0 and nullValidator
     });
 
     // Add custom validator to the group
