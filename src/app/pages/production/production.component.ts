@@ -125,6 +125,12 @@ export class ProductionComponent implements OnInit, OnDestroy {
           filtered = filtered.filter(flock => flock.farm_id === Number(selectedFarmId));
         }
         return filtered;
+      }),
+      // Set default flock_id if available and not already set
+      tap(flocks => {
+        if (flocks.length > 0 && !this.dailyProductionForm.get('flock_id')?.value) {
+          this.dailyProductionForm.get('flock_id')?.setValue(flocks[0].id, { emitEvent: true });
+        }
       })
     );
     // --- End Filtering Farms and Flocks ---
@@ -451,8 +457,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
 
   createFeedGroup(feed?: FeedConsumption): FormGroup {
     const group = this.fb.group({
-      feed_code: [feed?.feed_code || ''], // Removed Validators.nullValidator
-      quantity_kg: [feed?.quantity_kg || 0, [Validators.min(0)]] // Removed Validators.nullValidator, kept Validators.min(0)
+      feed_code: [feed?.feed_code || ''],
+      quantity_kg: [feed?.quantity_kg || 0, [Validators.min(0)]]
     });
 
     // Add custom validator to the group
