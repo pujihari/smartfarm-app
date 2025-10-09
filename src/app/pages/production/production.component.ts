@@ -413,41 +413,46 @@ export class ProductionComponent implements OnInit, OnDestroy {
   // Custom validator for a single feed item FormGroup
   private feedItemValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      const feedCodeControl = control.get('feed_code');
-      const quantityKgControl = control.get('quantity_kg');
+      const feedCode = control.get('feed_code')?.value;
+      const quantityKg = this.parseNumber(control.get('quantity_kg')?.value);
 
-      const feedCode = feedCodeControl?.value;
-      const quantityKg = this.parseNumber(quantityKgControl?.value);
+      console.log('--- feedItemValidator DEBUG ---');
+      console.log('feedCode:', feedCode, ' (type:', typeof feedCode, ')');
+      console.log('quantityKg:', quantityKg, ' (type:', typeof quantityKg, ')');
 
       // If both are empty/zero, it's valid (optional empty row)
       if (!feedCode && quantityKg === 0) {
+        console.log('Validator: Both empty/zero, returning null');
         return null;
       }
 
       // If feedCode is present, quantityKg must be > 0
       if (feedCode && quantityKg <= 0) {
+        console.log('Validator: feedCode present, quantityKg <= 0, returning { invalidFeedQuantity: true }');
         return { invalidFeedQuantity: true };
       }
 
       // If quantityKg is > 0, feedCode must be present
       if (!feedCode && quantityKg > 0) {
+        console.log('Validator: quantityKg > 0, feedCode missing, returning { missingFeedCode: true }');
         return { missingFeedCode: true };
       }
 
       // If both are present and quantity > 0, it's valid
       if (feedCode && quantityKg > 0) {
+        console.log('Validator: Both present and quantity > 0, returning null');
         return null;
       }
 
-      // Fallback for any other unexpected state (should ideally be covered)
-      return null;
+      console.log('Validator: Fallback, returning null');
+      return null; // Fallback
     };
   }
 
   createFeedGroup(feed?: FeedConsumption): FormGroup {
     const group = this.fb.group({
-      feed_code: [feed?.feed_code || '', Validators.nullValidator], // Use empty string and nullValidator
-      quantity_kg: [feed?.quantity_kg || 0, [Validators.min(0), Validators.nullValidator]] // Use 0 and nullValidator
+      feed_code: [feed?.feed_code || ''], // Removed Validators.nullValidator
+      quantity_kg: [feed?.quantity_kg || 0, [Validators.min(0)]] // Removed Validators.nullValidator, kept Validators.min(0)
     });
 
     // Add custom validator to the group
@@ -525,7 +530,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     // --- DEBUG: Detailed form dump (early return to inspect state) ---
     console.log('--- DEBUG: Save Daily Log Attempt ---');
     console.log('Daily Production Form Status:', this.dailyProductionForm.status);
-    console.log('Daily Production Form Value:', this.dailyProductionForm.value);
+    console.log('Daily Production Form Value:', this.dailyProductionForm.getRawValue()); // Use getRawValue to see disabled controls
     console.log('Daily Production Form Errors:', this.dailyProductionForm.errors);
 
     // Logika untuk FormArray feed_consumption (nama field sebenarnya di form)
