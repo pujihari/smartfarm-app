@@ -83,8 +83,8 @@ export class ProductionComponent implements OnInit, OnDestroy {
       farm_filter: [null],
       flock_id: [null, Validators.required],
       date: [new Date().toISOString().split('T')[0], Validators.required],
-      mortality_count: [0, [Validators.required, Validators.min(0)]],
-      culling_count: [0, [Validators.required, Validators.min(0)]],
+      mortality_count: [0, [Validators.required, Validators.min(0)]], // Fixed: Ensure 0 is default and required
+      culling_count: [0, [Validators.required, Validators.min(0)]], // Fixed: Ensure 0 is default and required
       feed_consumption: this.fb.array([this.createFeedGroup()]), // Initialize with one feed group
       egg_production_entries: this.fb.array([this.createEggProductionGroup()]), // Initialize with one egg group
       notes: ['']
@@ -223,7 +223,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
     });
 
     this.dailyProductionForm.get('farm_filter')!.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.dailyProductionForm.get('flock_id')!.reset(null, { emitEvent: false });
+      this.dailyProductionForm.get('flock_id')!.reset(null, { emitEvent: true }); // Ensure emitEvent: true
     });
 
     const formValueChanges$ = combineLatest([

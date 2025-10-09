@@ -54,14 +54,14 @@
           <div class="form-row">
             <div class="form-group">
               <label for="daily_mortality">Kematian <span class="required-indicator">*</span></label>
-              <input id="daily_mortality" type="number" formControlName="mortality_count" (input)="onMortalityInputChange($event)" [class.is-invalid]="dailyProductionForm.get('mortality_count')?.invalid && dailyProductionForm.get('mortality_count')?.touched">
+              <input id="daily_mortality" type="text" formControlName="mortality_count" (input)="onMortalityInputChange($event)" [class.is-invalid]="dailyProductionForm.get('mortality_count')?.invalid && dailyProductionForm.get('mortality_count')?.touched">
               @if (dailyProductionForm.get('mortality_count')?.invalid && dailyProductionForm.get('mortality_count')?.touched) {
                 <div class="invalid-feedback">Jumlah kematian wajib diisi dan minimal 0.</div>
               }
             </div>
             <div class="form-group">
               <label for="daily_culling">Culling <span class="required-indicator">*</span></label>
-              <input id="daily_culling" type="number" formControlName="culling_count" (input)="onCullingInputChange($event)" [class.is-invalid]="dailyProductionForm.get('culling_count')?.invalid && dailyProductionForm.get('culling_count')?.touched">
+              <input id="daily_culling" type="text" formControlName="culling_count" (input)="onCullingInputChange($event)" [class.is-invalid]="dailyProductionForm.get('culling_count')?.invalid && dailyProductionForm.get('culling_count')?.touched">
               @if (dailyProductionForm.get('culling_count')?.invalid && dailyProductionForm.get('culling_count')?.touched) {
                 <div class="invalid-feedback">Jumlah culling wajib diisi dan minimal 0.</div>
               }
