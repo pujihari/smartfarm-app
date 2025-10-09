@@ -72,86 +72,74 @@
           }
         </fieldset>
 
-        <fieldset formArrayName="feed_consumption">
+        <fieldset [formGroupName]="'feed_consumption'">
           <legend>Konsumsi Pakan</legend>
-          <!-- Assuming only one feed row now -->
-          @if (daily_feed_consumption.at(0); as feed) {
-            <div class="feed-row" [formGroupName]="0">
-              <select formControlName="feed_code" [class.is-invalid]="feed.invalid && feed.touched && feed.errors?.['missingFeedCode']">
-                <option [ngValue]="null">Pilih Kode Pakan</option>
-                @for (option of feedOptions; track option.item_code) {
-                  <option [value]="option.item_code">{{ option.name }} ({{ option.item_code }})</option>
-                }
-              </select>
-              <input type="text" formControlName="quantity_kg" placeholder="Jumlah (kg)" (input)="onFeedQuantityChange($event, 0)" [class.is-invalid]="feed.invalid && feed.touched && feed.errors?.['invalidFeedQuantity']">
-              <!-- Removed remove button -->
-            </div>
-            @if (feed.invalid && feed.touched) {
-              @if (feed.errors?.['missingFeedCode']) {
-                <div class="invalid-feedback">Kode pakan wajib diisi jika jumlah pakan diisi.</div>
+          <div class="feed-row">
+            <select formControlName="feed_code" [class.is-invalid]="feedConsumptionGroup.invalid && feedConsumptionGroup.touched && feedConsumptionGroup.errors?.['missingFeedCode']">
+              <option [ngValue]="null">Pilih Kode Pakan</option>
+              @for (option of feedOptions; track option.item_code) {
+                <option [value]="option.item_code">{{ option.name }} ({{ option.item_code }})</option>
               }
-              @if (feed.errors?.['invalidFeedQuantity']) {
-                <div class="invalid-feedback">Jumlah pakan wajib diisi dan minimal 0 jika kode pakan diisi.</div>
-              }
+            </select>
+            <input type="text" formControlName="quantity_kg" placeholder="Jumlah (kg)" (input)="onFeedQuantityChange($event)" [class.is-invalid]="feedConsumptionGroup.invalid && feedConsumptionGroup.touched && feedConsumptionGroup.errors?.['invalidFeedQuantity']">
+          </div>
+          @if (feedConsumptionGroup.invalid && feedConsumptionGroup.touched) {
+            @if (feedConsumptionGroup.errors?.['missingFeedCode']) {
+              <div class="invalid-feedback">Kode pakan wajib diisi jika jumlah pakan diisi.</div>
+            }
+            @if (feedConsumptionGroup.errors?.['invalidFeedQuantity']) {
+              <div class="invalid-feedback">Jumlah pakan wajib diisi dan minimal 0 jika kode pakan diisi.</div>
             }
           }
-          <!-- Removed add button -->
           @if (totalFeedConsumption$ | async; as totalFeedConsumption) {
             <p class="calculated-total">Total Konsumsi Pakan: <strong>{{ totalFeedConsumption.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} kg</strong></p>
           }
         </fieldset>
 
         @if (showEggProductionFields) {
-          <fieldset>
+          <fieldset [formGroupName]="'egg_production_entries'">
             <legend>Produksi Telur</legend>
-            <div formArrayName="egg_production_entries">
-              <!-- Assuming only one egg production row now -->
-              @if (eggProductionEntries.at(0); as eggEntryGroup) {
-                <div [formGroupName]="0" class="egg-production-row-group">
-                  <div class="egg-type-input-group">
-                    <label>Normal</label>
-                    <div class="input-pair">
-                      <input type="text" formControlName="normal_count" placeholder="Butir" (input)="onEggInputChange($event, 'normal_count', 0)" [class.is-invalid]="eggEntryGroup.get('normal_count')?.invalid && eggEntryGroup.get('normal_count')?.touched">
-                      <input type="text" formControlName="normal_weight" placeholder="Kilo" (input)="onEggInputChange($event, 'normal_weight', 0)" [class.is-invalid]="eggEntryGroup.get('normal_weight')?.invalid && eggEntryGroup.get('normal_weight')?.touched">
-                    </div>
-                    @if (eggEntryGroup.get('normal_count')?.invalid && eggEntryGroup.get('normal_count')?.touched) {
-                      <div class="invalid-feedback">Butir normal minimal 0.</div>
-                    }
-                    @if (eggEntryGroup.get('normal_weight')?.invalid && eggEntryGroup.get('normal_weight')?.touched) {
-                      <div class="invalid-feedback">Kilo normal minimal 0.</div>
-                    }
-                  </div>
-                  <div class="egg-type-input-group">
-                    <label>Putih</label>
-                    <div class="input-pair">
-                      <input type="text" formControlName="white_count" placeholder="Butir" (input)="onEggInputChange($event, 'white_count', 0)" [class.is-invalid]="eggEntryGroup.get('white_count')?.invalid && eggEntryGroup.get('white_count')?.touched">
-                      <input type="text" formControlName="white_weight" placeholder="Kilo" (input)="onEggInputChange($event, 'white_weight', 0)" [class.is-invalid]="eggEntryGroup.get('white_weight')?.invalid && eggEntryGroup.get('white_weight')?.touched">
-                    </div>
-                    @if (eggEntryGroup.get('white_count')?.invalid && eggEntryGroup.get('white_count')?.touched) {
-                      <div class="invalid-feedback">Butir putih minimal 0.</div>
-                    }
-                    @if (eggEntryGroup.get('white_weight')?.invalid && eggEntryGroup.get('white_weight')?.touched) {
-                      <div class="invalid-feedback">Kilo putih minimal 0.</div>
-                    }
-                  </div>
-                  <div class="egg-type-input-group">
-                    <label>Retak</label>
-                    <div class="input-pair">
-                      <input type="text" formControlName="cracked_count" placeholder="Butir" (input)="onEggInputChange($event, 'cracked_count', 0)" [class.is-invalid]="eggEntryGroup.get('cracked_count')?.invalid && eggEntryGroup.get('cracked_count')?.touched">
-                      <input type="text" formControlName="cracked_weight" placeholder="Kilo" (input)="onEggInputChange($event, 'cracked_weight', 0)" [class.is-invalid]="eggEntryGroup.get('cracked_weight')?.invalid && eggEntryGroup.get('cracked_weight')?.touched">
-                    </div>
-                    @if (eggEntryGroup.get('cracked_count')?.invalid && eggEntryGroup.get('cracked_count')?.touched) {
-                      <div class="invalid-feedback">Butir retak minimal 0.</div>
-                    }
-                    @if (eggEntryGroup.get('cracked_weight')?.invalid && eggEntryGroup.get('cracked_weight')?.touched) {
-                      <div class="invalid-feedback">Kilo retak minimal 0.</div>
-                    }
-                  </div>
-                  <!-- Removed remove button -->
+            <div class="egg-production-row-group">
+              <div class="egg-type-input-group">
+                <label>Normal</label>
+                <div class="input-pair">
+                  <input type="text" formControlName="normal_count" placeholder="Butir" (input)="onEggInputChange($event, 'normal_count')" [class.is-invalid]="eggProductionEntry.get('normal_count')?.invalid && eggProductionEntry.get('normal_count')?.touched">
+                  <input type="text" formControlName="normal_weight" placeholder="Kilo" (input)="onEggInputChange($event, 'normal_weight')" [class.is-invalid]="eggProductionEntry.get('normal_weight')?.invalid && eggProductionEntry.get('normal_weight')?.touched">
                 </div>
-              }
+                @if (eggProductionEntry.get('normal_count')?.invalid && eggProductionEntry.get('normal_count')?.touched) {
+                  <div class="invalid-feedback">Butir normal minimal 0.</div>
+                }
+                @if (eggProductionEntry.get('normal_weight')?.invalid && eggProductionEntry.get('normal_weight')?.touched) {
+                  <div class="invalid-feedback">Kilo normal minimal 0.</div>
+                }
+              </div>
+              <div class="egg-type-input-group">
+                <label>Putih</label>
+                <div class="input-pair">
+                  <input type="text" formControlName="white_count" placeholder="Butir" (input)="onEggInputChange($event, 'white_count')" [class.is-invalid]="eggProductionEntry.get('white_count')?.invalid && eggProductionEntry.get('white_count')?.touched">
+                  <input type="text" formControlName="white_weight" placeholder="Kilo" (input)="onEggInputChange($event, 'white_weight')" [class.is-invalid]="eggProductionEntry.get('white_weight')?.invalid && eggProductionEntry.get('white_weight')?.touched">
+                </div>
+                @if (eggProductionEntry.get('white_count')?.invalid && eggProductionEntry.get('white_count')?.touched) {
+                  <div class="invalid-feedback">Butir putih minimal 0.</div>
+                }
+                @if (eggProductionEntry.get('white_weight')?.invalid && eggProductionEntry.get('white_weight')?.touched) {
+                  <div class="invalid-feedback">Kilo putih minimal 0.</div>
+                }
+              </div>
+              <div class="egg-type-input-group">
+                <label>Retak</label>
+                <div class="input-pair">
+                  <input type="text" formControlName="cracked_count" placeholder="Butir" (input)="onEggInputChange($event, 'cracked_count')" [class.is-invalid]="eggProductionEntry.get('cracked_count')?.invalid && eggProductionEntry.get('cracked_count')?.touched">
+                  <input type="text" formControlName="cracked_weight" placeholder="Kilo" (input)="onEggInputChange($event, 'cracked_weight')" [class.is-invalid]="eggProductionEntry.get('cracked_weight')?.invalid && eggProductionEntry.get('cracked_weight')?.touched">
+                </div>
+                @if (eggProductionEntry.get('cracked_count')?.invalid && eggProductionEntry.get('cracked_count')?.touched) {
+                  <div class="invalid-feedback">Butir retak minimal 0.</div>
+                }
+                @if (eggProductionEntry.get('cracked_weight')?.invalid && eggProductionEntry.get('cracked_weight')?.touched) {
+                  <div class="invalid-feedback">Kilo retak minimal 0.</div>
+                }
+              </div>
             </div>
-            <!-- Removed add button -->
 
             <div class="total-egg-summary">
               <div class="total-egg-type-summary">
