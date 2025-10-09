@@ -129,7 +129,7 @@ export class ProductionComponent implements OnInit, OnDestroy {
       // Set default flock_id if available and not already set
       tap(flocks => {
         if (flocks.length > 0 && !this.dailyProductionForm.get('flock_id')?.value) {
-          this.dailyProductionForm.get('flock_id')?.setValue(flocks[0].id, { emitEvent: true });
+          this.dailyProductionForm.get('flock_id')?.setValue(flocks[0].id, { emitEvent: true }); // Ensure emitEvent: true
         }
       })
     );
